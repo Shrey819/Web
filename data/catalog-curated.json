@@ -1,0 +1,4891 @@
+[
+  {
+    "id": "prod-1-mrxd9c8y",
+    "slug": "guhring-premium-u-drills-guh-40355-a",
+    "sku": "GUH-40355-A",
+    "name": "Guhring Premium U Drills - GUH-40355-A",
+    "shortName": "Guhring U Drills",
+    "brand": "Guhring",
+    "manufacturer": "Guhring",
+    "categoryId": "drills",
+    "subcategoryId": "u-drills",
+    "productFamily": "Guhring Pro Series",
+    "description": "The Guhring Premium U Drills - GUH-40355-A represents the pinnacle of industrial engineering in the Drills category. Designed by Guhring for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium U Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5HVUgtNDAzNTUtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Guhring Premium U Drills - GUH-40355-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 7950,
+    "compareAtPrice": 9301,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 408,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.2,
+    "reviewCount": 13,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 1912,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.779Z"
+  },
+  {
+    "id": "prod-2-mrxd9c90",
+    "slug": "iscar-heavy-duty-tool-holders-isc-15816-b",
+    "sku": "ISC-15816-B",
+    "name": "Iscar Heavy-Duty Tool Holders - ISC-15816-B",
+    "shortName": "Iscar Tool Holders",
+    "brand": "Iscar",
+    "manufacturer": "Iscar",
+    "categoryId": "machine-tools",
+    "subcategoryId": "tool-holders",
+    "productFamily": "Iscar Pro Series",
+    "description": "The Iscar Heavy-Duty Tool Holders - ISC-15816-B represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Iscar for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Heavy-Duty Tool Holders engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5JU0MtMTU4MTYtQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Iscar Heavy-Duty Tool Holders - ISC-15816-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 43333,
+    "compareAtPrice": 55032,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 168,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.4,
+    "reviewCount": 103,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 3264,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.780Z"
+  },
+  {
+    "id": "prod-3-mrxd9c90",
+    "slug": "abb-ultra-hard-roughing-end-mills-abb-15202-c",
+    "sku": "ABB-15202-C",
+    "name": "ABB Ultra-Hard Roughing End Mills - ABB-15202-C",
+    "shortName": "ABB Roughing End Mills",
+    "brand": "ABB",
+    "manufacturer": "ABB",
+    "categoryId": "carbide-cutters",
+    "subcategoryId": "roughing",
+    "productFamily": "ABB Pro Series",
+    "description": "The ABB Ultra-Hard Roughing End Mills - ABB-15202-C represents the pinnacle of industrial engineering in the Carbide Cutters category. Designed by ABB for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Ultra-Hard Roughing End Mills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5BQkItMTUyMDItQzwvdGV4dD48L3N2Zz4=",
+        "alt": "ABB Ultra-Hard Roughing End Mills - ABB-15202-C",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 47791,
+    "compareAtPrice": 65473,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 697,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.3,
+    "reviewCount": 100,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 243,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.780Z"
+  },
+  {
+    "id": "prod-4-mrxd9c90",
+    "slug": "allen-bradley-precision-carbide-drills-all-78094-a",
+    "sku": "ALL-78094-A",
+    "name": "Allen-Bradley Precision Carbide Drills - ALL-78094-A",
+    "shortName": "Allen-Bradley Carbide Drills",
+    "brand": "Allen-Bradley",
+    "manufacturer": "Allen-Bradley",
+    "categoryId": "drills",
+    "subcategoryId": "carbide-drills",
+    "productFamily": "Allen-Bradley Pro Series",
+    "description": "The Allen-Bradley Precision Carbide Drills - ALL-78094-A represents the pinnacle of industrial engineering in the Drills category. Designed by Allen-Bradley for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Precision Carbide Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5BTEwtNzgwOTQtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Allen-Bradley Precision Carbide Drills - ALL-78094-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 9338,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 379,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "ALL-78094-A-V1",
+        "sku": "ALL-78094-A-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 9338,
+        "stockQuantity": 410
+      },
+      {
+        "id": "ALL-78094-A-V10",
+        "sku": "ALL-78094-A-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 84042,
+        "stockQuantity": 456
+      },
+      {
+        "id": "ALL-78094-A-V50",
+        "sku": "ALL-78094-A-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 420210,
+        "stockQuantity": 175
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3,
+    "reviewCount": 18,
+    "badges": [],
+    "shippingWeight": 3513,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.780Z"
+  },
+  {
+    "id": "prod-5-mrxd9c90",
+    "slug": "schneider-premium-roughing-end-mills-sch-65771-z",
+    "sku": "SCH-65771-Z",
+    "name": "Schneider Premium Roughing End Mills - SCH-65771-Z",
+    "shortName": "Schneider Roughing End Mills",
+    "brand": "Schneider",
+    "manufacturer": "Schneider",
+    "categoryId": "carbide-cutters",
+    "subcategoryId": "roughing",
+    "productFamily": "Schneider Pro Series",
+    "description": "The Schneider Premium Roughing End Mills - SCH-65771-Z represents the pinnacle of industrial engineering in the Carbide Cutters category. Designed by Schneider for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Roughing End Mills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TQ0gtNjU3NzEtWjwvdGV4dD48L3N2Zz4=",
+        "alt": "Schneider Premium Roughing End Mills - SCH-65771-Z",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 26525,
+    "compareAtPrice": 33686,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 244,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.8,
+    "reviewCount": 67,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 4098,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.780Z"
+  },
+  {
+    "id": "prod-6-mrxd9c90",
+    "slug": "iscar-industrial-flat-end-mills-isc-89355-x",
+    "sku": "ISC-89355-X",
+    "name": "Iscar Industrial Flat End Mills - ISC-89355-X",
+    "shortName": "Iscar Flat End Mills",
+    "brand": "Iscar",
+    "manufacturer": "Iscar",
+    "categoryId": "carbide-cutters",
+    "subcategoryId": "flat-end",
+    "productFamily": "Iscar Pro Series",
+    "description": "The Iscar Industrial Flat End Mills - ISC-89355-X represents the pinnacle of industrial engineering in the Carbide Cutters category. Designed by Iscar for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Industrial Flat End Mills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5JU0MtODkzNTUtWDwvdGV4dD48L3N2Zz4=",
+        "alt": "Iscar Industrial Flat End Mills - ISC-89355-X",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 18408,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 975,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.8,
+    "reviewCount": 33,
+    "badges": [],
+    "shippingWeight": 2478,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.780Z"
+  },
+  {
+    "id": "prod-7-mrxd9c90",
+    "slug": "abb-premium-carbide-drills-abb-48148-b",
+    "sku": "ABB-48148-B",
+    "name": "ABB Premium Carbide Drills - ABB-48148-B",
+    "shortName": "ABB Carbide Drills",
+    "brand": "ABB",
+    "manufacturer": "ABB",
+    "categoryId": "drills",
+    "subcategoryId": "carbide-drills",
+    "productFamily": "ABB Pro Series",
+    "description": "The ABB Premium Carbide Drills - ABB-48148-B represents the pinnacle of industrial engineering in the Drills category. Designed by ABB for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Carbide Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5BQkItNDgxNDgtQjwvdGV4dD48L3N2Zz4=",
+        "alt": "ABB Premium Carbide Drills - ABB-48148-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 37893,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 915,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "ABB-48148-B-V1",
+        "sku": "ABB-48148-B-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 37893,
+        "stockQuantity": 295
+      },
+      {
+        "id": "ABB-48148-B-V10",
+        "sku": "ABB-48148-B-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 341037,
+        "stockQuantity": 101
+      },
+      {
+        "id": "ABB-48148-B-V50",
+        "sku": "ABB-48148-B-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 1705185,
+        "stockQuantity": 303
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiAlN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.4,
+    "reviewCount": 119,
+    "badges": [],
+    "shippingWeight": 2334,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.780Z"
+  },
+  {
+    "id": "prod-8-mrxd9c90",
+    "slug": "omron-ultra-hard-u-drills-omr-76551-b",
+    "sku": "OMR-76551-B",
+    "name": "Omron Ultra-Hard U Drills - OMR-76551-B",
+    "shortName": "Omron U Drills",
+    "brand": "Omron",
+    "manufacturer": "Omron",
+    "categoryId": "drills",
+    "subcategoryId": "u-drills",
+    "productFamily": "Omron Pro Series",
+    "description": "The Omron Ultra-Hard U Drills - OMR-76551-B represents the pinnacle of industrial engineering in the Drills category. Designed by Omron for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Ultra-Hard U Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5PTVItNzY1NTEtQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Omron Ultra-Hard U Drills - OMR-76551-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 3663,
+    "compareAtPrice": 4798,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 628,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.5,
+    "reviewCount": 46,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 4344,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": true,
+    "createdAt": "2026-07-23T10:26:27.780Z"
+  },
+  {
+    "id": "prod-9-mrxd9c90",
+    "slug": "sick-heavy-duty-plcs-controllers-sic-66209-b",
+    "sku": "SIC-66209-B",
+    "name": "SICK Heavy-Duty PLCs & Controllers - SIC-66209-B",
+    "shortName": "SICK PLCs & Controllers",
+    "brand": "SICK",
+    "manufacturer": "SICK",
+    "categoryId": "automation",
+    "subcategoryId": "plcs",
+    "productFamily": "SICK Pro Series",
+    "description": "The SICK Heavy-Duty PLCs & Controllers - SIC-66209-B represents the pinnacle of industrial engineering in the Automation & Control category. Designed by SICK for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Heavy-Duty PLCs & Controllers engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TSUMtNjYyMDktQjwvdGV4dD48L3N2Zz4=",
+        "alt": "SICK Heavy-Duty PLCs & Controllers - SIC-66209-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 46094,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 616,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "SIC-66209-B-V1",
+        "sku": "SIC-66209-B-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 46094,
+        "stockQuantity": 371
+      },
+      {
+        "id": "SIC-66209-B-V10",
+        "sku": "SIC-66209-B-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 414846,
+        "stockQuantity": 466
+      },
+      {
+        "id": "SIC-66209-B-V50",
+        "sku": "SIC-66209-B-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 2074230,
+        "stockQuantity": 302
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.5,
+    "reviewCount": 78,
+    "badges": [],
+    "shippingWeight": 2244,
+    "featured": true,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.780Z"
+  },
+  {
+    "id": "prod-10-mrxd9c90",
+    "slug": "kennametal-ultra-hard-drill-chucks-ken-81615-b",
+    "sku": "KEN-81615-B",
+    "name": "Kennametal Ultra-Hard Drill Chucks - KEN-81615-B",
+    "shortName": "Kennametal Drill Chucks",
+    "brand": "Kennametal",
+    "manufacturer": "Kennametal",
+    "categoryId": "machine-tools",
+    "subcategoryId": "drill-chucks",
+    "productFamily": "Kennametal Pro Series",
+    "description": "The Kennametal Ultra-Hard Drill Chucks - KEN-81615-B represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Kennametal for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Ultra-Hard Drill Chucks engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5LRU4tODE2MTUtQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Kennametal Ultra-Hard Drill Chucks - KEN-81615-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 49544,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 386,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "KEN-81615-B-V1",
+        "sku": "KEN-81615-B-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 49544,
+        "stockQuantity": 500
+      },
+      {
+        "id": "KEN-81615-B-V10",
+        "sku": "KEN-81615-B-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 445896,
+        "stockQuantity": 109
+      },
+      {
+        "id": "KEN-81615-B-V50",
+        "sku": "KEN-81615-B-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 2229480,
+        "stockQuantity": 189
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.7,
+    "reviewCount": 33,
+    "badges": [],
+    "shippingWeight": 884,
+    "featured": false,
+    "bestSeller": true,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.780Z"
+  },
+  {
+    "id": "prod-11-mrxd9c90",
+    "slug": "allen-bradley-premium-plcs-controllers-all-61246-a",
+    "sku": "ALL-61246-A",
+    "name": "Allen-Bradley Premium PLCs & Controllers - ALL-61246-A",
+    "shortName": "Allen-Bradley PLCs & Controllers",
+    "brand": "Allen-Bradley",
+    "manufacturer": "Allen-Bradley",
+    "categoryId": "automation",
+    "subcategoryId": "plcs",
+    "productFamily": "Allen-Bradley Pro Series",
+    "description": "The Allen-Bradley Premium PLCs & Controllers - ALL-61246-A represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Allen-Bradley for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium PLCs & Controllers engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5BTEwtNjEyNDYtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Allen-Bradley Premium PLCs & Controllers - ALL-61246-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 40994,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 592,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "ALL-61246-A-V1",
+        "sku": "ALL-61246-A-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 40994,
+        "stockQuantity": 50
+      },
+      {
+        "id": "ALL-61246-A-V10",
+        "sku": "ALL-61246-A-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 368946,
+        "stockQuantity": 236
+      },
+      {
+        "id": "ALL-61246-A-V50",
+        "sku": "ALL-61246-A-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 1844730,
+        "stockQuantity": 139
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.1,
+    "reviewCount": 62,
+    "badges": [],
+    "shippingWeight": 838,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": true,
+    "createdAt": "2026-07-23T10:26:27.780Z"
+  },
+  {
+    "id": "prod-12-mrxd9c91",
+    "slug": "sandvik-ultra-hard-carbide-drills-san-95575-a",
+    "sku": "SAN-95575-A",
+    "name": "Sandvik Ultra-Hard Carbide Drills - SAN-95575-A",
+    "shortName": "Sandvik Carbide Drills",
+    "brand": "Sandvik",
+    "manufacturer": "Sandvik",
+    "categoryId": "drills",
+    "subcategoryId": "carbide-drills",
+    "productFamily": "Sandvik Pro Series",
+    "description": "The Sandvik Ultra-Hard Carbide Drills - SAN-95575-A represents the pinnacle of industrial engineering in the Drills category. Designed by Sandvik for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Ultra-Hard Carbide Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TQU4tOTU1NzUtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Sandvik Ultra-Hard Carbide Drills - SAN-95575-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 47698,
+    "compareAtPrice": 57714,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 215,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.7,
+    "reviewCount": 60,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 275,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-13-mrxd9c91",
+    "slug": "sandvik-rugged-drives-motors-san-82393-a",
+    "sku": "SAN-82393-A",
+    "name": "Sandvik Rugged Drives & Motors - SAN-82393-A",
+    "shortName": "Sandvik Drives & Motors",
+    "brand": "Sandvik",
+    "manufacturer": "Sandvik",
+    "categoryId": "automation",
+    "subcategoryId": "drives",
+    "productFamily": "Sandvik Pro Series",
+    "description": "The Sandvik Rugged Drives & Motors - SAN-82393-A represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Sandvik for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Rugged Drives & Motors engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TQU4tODIzOTMtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Sandvik Rugged Drives & Motors - SAN-82393-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 26391,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 964,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.2,
+    "reviewCount": 50,
+    "badges": [],
+    "shippingWeight": 1554,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-14-mrxd9c91",
+    "slug": "osg-premium-tool-holders-osg-68744-c",
+    "sku": "OSG-68744-C",
+    "name": "OSG Premium Tool Holders - OSG-68744-C",
+    "shortName": "OSG Tool Holders",
+    "brand": "OSG",
+    "manufacturer": "OSG",
+    "categoryId": "machine-tools",
+    "subcategoryId": "tool-holders",
+    "productFamily": "OSG Pro Series",
+    "description": "The OSG Premium Tool Holders - OSG-68744-C represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by OSG for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Tool Holders engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5PU0ctNjg3NDQtQzwvdGV4dD48L3N2Zz4=",
+        "alt": "OSG Premium Tool Holders - OSG-68744-C",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 5150,
+    "compareAtPrice": 5665,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 437,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiAlN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.8,
+    "reviewCount": 121,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 2696,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-15-mrxd9c91",
+    "slug": "sandvik-industrial-flat-end-mills-san-80639-c",
+    "sku": "SAN-80639-C",
+    "name": "Sandvik Industrial Flat End Mills - SAN-80639-C",
+    "shortName": "Sandvik Flat End Mills",
+    "brand": "Sandvik",
+    "manufacturer": "Sandvik",
+    "categoryId": "carbide-cutters",
+    "subcategoryId": "flat-end",
+    "productFamily": "Sandvik Pro Series",
+    "description": "The Sandvik Industrial Flat End Mills - SAN-80639-C represents the pinnacle of industrial engineering in the Carbide Cutters category. Designed by Sandvik for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Industrial Flat End Mills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TQU4tODA2MzktQzwvdGV4dD48L3N2Zz4=",
+        "alt": "Sandvik Industrial Flat End Mills - SAN-80639-C",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 16407,
+    "compareAtPrice": 21329,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 290,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 5,
+    "reviewCount": 144,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 2790,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-16-mrxd9c91",
+    "slug": "abb-heavy-duty-u-drills-abb-43326-c",
+    "sku": "ABB-43326-C",
+    "name": "ABB Heavy-Duty U Drills - ABB-43326-C",
+    "shortName": "ABB U Drills",
+    "brand": "ABB",
+    "manufacturer": "ABB",
+    "categoryId": "drills",
+    "subcategoryId": "u-drills",
+    "productFamily": "ABB Pro Series",
+    "description": "The ABB Heavy-Duty U Drills - ABB-43326-C represents the pinnacle of industrial engineering in the Drills category. Designed by ABB for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Heavy-Duty U Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5BQkItNDMzMjYtQzwvdGV4dD48L3N2Zz4=",
+        "alt": "ABB Heavy-Duty U Drills - ABB-43326-C",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 33088,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 801,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "ABB-43326-C-V1",
+        "sku": "ABB-43326-C-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 33088,
+        "stockQuantity": 223
+      },
+      {
+        "id": "ABB-43326-C-V10",
+        "sku": "ABB-43326-C-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 297792,
+        "stockQuantity": 274
+      },
+      {
+        "id": "ABB-43326-C-V50",
+        "sku": "ABB-43326-C-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 1488960,
+        "stockQuantity": 100
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.3,
+    "reviewCount": 145,
+    "badges": [],
+    "shippingWeight": 2996,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-17-mrxd9c91",
+    "slug": "allen-bradley-rugged-drives-motors-all-34690-a",
+    "sku": "ALL-34690-A",
+    "name": "Allen-Bradley Rugged Drives & Motors - ALL-34690-A",
+    "shortName": "Allen-Bradley Drives & Motors",
+    "brand": "Allen-Bradley",
+    "manufacturer": "Allen-Bradley",
+    "categoryId": "automation",
+    "subcategoryId": "drives",
+    "productFamily": "Allen-Bradley Pro Series",
+    "description": "The Allen-Bradley Rugged Drives & Motors - ALL-34690-A represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Allen-Bradley for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Rugged Drives & Motors engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5BTEwtMzQ2OTAtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Allen-Bradley Rugged Drives & Motors - ALL-34690-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 6227,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 748,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4,
+    "reviewCount": 19,
+    "badges": [],
+    "shippingWeight": 2103,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": true,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-18-mrxd9c91",
+    "slug": "osg-high-performance-ball-nose-end-mills-osg-30668-z",
+    "sku": "OSG-30668-Z",
+    "name": "OSG High-Performance Ball Nose End Mills - OSG-30668-Z",
+    "shortName": "OSG Ball Nose End Mills",
+    "brand": "OSG",
+    "manufacturer": "OSG",
+    "categoryId": "carbide-cutters",
+    "subcategoryId": "ball-nose",
+    "productFamily": "OSG Pro Series",
+    "description": "The OSG High-Performance Ball Nose End Mills - OSG-30668-Z represents the pinnacle of industrial engineering in the Carbide Cutters category. Designed by OSG for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "High-Performance Ball Nose End Mills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5PU0ctMzA2NjgtWjwvdGV4dD48L3N2Zz4=",
+        "alt": "OSG High-Performance Ball Nose End Mills - OSG-30668-Z",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 5099,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 480,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 5,
+    "reviewCount": 75,
+    "badges": [],
+    "shippingWeight": 2770,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": true,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-19-mrxd9c91",
+    "slug": "sick-premium-carbide-drills-sic-26589-b",
+    "sku": "SIC-26589-B",
+    "name": "SICK Premium Carbide Drills - SIC-26589-B",
+    "shortName": "SICK Carbide Drills",
+    "brand": "SICK",
+    "manufacturer": "SICK",
+    "categoryId": "drills",
+    "subcategoryId": "carbide-drills",
+    "productFamily": "SICK Pro Series",
+    "description": "The SICK Premium Carbide Drills - SIC-26589-B represents the pinnacle of industrial engineering in the Drills category. Designed by SICK for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Carbide Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TSUMtMjY1ODktQjwvdGV4dD48L3N2Zz4=",
+        "alt": "SICK Premium Carbide Drills - SIC-26589-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 6593,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 580,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiAlN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.3,
+    "reviewCount": 118,
+    "badges": [],
+    "shippingWeight": 954,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-20-mrxd9c91",
+    "slug": "mitsubishi-premium-drill-chucks-mit-24490-a",
+    "sku": "MIT-24490-A",
+    "name": "Mitsubishi Premium Drill Chucks - MIT-24490-A",
+    "shortName": "Mitsubishi Drill Chucks",
+    "brand": "Mitsubishi",
+    "manufacturer": "Mitsubishi",
+    "categoryId": "machine-tools",
+    "subcategoryId": "drill-chucks",
+    "productFamily": "Mitsubishi Pro Series",
+    "description": "The Mitsubishi Premium Drill Chucks - MIT-24490-A represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Mitsubishi for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Drill Chucks engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5NSVQtMjQ0OTAtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Mitsubishi Premium Drill Chucks - MIT-24490-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 19874,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 819,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.1,
+    "reviewCount": 129,
+    "badges": [],
+    "shippingWeight": 3838,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-21-mrxd9c91",
+    "slug": "sandvik-advanced-roughing-end-mills-san-58212-b",
+    "sku": "SAN-58212-B",
+    "name": "Sandvik Advanced Roughing End Mills - SAN-58212-B",
+    "shortName": "Sandvik Roughing End Mills",
+    "brand": "Sandvik",
+    "manufacturer": "Sandvik",
+    "categoryId": "carbide-cutters",
+    "subcategoryId": "roughing",
+    "productFamily": "Sandvik Pro Series",
+    "description": "The Sandvik Advanced Roughing End Mills - SAN-58212-B represents the pinnacle of industrial engineering in the Carbide Cutters category. Designed by Sandvik for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Advanced Roughing End Mills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TQU4tNTgyMTItQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Sandvik Advanced Roughing End Mills - SAN-58212-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 38499,
+    "compareAtPrice": 42733,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 328,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiAlN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.4,
+    "reviewCount": 65,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 2874,
+    "featured": true,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-22-mrxd9c91",
+    "slug": "siemens-ultra-hard-u-drills-sie-13066-z",
+    "sku": "SIE-13066-Z",
+    "name": "Siemens Ultra-Hard U Drills - SIE-13066-Z",
+    "shortName": "Siemens U Drills",
+    "brand": "Siemens",
+    "manufacturer": "Siemens",
+    "categoryId": "drills",
+    "subcategoryId": "u-drills",
+    "productFamily": "Siemens Pro Series",
+    "description": "The Siemens Ultra-Hard U Drills - SIE-13066-Z represents the pinnacle of industrial engineering in the Drills category. Designed by Siemens for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Ultra-Hard U Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TSUUtMTMwNjYtWjwvdGV4dD48L3N2Zz4=",
+        "alt": "Siemens Ultra-Hard U Drills - SIE-13066-Z",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 5255,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 148,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.3,
+    "reviewCount": 113,
+    "badges": [],
+    "shippingWeight": 2215,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-23-mrxd9c91",
+    "slug": "kennametal-ultra-hard-drill-chucks-ken-57525-a",
+    "sku": "KEN-57525-A",
+    "name": "Kennametal Ultra-Hard Drill Chucks - KEN-57525-A",
+    "shortName": "Kennametal Drill Chucks",
+    "brand": "Kennametal",
+    "manufacturer": "Kennametal",
+    "categoryId": "machine-tools",
+    "subcategoryId": "drill-chucks",
+    "productFamily": "Kennametal Pro Series",
+    "description": "The Kennametal Ultra-Hard Drill Chucks - KEN-57525-A represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Kennametal for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Ultra-Hard Drill Chucks engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5LRU4tNTc1MjUtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Kennametal Ultra-Hard Drill Chucks - KEN-57525-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 46982,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 112,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiAlN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.7,
+    "reviewCount": 60,
+    "badges": [
+      "New Arrival"
+    ],
+    "shippingWeight": 698,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-24-mrxd9c91",
+    "slug": "iscar-advanced-plcs-controllers-isc-39993-c",
+    "sku": "ISC-39993-C",
+    "name": "Iscar Advanced PLCs & Controllers - ISC-39993-C",
+    "shortName": "Iscar PLCs & Controllers",
+    "brand": "Iscar",
+    "manufacturer": "Iscar",
+    "categoryId": "automation",
+    "subcategoryId": "plcs",
+    "productFamily": "Iscar Pro Series",
+    "description": "The Iscar Advanced PLCs & Controllers - ISC-39993-C represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Iscar for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Advanced PLCs & Controllers engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5JU0MtMzk5OTMtQzwvdGV4dD48L3N2Zz4=",
+        "alt": "Iscar Advanced PLCs & Controllers - ISC-39993-C",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 47926,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 890,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.3,
+    "reviewCount": 79,
+    "badges": [],
+    "shippingWeight": 3194,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-25-mrxd9c91",
+    "slug": "iscar-precision-carbide-drills-isc-83312-b",
+    "sku": "ISC-83312-B",
+    "name": "Iscar Precision Carbide Drills - ISC-83312-B",
+    "shortName": "Iscar Carbide Drills",
+    "brand": "Iscar",
+    "manufacturer": "Iscar",
+    "categoryId": "drills",
+    "subcategoryId": "carbide-drills",
+    "productFamily": "Iscar Pro Series",
+    "description": "The Iscar Precision Carbide Drills - ISC-83312-B represents the pinnacle of industrial engineering in the Drills category. Designed by Iscar for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Precision Carbide Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5JU0MtODMzMTItQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Iscar Precision Carbide Drills - ISC-83312-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 11923,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 716,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.1,
+    "reviewCount": 88,
+    "badges": [
+      "New Arrival"
+    ],
+    "shippingWeight": 2492,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-26-mrxd9c91",
+    "slug": "osg-ultra-hard-carbide-drills-osg-40351-a",
+    "sku": "OSG-40351-A",
+    "name": "OSG Ultra-Hard Carbide Drills - OSG-40351-A",
+    "shortName": "OSG Carbide Drills",
+    "brand": "OSG",
+    "manufacturer": "OSG",
+    "categoryId": "drills",
+    "subcategoryId": "carbide-drills",
+    "productFamily": "OSG Pro Series",
+    "description": "The OSG Ultra-Hard Carbide Drills - OSG-40351-A represents the pinnacle of industrial engineering in the Drills category. Designed by OSG for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Ultra-Hard Carbide Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5PU0ctNDAzNTEtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "OSG Ultra-Hard Carbide Drills - OSG-40351-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 3931,
+    "compareAtPrice": 4953,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 162,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.7,
+    "reviewCount": 61,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 4361,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-27-mrxd9c91",
+    "slug": "sick-precision-grooving-inserts-sic-92340-x",
+    "sku": "SIC-92340-X",
+    "name": "SICK Precision Grooving Inserts - SIC-92340-X",
+    "shortName": "SICK Grooving Inserts",
+    "brand": "SICK",
+    "manufacturer": "SICK",
+    "categoryId": "carbide-inserts",
+    "subcategoryId": "grooving-inserts",
+    "productFamily": "SICK Pro Series",
+    "description": "The SICK Precision Grooving Inserts - SIC-92340-X represents the pinnacle of industrial engineering in the Carbide Inserts category. Designed by SICK for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Precision Grooving Inserts engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TSUMtOTIzNDAtWDwvdGV4dD48L3N2Zz4=",
+        "alt": "SICK Precision Grooving Inserts - SIC-92340-X",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 32772,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 171,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "SIC-92340-X-V1",
+        "sku": "SIC-92340-X-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 32772,
+        "stockQuantity": 222
+      },
+      {
+        "id": "SIC-92340-X-V10",
+        "sku": "SIC-92340-X-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 294948,
+        "stockQuantity": 358
+      },
+      {
+        "id": "SIC-92340-X-V50",
+        "sku": "SIC-92340-X-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 1474740,
+        "stockQuantity": 439
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.2,
+    "reviewCount": 150,
+    "badges": [],
+    "shippingWeight": 2474,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-28-mrxd9c91",
+    "slug": "kennametal-precision-sensors-ken-74329-b",
+    "sku": "KEN-74329-B",
+    "name": "Kennametal Precision Sensors - KEN-74329-B",
+    "shortName": "Kennametal Sensors",
+    "brand": "Kennametal",
+    "manufacturer": "Kennametal",
+    "categoryId": "automation",
+    "subcategoryId": "sensors",
+    "productFamily": "Kennametal Pro Series",
+    "description": "The Kennametal Precision Sensors - KEN-74329-B represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Kennametal for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Precision Sensors engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5LRU4tNzQzMjktQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Kennametal Precision Sensors - KEN-74329-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 23695,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 893,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.5,
+    "reviewCount": 148,
+    "badges": [],
+    "shippingWeight": 2873,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-29-mrxd9c91",
+    "slug": "keyence-advanced-ball-nose-end-mills-key-42651-a",
+    "sku": "KEY-42651-A",
+    "name": "Keyence Advanced Ball Nose End Mills - KEY-42651-A",
+    "shortName": "Keyence Ball Nose End Mills",
+    "brand": "Keyence",
+    "manufacturer": "Keyence",
+    "categoryId": "carbide-cutters",
+    "subcategoryId": "ball-nose",
+    "productFamily": "Keyence Pro Series",
+    "description": "The Keyence Advanced Ball Nose End Mills - KEY-42651-A represents the pinnacle of industrial engineering in the Carbide Cutters category. Designed by Keyence for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Advanced Ball Nose End Mills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5LRVktNDI2NTEtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Keyence Advanced Ball Nose End Mills - KEY-42651-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 44208,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 624,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiAlN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.2,
+    "reviewCount": 43,
+    "badges": [],
+    "shippingWeight": 4669,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-30-mrxd9c91",
+    "slug": "abb-advanced-grooving-inserts-abb-33613-a",
+    "sku": "ABB-33613-A",
+    "name": "ABB Advanced Grooving Inserts - ABB-33613-A",
+    "shortName": "ABB Grooving Inserts",
+    "brand": "ABB",
+    "manufacturer": "ABB",
+    "categoryId": "carbide-inserts",
+    "subcategoryId": "grooving-inserts",
+    "productFamily": "ABB Pro Series",
+    "description": "The ABB Advanced Grooving Inserts - ABB-33613-A represents the pinnacle of industrial engineering in the Carbide Inserts category. Designed by ABB for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Advanced Grooving Inserts engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5BQkItMzM2MTMtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "ABB Advanced Grooving Inserts - ABB-33613-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 16729,
+    "compareAtPrice": 22249,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 572,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "ABB-33613-A-V1",
+        "sku": "ABB-33613-A-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 16729,
+        "compareAtPrice": 22249,
+        "stockQuantity": 159
+      },
+      {
+        "id": "ABB-33613-A-V10",
+        "sku": "ABB-33613-A-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 150561,
+        "compareAtPrice": 222490,
+        "stockQuantity": 314
+      },
+      {
+        "id": "ABB-33613-A-V50",
+        "sku": "ABB-33613-A-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 752805,
+        "compareAtPrice": 1112450,
+        "stockQuantity": 259
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiAlN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.8,
+    "reviewCount": 24,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 2042,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-31-mrxd9c91",
+    "slug": "schneider-advanced-grooving-inserts-sch-19286-x",
+    "sku": "SCH-19286-X",
+    "name": "Schneider Advanced Grooving Inserts - SCH-19286-X",
+    "shortName": "Schneider Grooving Inserts",
+    "brand": "Schneider",
+    "manufacturer": "Schneider",
+    "categoryId": "carbide-inserts",
+    "subcategoryId": "grooving-inserts",
+    "productFamily": "Schneider Pro Series",
+    "description": "The Schneider Advanced Grooving Inserts - SCH-19286-X represents the pinnacle of industrial engineering in the Carbide Inserts category. Designed by Schneider for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Advanced Grooving Inserts engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TQ0gtMTkyODYtWDwvdGV4dD48L3N2Zz4=",
+        "alt": "Schneider Advanced Grooving Inserts - SCH-19286-X",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 2451,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 631,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "SCH-19286-X-V1",
+        "sku": "SCH-19286-X-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 2451,
+        "stockQuantity": 67
+      },
+      {
+        "id": "SCH-19286-X-V10",
+        "sku": "SCH-19286-X-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 22059,
+        "stockQuantity": 86
+      },
+      {
+        "id": "SCH-19286-X-V50",
+        "sku": "SCH-19286-X-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 110295,
+        "stockQuantity": 171
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.6,
+    "reviewCount": 143,
+    "badges": [],
+    "shippingWeight": 2642,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-32-mrxd9c91",
+    "slug": "kennametal-precision-drill-chucks-ken-96187-c",
+    "sku": "KEN-96187-C",
+    "name": "Kennametal Precision Drill Chucks - KEN-96187-C",
+    "shortName": "Kennametal Drill Chucks",
+    "brand": "Kennametal",
+    "manufacturer": "Kennametal",
+    "categoryId": "machine-tools",
+    "subcategoryId": "drill-chucks",
+    "productFamily": "Kennametal Pro Series",
+    "description": "The Kennametal Precision Drill Chucks - KEN-96187-C represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Kennametal for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Precision Drill Chucks engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5LRU4tOTYxODctQzwvdGV4dD48L3N2Zz4=",
+        "alt": "Kennametal Precision Drill Chucks - KEN-96187-C",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 2191,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 633,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "KEN-96187-C-V1",
+        "sku": "KEN-96187-C-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 2191,
+        "stockQuantity": 57
+      },
+      {
+        "id": "KEN-96187-C-V10",
+        "sku": "KEN-96187-C-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 19719,
+        "stockQuantity": 220
+      },
+      {
+        "id": "KEN-96187-C-V50",
+        "sku": "KEN-96187-C-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 98595,
+        "stockQuantity": 99
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.2,
+    "reviewCount": 143,
+    "badges": [],
+    "shippingWeight": 3234,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-33-mrxd9c91",
+    "slug": "iscar-premium-drill-chucks-isc-42378-c",
+    "sku": "ISC-42378-C",
+    "name": "Iscar Premium Drill Chucks - ISC-42378-C",
+    "shortName": "Iscar Drill Chucks",
+    "brand": "Iscar",
+    "manufacturer": "Iscar",
+    "categoryId": "machine-tools",
+    "subcategoryId": "drill-chucks",
+    "productFamily": "Iscar Pro Series",
+    "description": "The Iscar Premium Drill Chucks - ISC-42378-C represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Iscar for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Drill Chucks engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5JU0MtNDIzNzgtQzwvdGV4dD48L3N2Zz4=",
+        "alt": "Iscar Premium Drill Chucks - ISC-42378-C",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 42895,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 968,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.7,
+    "reviewCount": 57,
+    "badges": [],
+    "shippingWeight": 4434,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-34-mrxd9c91",
+    "slug": "sandvik-rugged-plcs-controllers-san-13343-b",
+    "sku": "SAN-13343-B",
+    "name": "Sandvik Rugged PLCs & Controllers - SAN-13343-B",
+    "shortName": "Sandvik PLCs & Controllers",
+    "brand": "Sandvik",
+    "manufacturer": "Sandvik",
+    "categoryId": "automation",
+    "subcategoryId": "plcs",
+    "productFamily": "Sandvik Pro Series",
+    "description": "The Sandvik Rugged PLCs & Controllers - SAN-13343-B represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Sandvik for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Rugged PLCs & Controllers engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TQU4tMTMzNDMtQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Sandvik Rugged PLCs & Controllers - SAN-13343-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 42024,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 448,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4,
+    "reviewCount": 93,
+    "badges": [],
+    "shippingWeight": 1167,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-35-mrxd9c91",
+    "slug": "kennametal-industrial-grooving-inserts-ken-31159-a",
+    "sku": "KEN-31159-A",
+    "name": "Kennametal Industrial Grooving Inserts - KEN-31159-A",
+    "shortName": "Kennametal Grooving Inserts",
+    "brand": "Kennametal",
+    "manufacturer": "Kennametal",
+    "categoryId": "carbide-inserts",
+    "subcategoryId": "grooving-inserts",
+    "productFamily": "Kennametal Pro Series",
+    "description": "The Kennametal Industrial Grooving Inserts - KEN-31159-A represents the pinnacle of industrial engineering in the Carbide Inserts category. Designed by Kennametal for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Industrial Grooving Inserts engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5LRU4tMzExNTktQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Kennametal Industrial Grooving Inserts - KEN-31159-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 42526,
+    "compareAtPrice": 56134,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 139,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "KEN-31159-A-V1",
+        "sku": "KEN-31159-A-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 42526,
+        "compareAtPrice": 56134,
+        "stockQuantity": 123
+      },
+      {
+        "id": "KEN-31159-A-V10",
+        "sku": "KEN-31159-A-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 382734,
+        "compareAtPrice": 561340,
+        "stockQuantity": 470
+      },
+      {
+        "id": "KEN-31159-A-V50",
+        "sku": "KEN-31159-A-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 1913670,
+        "compareAtPrice": 2806700,
+        "stockQuantity": 45
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.4,
+    "reviewCount": 46,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 2808,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-36-mrxd9c91",
+    "slug": "kennametal-advanced-turning-inserts-ken-26533-z",
+    "sku": "KEN-26533-Z",
+    "name": "Kennametal Advanced Turning Inserts - KEN-26533-Z",
+    "shortName": "Kennametal Turning Inserts",
+    "brand": "Kennametal",
+    "manufacturer": "Kennametal",
+    "categoryId": "carbide-inserts",
+    "subcategoryId": "turning-inserts",
+    "productFamily": "Kennametal Pro Series",
+    "description": "The Kennametal Advanced Turning Inserts - KEN-26533-Z represents the pinnacle of industrial engineering in the Carbide Inserts category. Designed by Kennametal for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Advanced Turning Inserts engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5LRU4tMjY1MzMtWjwvdGV4dD48L3N2Zz4=",
+        "alt": "Kennametal Advanced Turning Inserts - KEN-26533-Z",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 36976,
+    "compareAtPrice": 50657,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 766,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.7,
+    "reviewCount": 131,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 2908,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-37-mrxd9c91",
+    "slug": "keyence-premium-flat-end-mills-key-24798-b",
+    "sku": "KEY-24798-B",
+    "name": "Keyence Premium Flat End Mills - KEY-24798-B",
+    "shortName": "Keyence Flat End Mills",
+    "brand": "Keyence",
+    "manufacturer": "Keyence",
+    "categoryId": "carbide-cutters",
+    "subcategoryId": "flat-end",
+    "productFamily": "Keyence Pro Series",
+    "description": "The Keyence Premium Flat End Mills - KEY-24798-B represents the pinnacle of industrial engineering in the Carbide Cutters category. Designed by Keyence for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Flat End Mills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5LRVktMjQ3OTgtQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Keyence Premium Flat End Mills - KEY-24798-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 29558,
+    "compareAtPrice": 34582,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 702,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.3,
+    "reviewCount": 42,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 3298,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": true,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-38-mrxd9c91",
+    "slug": "omron-precision-sensors-omr-88676-z",
+    "sku": "OMR-88676-Z",
+    "name": "Omron Precision Sensors - OMR-88676-Z",
+    "shortName": "Omron Sensors",
+    "brand": "Omron",
+    "manufacturer": "Omron",
+    "categoryId": "automation",
+    "subcategoryId": "sensors",
+    "productFamily": "Omron Pro Series",
+    "description": "The Omron Precision Sensors - OMR-88676-Z represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Omron for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Precision Sensors engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5PTVItODg2NzYtWjwvdGV4dD48L3N2Zz4=",
+        "alt": "Omron Precision Sensors - OMR-88676-Z",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 711,
+    "compareAtPrice": 938,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 408,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "OMR-88676-Z-V1",
+        "sku": "OMR-88676-Z-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 711,
+        "compareAtPrice": 938,
+        "stockQuantity": 303
+      },
+      {
+        "id": "OMR-88676-Z-V10",
+        "sku": "OMR-88676-Z-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 6399,
+        "compareAtPrice": 9380,
+        "stockQuantity": 263
+      },
+      {
+        "id": "OMR-88676-Z-V50",
+        "sku": "OMR-88676-Z-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 31995,
+        "compareAtPrice": 46900,
+        "stockQuantity": 467
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.1,
+    "reviewCount": 100,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 1067,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-39-mrxd9c91",
+    "slug": "allen-bradley-premium-ball-nose-end-mills-all-10608-a",
+    "sku": "ALL-10608-A",
+    "name": "Allen-Bradley Premium Ball Nose End Mills - ALL-10608-A",
+    "shortName": "Allen-Bradley Ball Nose End Mills",
+    "brand": "Allen-Bradley",
+    "manufacturer": "Allen-Bradley",
+    "categoryId": "carbide-cutters",
+    "subcategoryId": "ball-nose",
+    "productFamily": "Allen-Bradley Pro Series",
+    "description": "The Allen-Bradley Premium Ball Nose End Mills - ALL-10608-A represents the pinnacle of industrial engineering in the Carbide Cutters category. Designed by Allen-Bradley for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Ball Nose End Mills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5BTEwtMTA2MDgtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Allen-Bradley Premium Ball Nose End Mills - ALL-10608-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 34503,
+    "compareAtPrice": 46234,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 200,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.8,
+    "reviewCount": 97,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 756,
+    "featured": false,
+    "bestSeller": true,
+    "newArrival": true,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-40-mrxd9c91",
+    "slug": "sick-high-performance-threading-inserts-sic-19803-b",
+    "sku": "SIC-19803-B",
+    "name": "SICK High-Performance Threading Inserts - SIC-19803-B",
+    "shortName": "SICK Threading Inserts",
+    "brand": "SICK",
+    "manufacturer": "SICK",
+    "categoryId": "carbide-inserts",
+    "subcategoryId": "threading-inserts",
+    "productFamily": "SICK Pro Series",
+    "description": "The SICK High-Performance Threading Inserts - SIC-19803-B represents the pinnacle of industrial engineering in the Carbide Inserts category. Designed by SICK for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "High-Performance Threading Inserts engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TSUMtMTk4MDMtQjwvdGV4dD48L3N2Zz4=",
+        "alt": "SICK High-Performance Threading Inserts - SIC-19803-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 21465,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 538,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.1,
+    "reviewCount": 41,
+    "badges": [],
+    "shippingWeight": 4068,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-41-mrxd9c91",
+    "slug": "kennametal-advanced-drives-motors-ken-85946-z",
+    "sku": "KEN-85946-Z",
+    "name": "Kennametal Advanced Drives & Motors - KEN-85946-Z",
+    "shortName": "Kennametal Drives & Motors",
+    "brand": "Kennametal",
+    "manufacturer": "Kennametal",
+    "categoryId": "automation",
+    "subcategoryId": "drives",
+    "productFamily": "Kennametal Pro Series",
+    "description": "The Kennametal Advanced Drives & Motors - KEN-85946-Z represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Kennametal for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Advanced Drives & Motors engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5LRU4tODU5NDYtWjwvdGV4dD48L3N2Zz4=",
+        "alt": "Kennametal Advanced Drives & Motors - KEN-85946-Z",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 8769,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 322,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "KEN-85946-Z-V1",
+        "sku": "KEN-85946-Z-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 8769,
+        "stockQuantity": 336
+      },
+      {
+        "id": "KEN-85946-Z-V10",
+        "sku": "KEN-85946-Z-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 78921,
+        "stockQuantity": 443
+      },
+      {
+        "id": "KEN-85946-Z-V50",
+        "sku": "KEN-85946-Z-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 394605,
+        "stockQuantity": 290
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4,
+    "reviewCount": 39,
+    "badges": [],
+    "shippingWeight": 1189,
+    "featured": false,
+    "bestSeller": true,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-42-mrxd9c91",
+    "slug": "osg-premium-tool-holders-osg-63575-b",
+    "sku": "OSG-63575-B",
+    "name": "OSG Premium Tool Holders - OSG-63575-B",
+    "shortName": "OSG Tool Holders",
+    "brand": "OSG",
+    "manufacturer": "OSG",
+    "categoryId": "machine-tools",
+    "subcategoryId": "tool-holders",
+    "productFamily": "OSG Pro Series",
+    "description": "The OSG Premium Tool Holders - OSG-63575-B represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by OSG for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Tool Holders engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5PU0ctNjM1NzUtQjwvdGV4dD48L3N2Zz4=",
+        "alt": "OSG Premium Tool Holders - OSG-63575-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 37883,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 693,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.9,
+    "reviewCount": 124,
+    "badges": [],
+    "shippingWeight": 1370,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-43-mrxd9c91",
+    "slug": "kennametal-precision-u-drills-ken-32881-x",
+    "sku": "KEN-32881-X",
+    "name": "Kennametal Precision U Drills - KEN-32881-X",
+    "shortName": "Kennametal U Drills",
+    "brand": "Kennametal",
+    "manufacturer": "Kennametal",
+    "categoryId": "drills",
+    "subcategoryId": "u-drills",
+    "productFamily": "Kennametal Pro Series",
+    "description": "The Kennametal Precision U Drills - KEN-32881-X represents the pinnacle of industrial engineering in the Drills category. Designed by Kennametal for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Precision U Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5LRU4tMzI4ODEtWDwvdGV4dD48L3N2Zz4=",
+        "alt": "Kennametal Precision U Drills - KEN-32881-X",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 44600,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 58,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4,
+    "reviewCount": 116,
+    "badges": [],
+    "shippingWeight": 2386,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-44-mrxd9c91",
+    "slug": "sandvik-heavy-duty-er-collets-san-83507-a",
+    "sku": "SAN-83507-A",
+    "name": "Sandvik Heavy-Duty ER Collets - SAN-83507-A",
+    "shortName": "Sandvik ER Collets",
+    "brand": "Sandvik",
+    "manufacturer": "Sandvik",
+    "categoryId": "machine-tools",
+    "subcategoryId": "er-collets",
+    "productFamily": "Sandvik Pro Series",
+    "description": "The Sandvik Heavy-Duty ER Collets - SAN-83507-A represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Sandvik for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Heavy-Duty ER Collets engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TQU4tODM1MDctQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Sandvik Heavy-Duty ER Collets - SAN-83507-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 15296,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 304,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "SAN-83507-A-V1",
+        "sku": "SAN-83507-A-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 15296,
+        "stockQuantity": 381
+      },
+      {
+        "id": "SAN-83507-A-V10",
+        "sku": "SAN-83507-A-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 137664,
+        "stockQuantity": 389
+      },
+      {
+        "id": "SAN-83507-A-V50",
+        "sku": "SAN-83507-A-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 688320,
+        "stockQuantity": 384
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.3,
+    "reviewCount": 120,
+    "badges": [],
+    "shippingWeight": 379,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-45-mrxd9c91",
+    "slug": "guhring-precision-turning-inserts-guh-80456-b",
+    "sku": "GUH-80456-B",
+    "name": "Guhring Precision Turning Inserts - GUH-80456-B",
+    "shortName": "Guhring Turning Inserts",
+    "brand": "Guhring",
+    "manufacturer": "Guhring",
+    "categoryId": "carbide-inserts",
+    "subcategoryId": "turning-inserts",
+    "productFamily": "Guhring Pro Series",
+    "description": "The Guhring Precision Turning Inserts - GUH-80456-B represents the pinnacle of industrial engineering in the Carbide Inserts category. Designed by Guhring for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Precision Turning Inserts engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5HVUgtODA0NTYtQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Guhring Precision Turning Inserts - GUH-80456-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 40393,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 894,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.6,
+    "reviewCount": 29,
+    "badges": [],
+    "shippingWeight": 2099,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": true,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-46-mrxd9c91",
+    "slug": "omron-rugged-tool-holders-omr-23128-a",
+    "sku": "OMR-23128-A",
+    "name": "Omron Rugged Tool Holders - OMR-23128-A",
+    "shortName": "Omron Tool Holders",
+    "brand": "Omron",
+    "manufacturer": "Omron",
+    "categoryId": "machine-tools",
+    "subcategoryId": "tool-holders",
+    "productFamily": "Omron Pro Series",
+    "description": "The Omron Rugged Tool Holders - OMR-23128-A represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Omron for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Rugged Tool Holders engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5PTVItMjMxMjgtQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Omron Rugged Tool Holders - OMR-23128-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 18289,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 158,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "OMR-23128-A-V1",
+        "sku": "OMR-23128-A-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 18289,
+        "stockQuantity": 225
+      },
+      {
+        "id": "OMR-23128-A-V10",
+        "sku": "OMR-23128-A-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 164601,
+        "stockQuantity": 2
+      },
+      {
+        "id": "OMR-23128-A-V50",
+        "sku": "OMR-23128-A-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 823005,
+        "stockQuantity": 408
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.9,
+    "reviewCount": 128,
+    "badges": [],
+    "shippingWeight": 3060,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-47-mrxd9c91",
+    "slug": "iscar-advanced-sensors-isc-34173-x",
+    "sku": "ISC-34173-X",
+    "name": "Iscar Advanced Sensors - ISC-34173-X",
+    "shortName": "Iscar Sensors",
+    "brand": "Iscar",
+    "manufacturer": "Iscar",
+    "categoryId": "automation",
+    "subcategoryId": "sensors",
+    "productFamily": "Iscar Pro Series",
+    "description": "The Iscar Advanced Sensors - ISC-34173-X represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Iscar for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Advanced Sensors engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5JU0MtMzQxNzMtWDwvdGV4dD48L3N2Zz4=",
+        "alt": "Iscar Advanced Sensors - ISC-34173-X",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 36948,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 265,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.9,
+    "reviewCount": 41,
+    "badges": [],
+    "shippingWeight": 1843,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": true,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-48-mrxd9c91",
+    "slug": "siemens-rugged-er-collets-sie-54377-x",
+    "sku": "SIE-54377-X",
+    "name": "Siemens Rugged ER Collets - SIE-54377-X",
+    "shortName": "Siemens ER Collets",
+    "brand": "Siemens",
+    "manufacturer": "Siemens",
+    "categoryId": "machine-tools",
+    "subcategoryId": "er-collets",
+    "productFamily": "Siemens Pro Series",
+    "description": "The Siemens Rugged ER Collets - SIE-54377-X represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Siemens for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Rugged ER Collets engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TSUUtNTQzNzctWDwvdGV4dD48L3N2Zz4=",
+        "alt": "Siemens Rugged ER Collets - SIE-54377-X",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 17645,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 318,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.9,
+    "reviewCount": 53,
+    "badges": [],
+    "shippingWeight": 3169,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-49-mrxd9c91",
+    "slug": "mitsubishi-precision-sensors-mit-63801-x",
+    "sku": "MIT-63801-X",
+    "name": "Mitsubishi Precision Sensors - MIT-63801-X",
+    "shortName": "Mitsubishi Sensors",
+    "brand": "Mitsubishi",
+    "manufacturer": "Mitsubishi",
+    "categoryId": "automation",
+    "subcategoryId": "sensors",
+    "productFamily": "Mitsubishi Pro Series",
+    "description": "The Mitsubishi Precision Sensors - MIT-63801-X represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Mitsubishi for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Precision Sensors engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5NSVQtNjM4MDEtWDwvdGV4dD48L3N2Zz4=",
+        "alt": "Mitsubishi Precision Sensors - MIT-63801-X",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 29042,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 404,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.8,
+    "reviewCount": 132,
+    "badges": [],
+    "shippingWeight": 2105,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-50-mrxd9c91",
+    "slug": "allen-bradley-rugged-tool-holders-all-49133-x",
+    "sku": "ALL-49133-X",
+    "name": "Allen-Bradley Rugged Tool Holders - ALL-49133-X",
+    "shortName": "Allen-Bradley Tool Holders",
+    "brand": "Allen-Bradley",
+    "manufacturer": "Allen-Bradley",
+    "categoryId": "machine-tools",
+    "subcategoryId": "tool-holders",
+    "productFamily": "Allen-Bradley Pro Series",
+    "description": "The Allen-Bradley Rugged Tool Holders - ALL-49133-X represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Allen-Bradley for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Rugged Tool Holders engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5BTEwtNDkxMzMtWDwvdGV4dD48L3N2Zz4=",
+        "alt": "Allen-Bradley Rugged Tool Holders - ALL-49133-X",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 9777,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 129,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.4,
+    "reviewCount": 94,
+    "badges": [
+      "New Arrival"
+    ],
+    "shippingWeight": 471,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-51-mrxd9c91",
+    "slug": "mitsubishi-premium-threading-inserts-mit-11167-a",
+    "sku": "MIT-11167-A",
+    "name": "Mitsubishi Premium Threading Inserts - MIT-11167-A",
+    "shortName": "Mitsubishi Threading Inserts",
+    "brand": "Mitsubishi",
+    "manufacturer": "Mitsubishi",
+    "categoryId": "carbide-inserts",
+    "subcategoryId": "threading-inserts",
+    "productFamily": "Mitsubishi Pro Series",
+    "description": "The Mitsubishi Premium Threading Inserts - MIT-11167-A represents the pinnacle of industrial engineering in the Carbide Inserts category. Designed by Mitsubishi for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Threading Inserts engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5NSVQtMTExNjctQTwvdGV4dD48L3N2Zz4=",
+        "alt": "Mitsubishi Premium Threading Inserts - MIT-11167-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 28352,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 74,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiAlN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 5,
+    "reviewCount": 141,
+    "badges": [],
+    "shippingWeight": 453,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-52-mrxd9c91",
+    "slug": "osg-advanced-ball-nose-end-mills-osg-71499-a",
+    "sku": "OSG-71499-A",
+    "name": "OSG Advanced Ball Nose End Mills - OSG-71499-A",
+    "shortName": "OSG Ball Nose End Mills",
+    "brand": "OSG",
+    "manufacturer": "OSG",
+    "categoryId": "carbide-cutters",
+    "subcategoryId": "ball-nose",
+    "productFamily": "OSG Pro Series",
+    "description": "The OSG Advanced Ball Nose End Mills - OSG-71499-A represents the pinnacle of industrial engineering in the Carbide Cutters category. Designed by OSG for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Advanced Ball Nose End Mills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5PU0ctNzE0OTktQTwvdGV4dD48L3N2Zz4=",
+        "alt": "OSG Advanced Ball Nose End Mills - OSG-71499-A",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 28331,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 430,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "OSG-71499-A-V1",
+        "sku": "OSG-71499-A-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 28331,
+        "stockQuantity": 97
+      },
+      {
+        "id": "OSG-71499-A-V10",
+        "sku": "OSG-71499-A-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 254979,
+        "stockQuantity": 126
+      },
+      {
+        "id": "OSG-71499-A-V50",
+        "sku": "OSG-71499-A-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 1274895,
+        "stockQuantity": 389
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.2,
+    "reviewCount": 13,
+    "badges": [],
+    "shippingWeight": 1488,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-53-mrxd9c91",
+    "slug": "kennametal-ultra-hard-er-collets-ken-31279-x",
+    "sku": "KEN-31279-X",
+    "name": "Kennametal Ultra-Hard ER Collets - KEN-31279-X",
+    "shortName": "Kennametal ER Collets",
+    "brand": "Kennametal",
+    "manufacturer": "Kennametal",
+    "categoryId": "machine-tools",
+    "subcategoryId": "er-collets",
+    "productFamily": "Kennametal Pro Series",
+    "description": "The Kennametal Ultra-Hard ER Collets - KEN-31279-X represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Kennametal for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Ultra-Hard ER Collets engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5LRU4tMzEyNzktWDwvdGV4dD48L3N2Zz4=",
+        "alt": "Kennametal Ultra-Hard ER Collets - KEN-31279-X",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 46835,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 959,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.1,
+    "reviewCount": 48,
+    "badges": [],
+    "shippingWeight": 3864,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-54-mrxd9c91",
+    "slug": "schneider-premium-drives-motors-sch-59292-c",
+    "sku": "SCH-59292-C",
+    "name": "Schneider Premium Drives & Motors - SCH-59292-C",
+    "shortName": "Schneider Drives & Motors",
+    "brand": "Schneider",
+    "manufacturer": "Schneider",
+    "categoryId": "automation",
+    "subcategoryId": "drives",
+    "productFamily": "Schneider Pro Series",
+    "description": "The Schneider Premium Drives & Motors - SCH-59292-C represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Schneider for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Drives & Motors engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TQ0gtNTkyOTItQzwvdGV4dD48L3N2Zz4=",
+        "alt": "Schneider Premium Drives & Motors - SCH-59292-C",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 31609,
+    "compareAtPrice": 37298,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 942,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "SCH-59292-C-V1",
+        "sku": "SCH-59292-C-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 31609,
+        "compareAtPrice": 37298,
+        "stockQuantity": 208
+      },
+      {
+        "id": "SCH-59292-C-V10",
+        "sku": "SCH-59292-C-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 284481,
+        "compareAtPrice": 372980,
+        "stockQuantity": 449
+      },
+      {
+        "id": "SCH-59292-C-V50",
+        "sku": "SCH-59292-C-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 1422405,
+        "compareAtPrice": 1864900,
+        "stockQuantity": 25
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.7,
+    "reviewCount": 141,
+    "badges": [
+      "Sale"
+    ],
+    "shippingWeight": 1997,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-55-mrxd9c91",
+    "slug": "mitsubishi-industrial-threading-inserts-mit-16359-c",
+    "sku": "MIT-16359-C",
+    "name": "Mitsubishi Industrial Threading Inserts - MIT-16359-C",
+    "shortName": "Mitsubishi Threading Inserts",
+    "brand": "Mitsubishi",
+    "manufacturer": "Mitsubishi",
+    "categoryId": "carbide-inserts",
+    "subcategoryId": "threading-inserts",
+    "productFamily": "Mitsubishi Pro Series",
+    "description": "The Mitsubishi Industrial Threading Inserts - MIT-16359-C represents the pinnacle of industrial engineering in the Carbide Inserts category. Designed by Mitsubishi for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Industrial Threading Inserts engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5NSVQtMTYzNTktQzwvdGV4dD48L3N2Zz4=",
+        "alt": "Mitsubishi Industrial Threading Inserts - MIT-16359-C",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 26244,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 905,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "MIT-16359-C-V1",
+        "sku": "MIT-16359-C-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 26244,
+        "stockQuantity": 219
+      },
+      {
+        "id": "MIT-16359-C-V10",
+        "sku": "MIT-16359-C-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 236196,
+        "stockQuantity": 331
+      },
+      {
+        "id": "MIT-16359-C-V50",
+        "sku": "MIT-16359-C-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 1180980,
+        "stockQuantity": 55
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.9,
+    "reviewCount": 141,
+    "badges": [],
+    "shippingWeight": 4688,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-56-mrxd9c91",
+    "slug": "guhring-industrial-drives-motors-guh-11450-b",
+    "sku": "GUH-11450-B",
+    "name": "Guhring Industrial Drives & Motors - GUH-11450-B",
+    "shortName": "Guhring Drives & Motors",
+    "brand": "Guhring",
+    "manufacturer": "Guhring",
+    "categoryId": "automation",
+    "subcategoryId": "drives",
+    "productFamily": "Guhring Pro Series",
+    "description": "The Guhring Industrial Drives & Motors - GUH-11450-B represents the pinnacle of industrial engineering in the Automation & Control category. Designed by Guhring for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Industrial Drives & Motors engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5HVUgtMTE0NTAtQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Guhring Industrial Drives & Motors - GUH-11450-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 41909,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 793,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "GUH-11450-B-V1",
+        "sku": "GUH-11450-B-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 41909,
+        "stockQuantity": 111
+      },
+      {
+        "id": "GUH-11450-B-V10",
+        "sku": "GUH-11450-B-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 377181,
+        "stockQuantity": 473
+      },
+      {
+        "id": "GUH-11450-B-V50",
+        "sku": "GUH-11450-B-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 1885905,
+        "stockQuantity": 383
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.7,
+    "reviewCount": 72,
+    "badges": [],
+    "shippingWeight": 4218,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-57-mrxd9c91",
+    "slug": "omron-rugged-carbide-drills-omr-63822-b",
+    "sku": "OMR-63822-B",
+    "name": "Omron Rugged Carbide Drills - OMR-63822-B",
+    "shortName": "Omron Carbide Drills",
+    "brand": "Omron",
+    "manufacturer": "Omron",
+    "categoryId": "drills",
+    "subcategoryId": "carbide-drills",
+    "productFamily": "Omron Pro Series",
+    "description": "The Omron Rugged Carbide Drills - OMR-63822-B represents the pinnacle of industrial engineering in the Drills category. Designed by Omron for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Rugged Carbide Drills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5PTVItNjM4MjItQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Omron Rugged Carbide Drills - OMR-63822-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 45644,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 833,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": true,
+    "variants": [
+      {
+        "id": "OMR-63822-B-V1",
+        "sku": "OMR-63822-B-1PK",
+        "name": "Pack of 1",
+        "attributes": {
+          "Pack Size": "1"
+        },
+        "price": 45644,
+        "stockQuantity": 54
+      },
+      {
+        "id": "OMR-63822-B-V10",
+        "sku": "OMR-63822-B-10PK",
+        "name": "Pack of 10",
+        "attributes": {
+          "Pack Size": "10"
+        },
+        "price": 410796,
+        "stockQuantity": 370
+      },
+      {
+        "id": "OMR-63822-B-V50",
+        "sku": "OMR-63822-B-50PK",
+        "name": "Pack of 50",
+        "attributes": {
+          "Pack Size": "50"
+        },
+        "price": 2053980,
+        "stockQuantity": 261
+      }
+    ],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.7,
+    "reviewCount": 117,
+    "badges": [],
+    "shippingWeight": 693,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-58-mrxd9c91",
+    "slug": "iscar-heavy-duty-ball-nose-end-mills-isc-11521-x",
+    "sku": "ISC-11521-X",
+    "name": "Iscar Heavy-Duty Ball Nose End Mills - ISC-11521-X",
+    "shortName": "Iscar Ball Nose End Mills",
+    "brand": "Iscar",
+    "manufacturer": "Iscar",
+    "categoryId": "carbide-cutters",
+    "subcategoryId": "ball-nose",
+    "productFamily": "Iscar Pro Series",
+    "description": "The Iscar Heavy-Duty Ball Nose End Mills - ISC-11521-X represents the pinnacle of industrial engineering in the Carbide Cutters category. Designed by Iscar for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Heavy-Duty Ball Nose End Mills engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5JU0MtMTE1MjEtWDwvdGV4dD48L3N2Zz4=",
+        "alt": "Iscar Heavy-Duty Ball Nose End Mills - ISC-11521-X",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 47987,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "low-stock",
+    "stockQuantity": 301,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "DLC"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.6,
+    "reviewCount": 137,
+    "badges": [],
+    "shippingWeight": 1258,
+    "featured": false,
+    "bestSeller": true,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-59-mrxd9c91",
+    "slug": "mitsubishi-advanced-tool-holders-mit-43366-b",
+    "sku": "MIT-43366-B",
+    "name": "Mitsubishi Advanced Tool Holders - MIT-43366-B",
+    "shortName": "Mitsubishi Tool Holders",
+    "brand": "Mitsubishi",
+    "manufacturer": "Mitsubishi",
+    "categoryId": "machine-tools",
+    "subcategoryId": "tool-holders",
+    "productFamily": "Mitsubishi Pro Series",
+    "description": "The Mitsubishi Advanced Tool Holders - MIT-43366-B represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Mitsubishi for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Advanced Tool Holders engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5NSVQtNDMzNjYtQjwvdGV4dD48L3N2Zz4=",
+        "alt": "Mitsubishi Advanced Tool Holders - MIT-43366-B",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 18928,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 948,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "TiN"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 4.9,
+    "reviewCount": 55,
+    "badges": [],
+    "shippingWeight": 220,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  },
+  {
+    "id": "prod-60-mrxd9c91",
+    "slug": "schneider-premium-tool-holders-sch-30799-z",
+    "sku": "SCH-30799-Z",
+    "name": "Schneider Premium Tool Holders - SCH-30799-Z",
+    "shortName": "Schneider Tool Holders",
+    "brand": "Schneider",
+    "manufacturer": "Schneider",
+    "categoryId": "machine-tools",
+    "subcategoryId": "tool-holders",
+    "productFamily": "Schneider Pro Series",
+    "description": "The Schneider Premium Tool Holders - SCH-30799-Z represents the pinnacle of industrial engineering in the Machine Tools & Accessories category. Designed by Schneider for exceptional durability and precision under the most demanding manufacturing conditions. Features state-of-the-art materials and strict quality control tolerances.",
+    "shortDescription": "Premium Tool Holders engineered for superior performance and extended tool life in industrial applications.",
+    "images": [
+      {
+        "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjNjQ3NDhiIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5TQ0gtMzA3OTktWjwvdGV4dD48L3N2Zz4=",
+        "alt": "Schneider Premium Tool Holders - SCH-30799-Z",
+        "isPrimary": true
+      }
+    ],
+    "basePrice": 42137,
+    "gstRate": 18,
+    "priceIncludesTax": false,
+    "stockStatus": "in-stock",
+    "stockQuantity": 706,
+    "minimumOrderQuantity": 1,
+    "maximumOrderQuantity": 1000,
+    "unit": "piece",
+    "packSize": 1,
+    "unitLabel": "/ piece",
+    "hasVariants": false,
+    "variants": [],
+    "specifications": [
+      {
+        "groupName": "General Specs",
+        "attributes": [
+          {
+            "label": "Material",
+            "value": "Tungsten Carbide / High-Grade Steel"
+          },
+          {
+            "label": "Coating",
+            "value": "Uncoated"
+          },
+          {
+            "label": "Tolerance",
+            "value": "±0.005mm"
+          }
+        ]
+      }
+    ],
+    "applications": [
+      "CNC Machining",
+      "Heavy Manufacturing",
+      "Aerospace Components"
+    ],
+    "features": [
+      "High thermal resistance",
+      "Optimized chip evacuation",
+      "Extended lifespan under high feed rates"
+    ],
+    "rating": 3.4,
+    "reviewCount": 67,
+    "badges": [],
+    "shippingWeight": 2711,
+    "featured": false,
+    "bestSeller": false,
+    "newArrival": false,
+    "createdAt": "2026-07-23T10:26:27.781Z"
+  }
+]
