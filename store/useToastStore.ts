@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 export interface ToastMessage {
   id: string;
-  type: "success" | "info" | "warning";
+  type: "success" | "info" | "warning" | "error";
   title: string;
   message: string;
 }
@@ -25,7 +25,7 @@ export const useToastStore = create<ToastState>()((set) => ({
       set((state) => ({
         toasts: state.toasts.filter((t) => t.id !== id),
       }));
-    }, 3500);
+    }, 4500);
   },
   removeToast: (id) => {
     set((state) => ({

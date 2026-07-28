@@ -2,7 +2,7 @@
 
 import { useToastStore } from "@/store/useToastStore";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, Info, AlertTriangle, X } from "lucide-react";
+import { CheckCircle2, Info, AlertTriangle, XCircle, X } from "lucide-react";
 
 export function ToastContainer() {
   const { toasts, removeToast } = useToastStore();
@@ -27,6 +27,9 @@ export function ToastContainer() {
             )}
             {toast.type === "warning" && (
               <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            )}
+            {toast.type === "error" && (
+              <XCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
             )}
 
             <div className="flex-1 text-sm">

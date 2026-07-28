@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { QuickViewModal } from "@/components/product/QuickViewModal";
 import { ToastContainer } from "@/components/ui/ToastContainer";
-import { CustomCursor } from "@/components/ui/CustomCursor";
+import { HeaderFooterWrapper } from "@/components/layout/HeaderFooterWrapper";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-heading",
@@ -39,17 +37,17 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${spaceGrotesk.variable} ${jakartaSans.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-[#faf9f5] text-slate-900 selection:bg-sky-500 selection:text-white">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+      <body className="min-h-full flex flex-col font-sans bg-[#faf9f5] text-slate-900 selection:bg-sky-500 selection:text-white" suppressHydrationWarning>
+        <HeaderFooterWrapper>
+          {children}
+        </HeaderFooterWrapper>
 
         {/* Global Drawers, Modals & Toast Overlays */}
         <CartDrawer />
         <QuickViewModal />
         <ToastContainer />
-        <CustomCursor />
       </body>
     </html>
   );
