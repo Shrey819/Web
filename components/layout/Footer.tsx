@@ -192,11 +192,32 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Large Brand Wordmark Section */}
-        <div className="py-10 border-b border-slate-900 text-center">
-          <div className="text-[10vw] font-black tracking-tighter leading-none select-none font-mono flex justify-center flex-wrap gap-x-6 text-slate-900">
-            <span>OM</span>
-            <span className="text-amber-500/20">AUTOMATION</span>
+        {/* Large Brand Wordmark Section with Per-Letter Hover Effect */}
+        <div className="py-12 border-b border-slate-900 text-center overflow-hidden">
+          <div className="text-[9vw] font-black tracking-tighter leading-none select-none font-mono flex justify-center items-center flex-wrap gap-x-6 sm:gap-x-10">
+            {/* OM */}
+            <div className="flex">
+              {Array.from("OM").map((char, i) => (
+                <span
+                  key={`om-${i}`}
+                  className="text-slate-800 cursor-pointer transition-all duration-300 hover:text-amber-400 hover:-translate-y-4 hover:scale-110 hover:drop-shadow-[0_0_35px_rgba(251,191,36,0.95)] inline-block"
+                >
+                  {char}
+                </span>
+              ))}
+            </div>
+
+            {/* AUTOMATION */}
+            <div className="flex">
+              {Array.from("AUTOMATION").map((char, i) => (
+                <span
+                  key={`auto-${i}`}
+                  className="text-amber-500/20 cursor-pointer transition-all duration-300 hover:text-amber-400 hover:-translate-y-4 hover:scale-110 hover:drop-shadow-[0_0_35px_rgba(251,191,36,0.95)] inline-block"
+                >
+                  {char}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
