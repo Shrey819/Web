@@ -15,11 +15,19 @@ export interface FilterState {
   searchQuery: string;
 }
 
+export interface CategoryFilterItem {
+  id: string;
+  name: string;
+  slug: string;
+  itemCount?: number;
+}
+
 interface FilterSidebarProps {
   filters: FilterState;
   onFilterChange: (newFilters: FilterState) => void;
   onReset: () => void;
   totalResults: number;
+  categories?: CategoryFilterItem[];
 }
 
 export function FilterSidebar({
@@ -27,7 +35,10 @@ export function FilterSidebar({
   onFilterChange,
   onReset,
   totalResults,
+  categories = [],
 }: FilterSidebarProps) {
+  const categoryList = categories.length > 0 ? categories : CATEGORIES;
+
   const handleBrandToggle = (brandName: string) => {
     const isSelected = filters.brand.includes(brandName);
     const updated = isSelected
@@ -68,20 +79,25 @@ export function FilterSidebar({
           >
             <span>All Categories</span>
           </button>
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => onFilterChange({ ...filters, category: cat.slug })}
-              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors flex items-center justify-between ${
-                filters.category === cat.slug
-                  ? "bg-sky-600 text-white font-bold"
-                  : "text-slate-700 hover:bg-slate-100"
-              }`}
-            >
-              <span>{cat.name}</span>
-              <span className="text-[10px] opacity-70">({cat.itemCount})</span>
-            </button>
-          ))}
+          {categoryList.map((cat) => {
+            const isSelected = filters.category === cat.id || filters.category === cat.slug;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => onFilterChange({ ...filters, category: isSelected ? "all" : cat.id })}
+                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors flex items-center justify-between ${
+                  isSelected
+                    ? "bg-sky-600 text-white font-bold"
+                    : "text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                <span>{cat.name}</span>
+                {cat.itemCount !== undefined && (
+                  <span className="text-[10px] opacity-70">({cat.itemCount})</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 

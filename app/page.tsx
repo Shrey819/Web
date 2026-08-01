@@ -12,8 +12,11 @@ import { Testimonials } from "@/components/home/Testimonials";
 import { SpecComparePreview } from "@/components/home/SpecComparePreview";
 import { ResourceHub } from "@/components/home/ResourceHub";
 import { FAQSection } from "@/components/home/FAQSection";
+import { getActiveProducts } from "@/lib/storefront";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const dbProducts = await getActiveProducts();
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* 1 & 2. Announcement Bar & Hero Section */}
@@ -26,7 +29,7 @@ export default function HomePage() {
       <CategoryGrid />
 
       {/* 5. Featured Products Grid */}
-      <FeaturedProducts />
+      <FeaturedProducts initialProducts={dbProducts} />
 
       {/* 6. Industrial Solutions Showcase */}
       <SolutionsShowcase />

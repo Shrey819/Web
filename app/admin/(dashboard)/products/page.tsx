@@ -1,6 +1,7 @@
 import { query } from "@/lib/db";
 import Link from "next/link";
-import { Plus, Search, Edit2, Trash2, Eye, Package, Copy, Filter } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Eye, Package, Filter } from "lucide-react";
+import { ProductVisibilityToggle } from "@/components/admin/products/ProductVisibilityToggle";
 
 interface AdminProductRow {
   id: string;
@@ -200,15 +201,11 @@ export default async function AdminProductsPage({
                       ₹{(product.basePrice / 100).toLocaleString('en-IN')}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${
-                        product.status === 'ACTIVE'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : product.status === 'DRAFT'
-                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                          : 'bg-slate-800 text-slate-400 border-slate-700'
-                      }`}>
-                        {product.status}
-                      </span>
+                      <ProductVisibilityToggle
+                        productId={product.id}
+                        initialStatus={product.status}
+                        productName={product.name}
+                      />
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">

@@ -67,6 +67,9 @@ export async function createProduct(input: ProductFormValues) {
     const validated = productFormSchema.parse(input);
     const productId = generateId();
     const slug = await generateUniqueSlug(validated.name);
+    if (!validated.sku || validated.sku.trim() === "") {
+      validated.sku = `PRD-${Date.now().toString().slice(-6)}`;
+    }
 
     let productCode = validated.productCode;
 
@@ -209,6 +212,9 @@ export async function updateProduct(productId: string, input: ProductFormValues)
       // 1. Fetch Previous State for Audit
       const prev = await client.query(`SELECT * FROM "Product" WHERE "id" = $1`, [productId]);
       const prevData = prev.rows[0] || {};
+      if (!validated.sku || validated.sku.trim() === "") {
+        validated.sku = prevData.sku || `PRD-${Date.now().toString().slice(-6)}`;
+      }
 
       // 2. Update Core Product
       await client.query(`
@@ -366,6 +372,28 @@ export async function duplicateProduct(productId: string) {
     return { success: true, id: newId };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to duplicate product";
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * TOGGLE PRODUCT VISIBILITY (ACTIVE vs DRAFT)
+ */
+export async function toggleProductVisibility(productId: string, currentStatus: string) {
+  try {
+    const newStatus = currentStatus === "ACTIVE" ? "DRAFT" : "ACTIVE";
+    await query(`
+      UPDATE "Product" 
+      SET "status" = $1, "publishedAt" = ${newStatus === 'ACTIVE' ? 'CURRENT_TIMESTAMP' : 'NULL'}, "updatedAt" = CURRENT_TIMESTAMP 
+      WHERE "id" = $2
+    `, [newStatus, productId]);
+
+    safeRevalidate("/admin/products");
+    safeRevalidate("/products");
+    safeRevalidate("/");
+    return { success: true, newStatus };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to toggle visibility";
     return { success: false, error: message };
   }
 }

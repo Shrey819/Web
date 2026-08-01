@@ -1,19 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PRODUCTS } from "@/data/products";
+import { PRODUCTS as MOCK_PRODUCTS } from "@/data/products";
+import { Product } from "@/types";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
 
-export function FeaturedProducts() {
-  const [activeTab, setActiveTab] = useState<"all" | "sensors" | "plcs" | "drives">("all");
+interface FeaturedProductsProps {
+  initialProducts?: Product[];
+}
+
+export function FeaturedProducts({ initialProducts }: FeaturedProductsProps) {
+  const [activeTab, setActiveTab] = useState<string>("all");
+  const [products, setProducts] = useState<Product[]>(initialProducts || MOCK_PRODUCTS);
+
+  useEffect(() => {
+    if (initialProducts && initialProducts.length > 0) {
+      setProducts(initialProducts);
+    }
+  }, [initialProducts]);
 
   const filteredProducts =
     activeTab === "all"
-      ? PRODUCTS.slice(0, 10)
-      : PRODUCTS.filter((p) => p.categoryId === activeTab).slice(0, 10);
+      ? products.slice(0, 10)
+      : products.filter((p) => p.categoryId === activeTab || p.categoryId.includes(activeTab)).slice(0, 10);
 
   return (
     <section className="py-20 bg-white border-b border-slate-200">
@@ -23,7 +34,7 @@ export function FeaturedProducts() {
           <div>
             <div className="inline-flex items-center gap-2 type-label text-sky-600 mb-2">
               <Sparkles className="w-4 h-4" />
-              <span>Certified Stock</span>
+              <span>Live Database Catalog</span>
             </div>
             <h2 className="type-section-title text-slate-900">
               Featured Industrial Components
@@ -45,7 +56,7 @@ export function FeaturedProducts() {
             <button
               onClick={() => setActiveTab("sensors")}
               className={`px-4 py-2 rounded-full type-button transition-all whitespace-nowrap ${
-                activeTab === "sensors"
+                activeTab === "sensors" || activeTab === "cat_sensors"
                   ? "bg-sky-600 text-white shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
               }`}
@@ -55,41 +66,41 @@ export function FeaturedProducts() {
             <button
               onClick={() => setActiveTab("plcs")}
               className={`px-4 py-2 rounded-full type-button transition-all whitespace-nowrap ${
-                activeTab === "plcs"
-                  ? "bg-emerald-600 text-white shadow-sm"
+                activeTab === "plcs" || activeTab === "cat_plcs"
+                  ? "bg-sky-600 text-white shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              PLCs & Control
+              PLCs
             </button>
             <button
-              onClick={() => setActiveTab("drives")}
+              onClick={() => setActiveTab("motors")}
               className={`px-4 py-2 rounded-full type-button transition-all whitespace-nowrap ${
-                activeTab === "drives"
-                  ? "bg-amber-600 text-white shadow-sm"
+                activeTab === "motors" || activeTab === "cat_motors"
+                  ? "bg-sky-600 text-white shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              Drives & Motors
+              Motors & Drives
             </button>
           </div>
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
 
-        {/* Catalog CTA */}
-        <div className="text-center">
+        {/* Bottom CTA */}
+        <div className="mt-12 text-center">
           <Link
             href="/products"
-            className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white type-button shadow-xl transition-all hover:scale-105"
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white type-button shadow-lg shadow-slate-900/10 transition-all hover:scale-105"
           >
-            <span>Explore Complete 1,500+ Hardware Inventory</span>
-            <ArrowRight className="w-4 h-4 text-sky-400" />
+            <span>Explore Entire Hardware Inventory</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </div>

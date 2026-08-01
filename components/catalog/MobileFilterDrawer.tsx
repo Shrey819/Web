@@ -1,6 +1,6 @@
 "use client";
 
-import { FilterSidebar, FilterState } from "./FilterSidebar";
+import { FilterSidebar, FilterState, CategoryFilterItem } from "./FilterSidebar";
 import { X, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -11,6 +11,7 @@ interface MobileFilterDrawerProps {
   onFilterChange: (newFilters: FilterState) => void;
   onReset: () => void;
   totalResults: number;
+  categories?: CategoryFilterItem[];
 }
 
 export function MobileFilterDrawer({
@@ -20,6 +21,7 @@ export function MobileFilterDrawer({
   onFilterChange,
   onReset,
   totalResults,
+  categories = [],
 }: MobileFilterDrawerProps) {
   return (
     <AnimatePresence>
@@ -62,6 +64,7 @@ export function MobileFilterDrawer({
                 onFilterChange={onFilterChange}
                 onReset={onReset}
                 totalResults={totalResults}
+                categories={categories}
               />
             </div>
 
