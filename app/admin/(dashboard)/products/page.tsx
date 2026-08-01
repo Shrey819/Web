@@ -2,6 +2,7 @@ import { query } from "@/lib/db";
 import Link from "next/link";
 import { Plus, Search, Edit2, Trash2, Eye, Package, Filter } from "lucide-react";
 import { ProductVisibilityToggle } from "@/components/admin/products/ProductVisibilityToggle";
+import { BulkUploadButton } from "@/components/admin/products/BulkUploadButton";
 
 interface AdminProductRow {
   id: string;
@@ -99,12 +100,15 @@ export default async function AdminProductsPage({
           <h1 className="type-section-title text-white">Product Catalog Management</h1>
           <p className="text-xs text-slate-400 mt-1">Shopify/Wix-style multi-channel product workflow</p>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/25"
-        >
-          <Plus className="w-4 h-4" /> Add New Product
-        </Link>
+        <div className="flex items-center gap-3">
+          <BulkUploadButton />
+          <Link
+            href="/admin/products/new"
+            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/25"
+          >
+            <Plus className="w-4 h-4" /> Add New Product
+          </Link>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
