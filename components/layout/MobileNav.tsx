@@ -45,11 +45,11 @@ export function MobileNav({ isOpen, onClose, cartCount, wishlistCount }: MobileN
             <div>
               <div className="flex items-center justify-between p-5 border-b border-slate-800">
                 <Link href="/" onClick={onClose} className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 to-emerald-400 flex items-center justify-center font-bold text-slate-950 text-sm">
-                    P
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-500 flex items-center justify-center font-bold text-slate-950 text-sm font-mono">
+                    OM
                   </div>
-                  <span className="font-bold text-lg text-white tracking-tight">
-                    PROPEL<span className="text-sky-400">AUTO</span>
+                  <span className="font-bold text-lg text-white tracking-tight font-mono">
+                    OM <span className="text-amber-400">AUTOMATION</span>
                   </span>
                 </Link>
                 <button

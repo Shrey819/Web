@@ -17,10 +17,10 @@ export default async function AdminDashboardLayout({
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col fixed inset-y-0 z-50">
         <div className="p-6 border-b border-slate-800 flex items-center gap-3">
-          <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-sky-500/20">
-            P
+          <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center font-bold text-slate-950 font-mono shadow-lg shadow-amber-500/20">
+            OM
           </div>
-          <span className="font-bold text-white tracking-wide type-label">PROPEL.AUTO</span>
+          <span className="font-bold text-white tracking-wide type-label font-mono">OM AUTOMATION</span>
         </div>
         
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">

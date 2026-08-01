@@ -80,15 +80,15 @@ export function Header() {
             </button>
 
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-sky-500 via-cyan-400 to-emerald-400 flex items-center justify-center font-black text-slate-950 text-base shadow-md group-hover:scale-105 transition-transform">
-                P
+              <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-500 flex items-center justify-center font-black text-slate-950 text-base shadow-md group-hover:scale-105 transition-transform font-mono">
+                OM
               </div>
               <div className="flex flex-col">
                 <span className="font-extrabold text-lg tracking-tight leading-none text-white font-mono">
-                  PROPEL<span className="text-sky-400">AUTO</span>
+                  OM <span className="text-amber-400">AUTOMATION</span>
                 </span>
                 <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">
-                  Industrial B2B
+                  Industrial Automation
                 </span>
               </div>
             </Link>
