@@ -67,6 +67,7 @@ export const productFormSchema = z.object({
   
   // Categorization
   categoryId: z.string().min(1, "Category is required"),
+  categoryIds: z.array(z.string()).default([]),
   brandId: z.string().optional().default("default-brand"),
   
   // Status & Publishing

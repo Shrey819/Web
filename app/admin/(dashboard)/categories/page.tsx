@@ -7,6 +7,7 @@ export default async function AdminCategoriesPage() {
     name: string;
     slug: string;
     description: string | null;
+    status: string;
     product_count: number;
   }> = [];
 
@@ -17,10 +18,15 @@ export default async function AdminCategoriesPage() {
         c.name, 
         c.slug, 
         c.description,
-        COUNT(p.id)::int as product_count
+        COALESCE(c.status, 'active') as status,
+        COUNT(DISTINCT pc."productId")::int as product_count
       FROM "Category" c
-      LEFT JOIN "Product" p ON c.id = p."categoryId"
-      GROUP BY c.id, c.name, c.slug, c.description
+      LEFT JOIN (
+        SELECT "productId", "categoryId" FROM "ProductCategory"
+        UNION
+        SELECT "id" as "productId", "categoryId" FROM "Product" WHERE "categoryId" IS NOT NULL
+      ) pc ON c.id = pc."categoryId" OR c.slug = pc."categoryId"
+      GROUP BY c.id, c.name, c.slug, c.description, c.status
       ORDER BY c.name ASC
     `);
     categories = res.rows as Array<{
@@ -28,6 +34,7 @@ export default async function AdminCategoriesPage() {
       name: string;
       slug: string;
       description: string | null;
+      status: string;
       product_count: number;
     }>;
   } catch (error) {

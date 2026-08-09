@@ -128,6 +128,16 @@ export async function createProduct(input: ProductFormValues) {
         validated.installationAvailable, validated.technicalSupportAvailable, validated.calibrationRequired
       ]);
 
+      // 2.5 Insert Multi-Categories into ProductCategory join table
+      const catsToInsert = Array.from(new Set([validated.categoryId, ...(validated.categoryIds || [])])).filter(Boolean);
+      for (const catId of catsToInsert) {
+        await client.query(`
+          INSERT INTO "ProductCategory" ("productId", "categoryId")
+          VALUES ($1, $2)
+          ON CONFLICT ("productId", "categoryId") DO NOTHING
+        `, [productId, catId]);
+      }
+
       // 3. Insert Inventory
       await client.query(`
         INSERT INTO "Inventory" ("id", "productId", "quantity", "status", "reserved", "updatedAt")
@@ -244,6 +254,17 @@ export async function updateProduct(productId: string, input: ProductFormValues)
         validated.installationAvailable, validated.technicalSupportAvailable, validated.calibrationRequired,
         productId
       ]);
+
+      // 2.5 Update Multi-Categories
+      await client.query(`DELETE FROM "ProductCategory" WHERE "productId" = $1`, [productId]);
+      const catsToInsert = Array.from(new Set([validated.categoryId, ...(validated.categoryIds || [])])).filter(Boolean);
+      for (const catId of catsToInsert) {
+        await client.query(`
+          INSERT INTO "ProductCategory" ("productId", "categoryId")
+          VALUES ($1, $2)
+          ON CONFLICT ("productId", "categoryId") DO NOTHING
+        `, [productId, catId]);
+      }
 
       // 3. Update Inventory
       await client.query(`
@@ -444,7 +465,7 @@ export async function getProductForEdit(productId: string) {
 
     const product = prodRes.rows[0];
 
-    const [imagesRes, docsRes, specsRes, invRes] = await Promise.all([
+    const [imagesRes, docsRes, specsRes, invRes, multiCatRes] = await Promise.all([
       query(`SELECT * FROM "ProductImage" WHERE "productId" = $1 ORDER BY "order" ASC`, [productId]),
       query(`SELECT * FROM "ProductDocument" WHERE "productId" = $1 ORDER BY "sortOrder" ASC`, [productId]),
       query(`
@@ -455,10 +476,17 @@ export async function getProductForEdit(productId: string) {
         ORDER BY g."order", s."order"
       `, [productId]),
       query(`SELECT "quantity" FROM "Inventory" WHERE "productId" = $1 LIMIT 1`, [productId]),
+      query(`SELECT "categoryId" FROM "ProductCategory" WHERE "productId" = $1`, [productId]),
     ]);
+
+    const fetchedCategoryIds = multiCatRes.rows.map(r => r.categoryId);
+    const categoryIds = fetchedCategoryIds.length > 0 
+      ? fetchedCategoryIds 
+      : (product.categoryId ? [product.categoryId] : []);
 
     return {
       ...product,
+      categoryIds,
       stockQuantity: invRes.rows[0]?.quantity || 0,
       images: imagesRes.rows.map(r => ({ id: r.id, url: r.url, altText: r.alt || '', caption: '', isPrimary: r.isPrimary, sortOrder: r.order })),
       documents: docsRes.rows.map((r, idx) => ({ id: r.id, title: r.title, documentType: r.documentType || 'datasheet', fileUrl: r.fileUrl, version: r.version || 'v1.0', fileSize: r.fileSize || '', sortOrder: r.sortOrder || idx })),

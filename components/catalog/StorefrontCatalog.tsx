@@ -45,8 +45,10 @@ export function StorefrontCatalog({ initialProducts, categories = [] }: Storefro
     return initialProducts.filter((p) => {
       if (filters.category !== "all") {
         const catObj = categories.find(c => c.id === filters.category || c.slug === filters.category);
+        const pCategoryIds: string[] = Array.isArray((p as any).categoryIds) ? (p as any).categoryIds : [];
         const matchesCategory = p.categoryId === filters.category || 
-                                (catObj && (p.categoryId === catObj.id || p.categoryId === catObj.slug));
+                                (catObj && (p.categoryId === catObj.id || p.categoryId === catObj.slug)) ||
+                                pCategoryIds.some((cid: string) => cid === filters.category || (catObj && (cid === catObj.id || cid === catObj.slug)));
         if (!matchesCategory) return false;
       }
       if (filters.brand.length > 0 && !filters.brand.includes(p.brand)) return false;

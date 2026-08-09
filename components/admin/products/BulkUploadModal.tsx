@@ -64,20 +64,20 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
         "Sr No / Code": "P0001",
         "Product Name": "Siemens S7-1200 CPU 1214C PLC",
         "Description": "Compact high-performance PLC controller with built-in PROFINET ports.",
-        "Image Match Rule": "AUTO", // Or specific folder path like 'plc_folder/p0001'
+        "Image Match Rule": "AUTO",
         "Original Price": 35000,
         "Current Price": 29999,
-        "Category Name": "PLC & Controllers",
+        "Category Name": "PLC & Controllers; Demo category; Sensors & Switches; Motors & Servo Drives",
         "Visibility": "TRUE",
       },
       {
         "Sr No / Code": "P0002",
         "Product Name": "Schneider Electric ATV320 VFD 5.5kW",
         "Description": "Variable speed drive for industrial 3-phase asynchronous motors.",
-        "Image Match Rule": "vfd_images/p0002", // Explicit subfolder location!
+        "Image Match Rule": "vfd_images/p0002",
         "Original Price": 48000,
         "Current Price": 42500,
-        "Category Name": "Drives & VFDs",
+        "Category Name": "Drives & VFDs; Motors & Servo Drives",
         "Visibility": "TRUE",
       },
       {
@@ -87,7 +87,7 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
         "Image Match Rule": "AUTO",
         "Original Price": 4500,
         "Current Price": 3800,
-        "Category Name": "Sensors & Switches",
+        "Category Name": "Sensors & Switches; Demo category",
         "Visibility": "TRUE",
       },
     ];

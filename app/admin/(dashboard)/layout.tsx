@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Package, LayoutDashboard, FolderTree, Users, LogOut, Settings } from "lucide-react";
+import { Package, LayoutDashboard, FolderTree, Users, LogOut, Settings, ShoppingCart, FileText } from "lucide-react";
 import { logoutAction } from "../actions";
 
 export default async function AdminDashboardLayout({
@@ -36,6 +36,16 @@ export default async function AdminDashboardLayout({
           <Link href="/admin/categories" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
             <FolderTree className="w-4 h-4 text-amber-400" />
             Categories
+          </Link>
+          
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 mt-8 px-3">Sales & Fulfillment</div>
+          <Link href="/admin/orders" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+            <ShoppingCart className="w-4 h-4 text-emerald-400" />
+            Orders (COD & PO)
+          </Link>
+          <Link href="/admin/quotes" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+            <FileText className="w-4 h-4 text-sky-400" />
+            Quote Requests (RFQs)
           </Link>
           
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 mt-8 px-3">System</div>

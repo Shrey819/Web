@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useToastStore } from "@/store/useToastStore";
-import { Sparkles, ChevronRight, FileText, Upload, CheckCircle2, PhoneCall, ShieldCheck } from "lucide-react";
+import { Sparkles, ChevronRight, FileText, Upload, CheckCircle2, PhoneCall, ShieldCheck, Loader2 } from "lucide-react";
+import { createQuoteAction } from "@/app/actions/quote";
 
 export default function QuotePage() {
   const { addToast } = useToastStore();
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [rfqNumber, setRfqNumber] = useState("");
 
   const [formData, setFormData] = useState({
@@ -20,12 +22,39 @@ export default function QuotePage() {
     projectScope: "",
   });
 
-  const handleSubmitQuote = (e: React.FormEvent) => {
+  const handleSubmitQuote = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newRfq = "RFQ-2026-" + Math.floor(1000 + Math.random() * 9000);
-    setRfqNumber(newRfq);
-    setSubmitted(true);
-    addToast("success", "RFQ Submitted!", `Quote reference ${newRfq} received by engineering.`);
+    setIsSubmitting(true);
+
+    try {
+      const res = await createQuoteAction({
+        company: formData.companyName,
+        name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        notes: `Part Numbers / Requirements: ${formData.partNumbers}`,
+        items: [
+          {
+            name: formData.partNumbers || "Bulk Hardware Quote Request",
+            quantity: 1,
+            notes: formData.partNumbers,
+          },
+        ],
+      });
+
+      if (res.success && res.quoteId) {
+        setRfqNumber(res.quoteId);
+        setSubmitted(true);
+        addToast("success", "RFQ Saved to Database!", `Quote reference ${res.quoteId} received by engineering.`);
+      } else {
+        addToast("error", "Submission Failed", res.error || "Failed to submit quote request.");
+      }
+    } catch (err) {
+      console.error("Quote submission error:", err);
+      addToast("error", "Error", "An error occurred while submitting RFQ.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -51,13 +80,13 @@ export default function QuotePage() {
             </h1>
 
             <p className="text-sm text-slate-600 max-w-md mx-auto">
-              Your Request for Quotation <strong>{rfqNumber}</strong> has been routed to our B2B industrial engineering team. Expect a formal PDF pricing matrix within 2 business hours.
+              Your Request for Quotation <strong className="font-mono text-sky-700">{rfqNumber}</strong> has been logged in our database and routed to our B2B industrial engineering team.
             </p>
 
             <div className="pt-4">
               <Link
                 href="/products"
-                className="px-8 py-3 rounded-full bg-slate-900 text-white type-button shadow-md"
+                className="px-8 py-3 rounded-full bg-slate-900 text-white type-button shadow-md hover:bg-slate-800"
               >
                 Return to Hardware Catalog
               </Link>
@@ -137,20 +166,19 @@ export default function QuotePage() {
                 />
               </div>
 
-              <div>
-                <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">Attach BOM File / CAD Drawing (Optional)</label>
-                <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-sky-500 transition-colors cursor-pointer bg-slate-50">
-                  <Upload className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                  <div className="font-bold text-slate-700">Click to upload PDF, XLS, or STEP file</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Up to 25 MB file size</div>
-                </div>
-              </div>
-
               <button
                 type="submit"
-                className="w-full py-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-xl transition-all hover:scale-[1.01]"
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                Submit RFQ for 2-Hour Response
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Saving RFQ to Database...</span>
+                  </>
+                ) : (
+                  <span>Submit RFQ for 2-Hour Response</span>
+                )}
               </button>
             </form>
           </div>

@@ -129,13 +129,28 @@ export async function bulkCreateProducts(products: BulkProductRowInput[]): Promi
       const basePrice = Math.round((Number(item.originalPrice) || 0) * 100) / 100;
       const salePrice = Number(item.currentPrice) > 0 ? Math.round(Number(item.currentPrice) * 100) / 100 : null;
 
-      // 1. Category Resolution
-      const catName = item.categoryName ? item.categoryName.trim() : "General";
-      let categoryId = categoryMap.get(catName.toLowerCase());
-      if (!categoryId) {
-        categoryId = await getOrCreateCategory(catName);
-        categoryMap.set(catName.toLowerCase(), categoryId);
+      // 1. Multi-Category Resolution (Supporting ';' delimited categories e.g. "PLC & Controllers; Demo category; Sensors & Switches; Motors & Servo Drives")
+      const rawCategoryStr = item.categoryName ? item.categoryName.trim() : "General";
+      const categoryNames = rawCategoryStr
+        .split(";")
+        .map((c) => c.trim())
+        .filter(Boolean);
+
+      if (categoryNames.length === 0) categoryNames.push("General");
+
+      const categoryIds: string[] = [];
+      for (const catName of categoryNames) {
+        let catId = categoryMap.get(catName.toLowerCase());
+        if (!catId) {
+          catId = await getOrCreateCategory(catName);
+          categoryMap.set(catName.toLowerCase(), catId);
+        }
+        if (catId && !categoryIds.includes(catId)) {
+          categoryIds.push(catId);
+        }
       }
+
+      const primaryCategoryId = categoryIds[0] || null;
 
       // 2. Code & Slug Generation
       const productCode = item.productCode ? item.productCode.trim() : `PRD-${Date.now()}-${rowNum}`;
@@ -177,7 +192,7 @@ export async function bulkCreateProducts(products: BulkProductRowInput[]): Promi
             productCode,
             item.description ? item.description.slice(0, 200) : null,
             item.description || null,
-            categoryId,
+            primaryCategoryId,
             "default-brand",
             status,
             basePrice,
@@ -185,6 +200,16 @@ export async function bulkCreateProducts(products: BulkProductRowInput[]): Promi
             basePrice > (salePrice || 0) ? basePrice : null,
           ]
         );
+
+        // Insert all categories into ProductCategory join table
+        for (const catId of categoryIds) {
+          await client.query(
+            `INSERT INTO "ProductCategory" ("productId", "categoryId")
+             VALUES ($1, $2)
+             ON CONFLICT ("productId", "categoryId") DO NOTHING`,
+            [productId, catId]
+          );
+        }
 
         // Insert Inventory record
         await client.query(

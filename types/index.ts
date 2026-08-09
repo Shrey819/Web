@@ -34,6 +34,7 @@ export interface Product {
   manufacturer?: string;
 
   categoryId: string;
+  categoryIds?: string[];
   subcategoryId: string;
   productFamily?: string;
 

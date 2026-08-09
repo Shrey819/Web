@@ -14,8 +14,10 @@ import {
 import Link from "next/link";
 import { CldUploadButton } from "next-cloudinary";
 
+import { createCategory } from "@/app/actions/category";
+
 interface ProductEditorFormProps {
-  initialData?: Partial<ProductFormValues> & { id?: string };
+  initialData?: Partial<ProductFormValues> & { id?: string; categoryIds?: string[] };
   categories: { id: string; name: string }[];
   brands: { id: string; name: string }[];
   isEdit?: boolean;
@@ -27,10 +29,22 @@ export function ProductEditorForm({ initialData, categories, isEdit = false }: P
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customImageUrl, setCustomImageUrl] = useState("");
 
+  // Multi-Category state & inline category creation
+  const [categoryList, setCategoryList] = useState<{ id: string; name: string }[]>(categories);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(() => {
+    const initial = (initialData as any)?.categoryIds || (initialData?.categoryId ? [initialData.categoryId] : []);
+    return initial.length > 0 ? initial : [categories[0]?.id || "cat_sensors"];
+  });
+
+  const [showInlineNewCat, setShowInlineNewCat] = useState(false);
+  const [inlineCatName, setInlineCatName] = useState("");
+  const [isCreatingInlineCat, setIsCreatingInlineCat] = useState(false);
+
   const defaultValues: Partial<ProductFormValues> = {
     name: initialData?.name || "",
     description: initialData?.description || "",
     categoryId: initialData?.categoryId || (categories[0]?.id || ""),
+    categoryIds: selectedCategoryIds,
     basePrice: initialData?.basePrice ? initialData.basePrice / 100 : 0,
     compareAtPrice: initialData?.compareAtPrice ? initialData.compareAtPrice / 100 : null,
     status: initialData?.status || "ACTIVE",
@@ -58,6 +72,48 @@ export function ProductEditorForm({ initialData, categories, isEdit = false }: P
 
   const formValues = watch();
 
+  const handleToggleCategory = (catId: string) => {
+    let updated: string[];
+    if (selectedCategoryIds.includes(catId)) {
+      if (selectedCategoryIds.length === 1) {
+        addToast("warning", "Category Required", "A product must belong to at least 1 category.");
+        return;
+      }
+      updated = selectedCategoryIds.filter(id => id !== catId);
+    } else {
+      updated = [...selectedCategoryIds, catId];
+    }
+    setSelectedCategoryIds(updated);
+    setValue("categoryId", updated[0]);
+    setValue("categoryIds", updated, { shouldDirty: true });
+  };
+
+  const handleCreateInlineCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inlineCatName.trim()) return;
+
+    setIsCreatingInlineCat(true);
+    try {
+      const res = await createCategory(inlineCatName.trim());
+      if (res.success) {
+        const newCat = { id: "cat_" + Date.now(), name: inlineCatName.trim() };
+        addToast("success", "Category Created", `Category "${inlineCatName.trim()}" added!`);
+        setCategoryList(prev => [...prev, newCat]);
+        const updated = [...selectedCategoryIds, newCat.id];
+        setSelectedCategoryIds(updated);
+        setValue("categoryId", updated[0]);
+        setValue("categoryIds", updated, { shouldDirty: true });
+        setInlineCatName("");
+        setShowInlineNewCat(false);
+        router.refresh();
+      } else {
+        addToast("error", "Failed", res.error || "Could not create category.");
+      }
+    } finally {
+      setIsCreatingInlineCat(false);
+    }
+  };
+
   const handleSaveProduct = async (data: ProductFormValues) => {
     setIsSubmitting(true);
     
@@ -67,7 +123,8 @@ export function ProductEditorForm({ initialData, categories, isEdit = false }: P
       status: "ACTIVE",
       basePrice: Math.round(Number(data.basePrice || 0) * 100),
       compareAtPrice: data.compareAtPrice ? Math.round(Number(data.compareAtPrice) * 100) : null,
-      categoryId: data.categoryId || (categories[0]?.id || "cat_sensors"),
+      categoryId: selectedCategoryIds[0] || (categories[0]?.id || "cat_sensors"),
+      categoryIds: selectedCategoryIds,
       brandId: data.brandId || "default-brand",
     };
 
@@ -213,25 +270,73 @@ export function ProductEditorForm({ initialData, categories, isEdit = false }: P
           {errors.name && <p className="text-xs text-rose-400">{errors.name.message}</p>}
         </div>
 
-        {/* 2. Category Dropdown */}
-        <div className="space-y-2">
-          <label className="block text-sm font-bold text-white flex items-center gap-2">
-            <Tag className="w-4 h-4 text-blue-400" />
-            Category *
-          </label>
-          <select
-            {...register("categoryId")}
-            className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm font-medium focus:outline-none focus:border-blue-500"
-          >
-            {categories.length === 0 ? (
-              <option value="cat_sensors">General Catalog</option>
-            ) : (
-              categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))
-            )}
-          </select>
-          {errors.categoryId && <p className="text-xs text-rose-400">{errors.categoryId.message}</p>}
+        {/* 2. Category Selection (Multi-Category Support) */}
+        <div className="space-y-3 p-6 rounded-2xl bg-slate-950/60 border border-slate-800/80">
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-bold text-white flex items-center gap-2">
+              <Tag className="w-4 h-4 text-blue-400" />
+              Categories (Select 1 or More) *
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowInlineNewCat(!showInlineNewCat)}
+              className="text-xs font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add New Category
+            </button>
+          </div>
+
+          {/* Inline New Category Creation Form */}
+          {showInlineNewCat && (
+            <div className="p-4 rounded-xl bg-slate-900 border border-blue-500/30 space-y-2 animate-in fade-in">
+              <div className="text-xs font-bold text-white">Create New Category Right Here</div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={inlineCatName}
+                  onChange={(e) => setInlineCatName(e.target.value)}
+                  placeholder="e.g. Variable Frequency Drives"
+                  className="flex-1 px-3 py-2 text-xs rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateInlineCategory}
+                  disabled={isCreatingInlineCat}
+                  className="px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1 disabled:opacity-50"
+                >
+                  {isCreatingInlineCat ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                  Add & Select
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Multi-Select Category Pills / Checkboxes */}
+          <div className="flex flex-wrap gap-2.5 pt-1">
+            {categoryList.map((cat) => {
+              const isSelected = selectedCategoryIds.includes(cat.id);
+              return (
+                <button
+                  type="button"
+                  key={cat.id}
+                  onClick={() => handleToggleCategory(cat.id)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/20"
+                      : "bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white"
+                  }`}
+                >
+                  <span className={`w-3.5 h-3.5 rounded-md border flex items-center justify-center text-[10px] ${isSelected ? "border-white bg-white text-blue-600" : "border-slate-600"}`}>
+                    {isSelected && "✓"}
+                  </span>
+                  <span>{cat.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-slate-400">
+            This product will appear under all selected categories.
+          </p>
         </div>
 
         {/* 3. Pricing Section: Current Price & Original Price */}

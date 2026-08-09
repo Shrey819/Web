@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
+import { useUserStore } from "@/store/useUserStore";
 import { AnnouncementBar } from "./AnnouncementBar";
 import { MegaMenu } from "./MegaMenu";
 import { MobileNav } from "./MobileNav";
-import { Search, ShoppingBag, Heart, Menu, ChevronDown, PhoneCall, Sparkles, X } from "lucide-react";
+import { Search, ShoppingBag, Heart, Menu, ChevronDown, PhoneCall, Sparkles, X, User } from "lucide-react";
 import { PRODUCTS } from "@/data/products";
 import { formatCurrency } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ export function Header() {
 
   const { getItemCount, openCart } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
+  const { user, isLoggedIn } = useUserStore();
 
   const cartCount = getItemCount();
   const wishlistCount = wishlistItems.length;
@@ -173,6 +175,30 @@ export function Header() {
                 </span>
               )}
             </button>
+
+            {/* User Account / Profile Badge */}
+            {isLoggedIn && user ? (
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 p-1.5 pr-3 text-slate-300 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors border border-slate-800"
+                title="User Workspace"
+              >
+                <div className="w-7 h-7 rounded-full bg-amber-400 text-slate-950 font-mono font-extrabold text-xs flex items-center justify-center shadow-sm">
+                  {user.name ? user.name[0].toUpperCase() : "U"}
+                </div>
+                <span className="text-xs font-mono font-bold max-w-24 truncate hidden xl:inline text-slate-200">
+                  {user.name.split(" ")[0]}
+                </span>
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="p-2.5 text-slate-300 hover:text-white rounded-full hover:bg-slate-800 transition-colors"
+                title="Sign In to Account"
+              >
+                <User className="w-5 h-5 text-amber-400" />
+              </Link>
+            )}
 
             {/* Request a Quote CTA */}
             <Link
