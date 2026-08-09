@@ -6,6 +6,8 @@ import { QuickViewModal } from "@/components/product/QuickViewModal";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { HeaderFooterWrapper } from "@/components/layout/HeaderFooterWrapper";
 
+import { UserTracker } from "@/components/layout/UserTracker";
+
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-heading",
   subsets: ["latin"],
@@ -40,6 +42,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans bg-[#faf9f5] text-slate-900 selection:bg-sky-500 selection:text-white" suppressHydrationWarning>
+        <UserTracker />
         <HeaderFooterWrapper>
           {children}
         </HeaderFooterWrapper>

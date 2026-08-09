@@ -22,6 +22,8 @@ interface CartState {
   getItemCount: () => number;
 }
 
+import { trackUserAction } from "@/lib/trackerClient";
+
 // Generate a unique ID for cart items to handle multiple variants of the same product
 const getCartItemId = (productId: string, variantId?: string) => 
   variantId ? `${productId}-${variantId}` : productId;
@@ -39,6 +41,7 @@ export const useCartStore = create<CartState>()(
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
 
       addItem: (product: Product, quantity = 1, variant?: ProductVariant) => {
+        trackUserAction("ADD_TO_CART", `Added ${quantity}x "${product.name}" to cart`);
         set((state) => {
           const itemId = getCartItemId(product.id, variant?.id);
           const existingIndex = state.items.findIndex(
@@ -58,6 +61,10 @@ export const useCartStore = create<CartState>()(
       },
 
       removeItem: (itemId: string) => {
+        const itemToRemove = get().items.find((i) => getCartItemId(i.product.id, i.variant?.id) === itemId);
+        if (itemToRemove) {
+          trackUserAction("REMOVE_FROM_CART", `Removed "${itemToRemove.product.name}" from cart`);
+        }
         set((state) => ({
           items: state.items.filter((item) => getCartItemId(item.product.id, item.variant?.id) !== itemId),
         }));
@@ -81,16 +88,22 @@ export const useCartStore = create<CartState>()(
       applyCoupon: (code: string) => {
         const cleanCode = code.trim().toUpperCase();
         if (cleanCode === "INDUSTRIAL10" || cleanCode === "PROPEL10") {
+          trackUserAction("APPLY_COUPON", `Applied promo code "${cleanCode}" (10% OFF)`);
           set({ appliedCoupon: cleanCode, discountPercent: 10 });
           return { success: true, message: "10% Industrial Discount Applied!" };
         } else if (cleanCode === "PROPEL15" || cleanCode === "AUTOMATION15") {
+          trackUserAction("APPLY_COUPON", `Applied promo code "${cleanCode}" (15% OFF)`);
           set({ appliedCoupon: cleanCode, discountPercent: 15 });
           return { success: true, message: "15% Enterprise Automation Discount Applied!" };
         }
         return { success: false, message: "Invalid promo code. Try 'INDUSTRIAL10'" };
       },
 
-      removeCoupon: () => set({ appliedCoupon: null, discountPercent: 0 }),
+      removeCoupon: () => {
+        const current = get().appliedCoupon;
+        if (current) trackUserAction("REMOVE_COUPON", `Removed promo code "${current}"`);
+        set({ appliedCoupon: null, discountPercent: 0 });
+      },
 
       getSubtotal: () => {
         return get().items.reduce(

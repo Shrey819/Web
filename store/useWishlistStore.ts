@@ -9,6 +9,8 @@ interface WishlistState {
   clearWishlist: () => void;
 }
 
+import { trackUserAction } from "@/lib/trackerClient";
+
 export const useWishlistStore = create<WishlistState>()(
   persist(
     (set, get) => ({
@@ -16,11 +18,13 @@ export const useWishlistStore = create<WishlistState>()(
       toggleWishlist: (product: Product) => {
         const exists = get().items.some((p) => p.id === product.id);
         if (exists) {
+          trackUserAction("REMOVE_WISHLIST", `Removed "${product.name}" from wishlist/saved items`);
           set((state) => ({
             items: state.items.filter((p) => p.id !== product.id),
           }));
           return false;
         } else {
+          trackUserAction("ADD_WISHLIST", `Saved "${product.name}" to wishlist`);
           set((state) => ({
             items: [...state.items, product],
           }));

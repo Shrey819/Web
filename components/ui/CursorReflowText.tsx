@@ -94,7 +94,7 @@ export function CursorReflowText({
   return (
     <Tag className={cn("relative", className)}>
       <span className="sr-only">{text}</span>
-      <div 
+      <span 
         ref={containerRef} 
         aria-hidden="true" 
         className="inline-block relative w-full"
@@ -133,7 +133,7 @@ export function CursorReflowText({
             </span>
           );
         })}
-      </div>
+      </span>
     </Tag>
   );
 }

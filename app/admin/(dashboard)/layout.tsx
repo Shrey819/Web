@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Package, LayoutDashboard, FolderTree, Users, LogOut, Settings, ShoppingCart, FileText } from "lucide-react";
+import { Package, LayoutDashboard, FolderTree, Users, LogOut, Settings, ShoppingCart, FileText, Activity } from "lucide-react";
 import { logoutAction } from "../actions";
 
 export default async function AdminDashboardLayout({
@@ -48,7 +48,14 @@ export default async function AdminDashboardLayout({
             Quote Requests (RFQs)
           </Link>
           
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 mt-8 px-3">System</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 mt-8 px-3">Telemetry & System</div>
+          <Link href="/admin/live-tracker" className="flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors group">
+            <div className="flex items-center gap-3">
+              <Activity className="w-4 h-4 text-emerald-400" />
+              <span>Live User Tracker</span>
+            </div>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+          </Link>
           <Link href="/admin/users" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
             <Users className="w-4 h-4 text-indigo-400" />
             Users
@@ -71,7 +78,7 @@ export default async function AdminDashboardLayout({
           </div>
           
           <form action={logoutAction}>
-            <button type="submit" className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors border border-rose-500/0 hover:border-rose-500/20">
+            <button type="submit" suppressHydrationWarning className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors border border-rose-500/0 hover:border-rose-500/20">
               <LogOut className="w-4 h-4" />
               Sign Out
             </button>
