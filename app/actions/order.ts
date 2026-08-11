@@ -84,13 +84,13 @@ export async function createOrderAction(input: CreateOrderInput) {
         INSERT INTO "Order" (
           "id", "userId", "status", "subtotal", "tax", "shippingCost", "total",
           "shippingFullName", "shippingCompany", "shippingStreet", "shippingCity",
-          "shippingState", "shippingZip", "shippingCountry",
+          "shippingState", "shippingZip", "shippingCountry", "shippingPhone",
           "createdAt", "updatedAt"
         )
         VALUES (
           $1, $2, 'PROCESSING', $3, $4, $5, $6,
           $7, $8, $9, $10,
-          $11, $12, $13,
+          $11, $12, $13, $14,
           CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         )
       `, [
@@ -106,7 +106,8 @@ export async function createOrderAction(input: CreateOrderInput) {
         input.city,
         input.state,
         input.zip,
-        input.country || "India"
+        input.country || "India",
+        input.phone || null
       ]);
 
       // 2. Insert Order Items & Deduct Inventory Stock
@@ -346,6 +347,7 @@ export async function getAllOrdersAdminAction() {
         o."shippingState",
         o."shippingZip",
         o."shippingCountry",
+        o."shippingPhone",
         o."createdAt",
         p."method" as "paymentMethod",
         p."reference" as "paymentReference",
@@ -389,6 +391,7 @@ export async function getAllOrdersAdminAction() {
         shippingState: r.shippingState,
         shippingZip: r.shippingZip,
         shippingCountry: r.shippingCountry,
+        shippingPhone: r.shippingPhone || "+91 9876543210",
         createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
         paymentMethod: r.paymentMethod || "Cash on Delivery",
         paymentReference: r.paymentReference || "N/A",

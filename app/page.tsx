@@ -12,6 +12,7 @@ import { Testimonials } from "@/components/home/Testimonials";
 import { SpecComparePreview } from "@/components/home/SpecComparePreview";
 import { ResourceHub } from "@/components/home/ResourceHub";
 import { FAQSection } from "@/components/home/FAQSection";
+import { ProductAssemblySection } from "@/components/home/ProductAssembly/ProductAssemblySection";
 import { getActiveProducts } from "@/lib/storefront";
 
 export default async function HomePage() {
@@ -34,7 +35,10 @@ export default async function HomePage() {
       {/* 6. Industrial Solutions Showcase */}
       <SolutionsShowcase />
 
-      {/* 7. Why Buy From Us */}
+      {/* 7. Precision Product Assembly (Scroll-Driven Interactive Story) */}
+      <ProductAssemblySection />
+
+      {/* 8. Why Buy From Us */}
       <WhyBuyFromUs />
 
       {/* 8. Product Story / Sticky Showcase */}

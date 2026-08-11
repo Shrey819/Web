@@ -512,22 +512,32 @@ export default function LiveTrackerPage() {
                   </div>
                 ) : (
                   <div className="relative border-l-2 border-slate-200 ml-3 space-y-4 pl-4 py-1">
-                    {selectedSession.visitHistory.map((visit, idx) => (
-                      <div key={visit.id || idx} className="relative group">
-                        <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-sky-500 border-2 border-white ring-2 ring-sky-200" />
-                        <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm space-y-1">
-                          <div className="font-bold text-slate-900 text-sm flex items-center justify-between">
-                            <span>{visit.pagePath}</span>
-                            <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                              {visit.durationSeconds}s spent
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-slate-400">
-                            Visited at: {new Date(visit.visitedAt).toLocaleTimeString()}
+                    {selectedSession.visitHistory.map((visit, idx) => {
+                      const formatDuration = (sec: number) => {
+                        if (!sec || sec <= 0) return "0s spent";
+                        if (sec < 60) return `${sec}s spent`;
+                        const mins = Math.floor(sec / 60);
+                        const remainder = sec % 60;
+                        return remainder > 0 ? `${mins}m ${remainder}s spent` : `${mins}m spent`;
+                      };
+
+                      return (
+                        <div key={visit.id || idx} className="relative group">
+                          <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-sky-500 border-2 border-white ring-2 ring-sky-200" />
+                          <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm space-y-1">
+                            <div className="font-bold text-slate-900 text-sm flex items-center justify-between">
+                              <span>{visit.pagePath}</span>
+                              <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                {formatDuration(visit.durationSeconds)}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              Visited at: {new Date(visit.visitedAt).toLocaleTimeString()}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

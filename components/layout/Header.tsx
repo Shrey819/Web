@@ -27,8 +27,10 @@ export function Header() {
 
   const cartCount = getItemCount();
   const wishlistCount = wishlistItems.length;
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       if (window.scrollY > 20) {
         setIsScrolled(true);
@@ -155,9 +157,9 @@ export function Header() {
               aria-label="Wishlist saved items"
             >
               <Heart className="w-5 h-5" />
-              {wishlistCount > 0 && (
+              {mounted && wishlistItems.length > 0 && (
                 <span className="absolute top-1 right-1 bg-rose-500 text-white type-label w-4 h-4 rounded-full flex items-center justify-center">
-                  {wishlistCount}
+                  {wishlistItems.length}
                 </span>
               )}
             </Link>
@@ -169,15 +171,15 @@ export function Header() {
               aria-label="Open industrial shopping cart"
             >
               <ShoppingBag className="w-5 h-5 text-sky-400" />
-              {cartCount > 0 && (
+              {mounted && getItemCount() > 0 && (
                 <span className="absolute top-1 right-1 bg-sky-500 text-slate-950 type-label w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-md">
-                  {cartCount}
+                  {getItemCount()}
                 </span>
               )}
             </button>
 
             {/* User Account / Profile Badge */}
-            {isLoggedIn && user ? (
+            {mounted && isLoggedIn && user ? (
               <Link
                 href="/profile"
                 className="flex items-center gap-2 p-1.5 pr-3 text-slate-300 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors border border-slate-800"

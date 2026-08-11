@@ -365,14 +365,6 @@ export async function recordUserHeartbeat(params: {
           );
         }
       }
-
-      if (previousPage && previousPageDuration > 0) {
-        await client.query(
-          `INSERT INTO "PageVisitLog" ("id", "sessionId", "pagePath", "durationSeconds", "visitedAt")
-           VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)`,
-          [generateId("pvl_"), sessionId, previousPage, previousPageDuration]
-        );
-      }
     });
 
     return { success: true };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { CATEGORIES } from "@/data/categories";
 import { X, ChevronDown, Search, ShoppingBag, Heart, FileText, Phone, User } from "lucide-react";
@@ -15,6 +15,11 @@ interface MobileNavProps {
 
 export function MobileNav({ isOpen, onClose, cartCount, wishlistCount }: MobileNavProps) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleCategory = (id: string) => {
     setExpandedCategory(expandedCategory === id ? null : id);
@@ -70,7 +75,7 @@ export function MobileNav({ isOpen, onClose, cartCount, wishlistCount }: MobileN
                 >
                   <div className="relative">
                     <ShoppingBag className="w-5 h-5 text-sky-400" />
-                    {cartCount > 0 && (
+                    {mounted && cartCount > 0 && (
                       <span className="absolute -top-1.5 -right-2 bg-sky-500 text-slate-950 font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
                         {cartCount}
                       </span>
@@ -86,7 +91,7 @@ export function MobileNav({ isOpen, onClose, cartCount, wishlistCount }: MobileN
                 >
                   <div className="relative">
                     <Heart className="w-5 h-5 text-rose-400" />
-                    {wishlistCount > 0 && (
+                    {mounted && wishlistCount > 0 && (
                       <span className="absolute -top-1.5 -right-2 bg-rose-500 text-white font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
                         {wishlistCount}
                       </span>

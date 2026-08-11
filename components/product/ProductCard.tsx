@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/types";
@@ -18,6 +19,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
+  const [mounted, setMounted] = useState(false);
   const { addItem } = useCartStore();
   const { toggleWishlist, isInWishlist } = useWishlistStore();
   const { toggleCompare, isInCompare } = useCompareStore();
@@ -25,8 +27,12 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const { addToast } = useToastStore();
   const router = useRouter();
 
-  const isWishlisted = isInWishlist(product.id);
-  const isCompared = isInCompare(product.id);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isWishlisted = mounted ? isInWishlist(product.id) : false;
+  const isCompared = mounted ? isInCompare(product.id) : false;
   
   const discountPercent = product.compareAtPrice 
     ? calculateDiscount(product.basePrice, product.compareAtPrice) 

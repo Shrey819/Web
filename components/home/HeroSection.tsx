@@ -64,7 +64,7 @@ export function HeroSection() {
             </motion.h1>
 
             {/* Supporting Copy */}
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -73,7 +73,7 @@ export function HeroSection() {
               <CursorRepelText 
                 text="Direct factory distribution for 1,500+ industrial sensors, PLCs, safety controllers, and heavy-duty variable frequency drives. Certified OEM genuine hardware with immediate B2B dispatch." 
               />
-            </motion.p>
+            </motion.div>
 
             {/* CTA Buttons */}
             <motion.div

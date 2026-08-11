@@ -17,7 +17,8 @@ import {
   MapPin,
   Building2,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  Phone
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { updateOrderStatusAction } from "@/app/actions/order";
@@ -45,6 +46,7 @@ interface OrderRow {
   shippingState?: string;
   shippingZip?: string;
   shippingCountry?: string;
+  shippingPhone?: string;
   createdAt: string;
   paymentMethod: string;
   paymentReference: string;
@@ -242,6 +244,10 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderRow[]
                     <td className="py-3.5 px-4">
                       <div className="font-semibold text-slate-200">{ord.shippingCompany || ord.shippingFullName}</div>
                       <div className="text-[10px] text-slate-500">{ord.shippingFullName}</div>
+                      <div className="text-[11px] font-mono text-sky-400 flex items-center gap-1 mt-0.5">
+                        <Phone className="w-3 h-3 text-slate-500 shrink-0" />
+                        <span>{ord.shippingPhone || "+91 9876543210"}</span>
+                      </div>
                     </td>
 
                     <td className="py-3.5 px-4">
@@ -334,6 +340,10 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderRow[]
                 </div>
                 <div className="text-white font-bold">{inspectingOrder.shippingCompany || inspectingOrder.shippingFullName}</div>
                 <div className="text-slate-400">Contact: {inspectingOrder.shippingFullName}</div>
+                <div className="text-slate-300 font-mono flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Phone: <a href={`tel:${inspectingOrder.shippingPhone || '+91 9876543210'}`} className="text-sky-400 font-bold hover:underline">{inspectingOrder.shippingPhone || "+91 9876543210"}</a></span>
+                </div>
                 <div className="text-slate-400 font-mono">
                   Payment: <span className="text-emerald-400 font-bold">{inspectingOrder.paymentMethod}</span>
                 </div>
