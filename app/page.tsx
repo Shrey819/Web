@@ -13,6 +13,7 @@ import { SpecComparePreview } from "@/components/home/SpecComparePreview";
 import { ResourceHub } from "@/components/home/ResourceHub";
 import { FAQSection } from "@/components/home/FAQSection";
 import { ProductAssemblySection } from "@/components/home/ProductAssembly/ProductAssemblySection";
+import { CinematicProductSection } from "@/components/cinematic";
 import { getActiveProducts } from "@/lib/storefront";
 
 export default async function HomePage() {
@@ -26,16 +27,19 @@ export default async function HomePage() {
       {/* 3. Trusted Brand OEM Marquee */}
       <BrandMarquee />
 
-      {/* 4. Core Hardware Categories */}
+      {/* 4. Infinite Seamless Cinematic Product Showcase */}
+      <CinematicProductSection />
+
+      {/* 5. Core Hardware Categories */}
       <CategoryGrid />
 
-      {/* 5. Featured Products Grid */}
+      {/* 6. Featured Products Grid */}
       <FeaturedProducts initialProducts={dbProducts} />
 
-      {/* 6. Industrial Solutions Showcase */}
+      {/* 7. Industrial Solutions Showcase */}
       <SolutionsShowcase />
 
-      {/* 7. Precision Product Assembly (Scroll-Driven Interactive Story) */}
+      {/* 8. Precision Product Assembly (Scroll-Driven Interactive Story) */}
       <ProductAssemblySection />
 
       {/* 8. Why Buy From Us */}
