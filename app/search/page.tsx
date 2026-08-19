@@ -1,24 +1,55 @@
 "use client";
 
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PRODUCTS } from "@/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ChevronRight, Search } from "lucide-react";
-import { Suspense } from "react";
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
+  const [catalog, setCatalog] = useState<any[]>(PRODUCTS);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch the actual database products shown on the storefront
+  useEffect(() => {
+    setIsLoading(true);
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCatalog(data);
+        }
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+      });
+  }, []);
+
+  // Multi-word partial-match query filter (Matches Header Autocomplete)
   const results = query.trim()
-    ? PRODUCTS.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query.toLowerCase()) ||
-          p.brand.toLowerCase().includes(query.toLowerCase()) ||
-          p.sku.toLowerCase().includes(query.toLowerCase()) ||
-          p.shortDescription.toLowerCase().includes(query.toLowerCase())
-      )
+    ? (() => {
+        const keywords = query.toLowerCase().trim().split(/\s+/);
+        return catalog.filter((p) => {
+          const pName = p.name.toLowerCase();
+          const pBrand = p.brand ? p.brand.toLowerCase() : "";
+          const pSku = p.sku ? p.sku.toLowerCase() : "";
+          const pDesc = p.description ? p.description.toLowerCase() : "";
+          const pShortDesc = p.shortDescription ? p.shortDescription.toLowerCase() : "";
+          
+          return keywords.every(
+            (kw) =>
+              pName.includes(kw) ||
+              pBrand.includes(kw) ||
+              pSku.includes(kw) ||
+              pDesc.includes(kw) ||
+              pShortDesc.includes(kw)
+          );
+        });
+      })()
     : [];
 
   return (
@@ -37,11 +68,18 @@ function SearchContent() {
             Search Results for &quot;{query}&quot;
           </h1>
           <p className="type-body-small text-slate-500 mt-1 font-mono">
-            Found {results.length} matching industrial automation components
+            {isLoading 
+              ? "Searching active catalog..." 
+              : `Found ${results.length} matching industrial automation components`}
           </p>
         </div>
 
-        {results.length > 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500 mb-4"></div>
+            <span className="text-sm font-mono text-slate-400">Searching active catalog...</span>
+          </div>
+        ) : results.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {results.map((product) => (
               <ProductCard key={product.id} product={product} />

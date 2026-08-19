@@ -15,11 +15,19 @@ export async function saveSettingsAction(prevState: any, formData: FormData) {
       "store_name",
       "support_email",
       "support_phone",
+      "sub_contact_1_name",
+      "sub_contact_1_phone",
+      "sub_contact_2_name",
+      "sub_contact_2_phone",
+      "sub_contact_3_name",
+      "sub_contact_3_phone",
+      "sub_email_1",
+      "sub_email_2",
       "gst_number",
       "min_order_value",
       "tax_rate",
       "cod_enabled",
-      "maintenance_mode"
+      "maintenance_mode",
     ];
 
     for (const key of keys) {
@@ -35,8 +43,11 @@ export async function saveSettingsAction(prevState: any, formData: FormData) {
     }
 
     revalidatePath("/admin/settings");
+    revalidatePath("/contact");
+    revalidatePath("/delivery");
+    revalidatePath("/about");
     revalidatePath("/checkout");
-    revalidatePath("/");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (error: any) {
     console.error("Failed to save settings:", error);

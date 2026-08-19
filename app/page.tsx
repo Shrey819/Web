@@ -1,4 +1,5 @@
-import { HeroSection } from "@/components/home/HeroSection";
+import { HeroSlider } from "@/components/home/HeroSlider";
+import { HomepageCategoryShowcase } from "@/components/home/HomepageCategoryShowcase";
 import { BrandMarquee } from "@/components/home/BrandMarquee";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
@@ -14,59 +15,117 @@ import { ResourceHub } from "@/components/home/ResourceHub";
 import { FAQSection } from "@/components/home/FAQSection";
 import { ProductAssemblySection } from "@/components/home/ProductAssembly/ProductAssemblySection";
 import { CinematicProductSection } from "@/components/cinematic";
-import { getActiveProducts } from "@/lib/storefront";
+import { getActiveProducts, getStorefrontCategories } from "@/lib/storefront";
+import { getHomepageData } from "@/lib/homepage";
 
 export default async function HomePage() {
-  const dbProducts = await getActiveProducts();
+  const [homepageData, dbCategories, dbProducts] = await Promise.all([
+    getHomepageData(),
+    getStorefrontCategories(),
+    getActiveProducts(),
+  ]);
+
+  // Build category showcase resolved list
+  const showcaseSections = homepageData.categoryShowcases
+    .filter((showcase) => showcase.isActive)
+    .map((showcase, index) => {
+      const matchedCat = dbCategories.find(
+        (c) => c.id === showcase.categoryId || c.slug === showcase.categoryId
+      );
+
+      const catName = matchedCat?.name || `Featured Category #${index + 1}`;
+      const catSlug = matchedCat?.slug || showcase.categoryId || "products";
+
+      // Filter active products matching category
+      let categoryProducts = dbProducts.filter((p) => {
+        if (!matchedCat) return true;
+        return (
+          p.categoryId === matchedCat.id ||
+          p.categoryId === matchedCat.slug ||
+          p.categoryIds?.includes(matchedCat.id) ||
+          p.categoryIds?.includes(matchedCat.slug)
+        );
+      });
+
+      // Fallback: if category has no specific products yet, provide fallback products
+      if (categoryProducts.length === 0 && dbProducts.length > 0) {
+        // Slice different chunks so carousels look distinct
+        const start = (index * 4) % dbProducts.length;
+        categoryProducts = dbProducts.slice(start, start + 8);
+        if (categoryProducts.length < 4) {
+          categoryProducts = dbProducts.slice(0, 8);
+        }
+      }
+
+      return {
+        showcase,
+        categoryName: catName,
+        categorySlug: catSlug,
+        products: categoryProducts,
+      };
+    });
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* 1 & 2. Announcement Bar & Hero Section */}
-      <HeroSection />
+      {/* 2. Full-Width Premium Hero Image Slider (3 slides, responsive desktop/mobile images) */}
+      <HeroSlider slides={homepageData.heroSlides} />
 
-      {/* 3. Trusted Brand OEM Marquee */}
+      {/* 4, 5, 6. Category Product Showcase Sections (3 Admin-Controlled Showcases) */}
+      <div className="bg-[#faf9f5]">
+        {showcaseSections.map((sec, idx) => (
+          <HomepageCategoryShowcase
+            key={sec.showcase.id || idx}
+            showcase={sec.showcase}
+            categoryName={sec.categoryName}
+            categorySlug={sec.categorySlug}
+            products={sec.products}
+          />
+        ))}
+      </div>
+
+      {/* OEM Brand Marquee */}
       <BrandMarquee />
 
-      {/* 4. Infinite Seamless Cinematic Product Showcase */}
+      {/* Cinematic Product Showcase */}
       <CinematicProductSection />
 
-      {/* 5. Core Hardware Categories */}
+      {/* Core Hardware Categories */}
       <CategoryGrid />
 
-      {/* 6. Featured Products Grid */}
+      {/* Featured Products Grid */}
       <FeaturedProducts initialProducts={dbProducts} />
 
-      {/* 7. Industrial Solutions Showcase */}
+      {/* Industrial Solutions Showcase */}
       <SolutionsShowcase />
 
-      {/* 8. Precision Product Assembly (Scroll-Driven Interactive Story) */}
+      {/* Precision Product Assembly */}
       <ProductAssemblySection />
 
-      {/* 8. Why Buy From Us */}
+      {/* Why Buy From Us */}
       <WhyBuyFromUs />
 
-      {/* 8. Product Story / Sticky Showcase */}
+      {/* Sticky Showcase */}
       <StickyShowcase />
 
-      {/* 9. Best Sellers Horizontal Rail */}
+      {/* Best Sellers Horizontal Rail */}
       <BestSellersRail />
 
-      {/* 10. Statistics Section */}
+      {/* Statistics Section */}
       <StatsSection />
 
-      {/* 11. Promotional Banner */}
+      {/* Promotional Banner */}
       <PromoBanner />
 
-      {/* 12. Customer Testimonials */}
+      {/* Customer Testimonials */}
       <Testimonials />
 
-      {/* 13. Product Comparison Preview */}
+      {/* Product Comparison Preview */}
       <SpecComparePreview />
 
-      {/* 14. Technical Resource Hub */}
+      {/* Technical Resource Hub */}
       <ResourceHub />
 
-      {/* 15 & 16. Accessible FAQ Section & Newsletter integrated in Footer */}
+      {/* Accessible FAQ Section */}
       <FAQSection />
     </div>
   );

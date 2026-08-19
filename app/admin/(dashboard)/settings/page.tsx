@@ -5,8 +5,16 @@ import { Settings, Server } from "lucide-react";
 export default async function AdminSettingsPage() {
   const settingsMap: Record<string, string> = {
     store_name: "OM Automation & Industrial Controls",
-    support_email: "support@omautomation.com",
-    support_phone: "+91 9876543210",
+    support_email: "omautomation2012@gmail.com",
+    support_phone: "+91 90993 92066",
+    sub_contact_1_name: "Hiren Padia",
+    sub_contact_1_phone: "+91 90993 92066",
+    sub_contact_2_name: "Mahesh Pambhar",
+    sub_contact_2_phone: "+91 99130 85220",
+    sub_contact_3_name: "Dharmesh Pambhar",
+    sub_contact_3_phone: "+91 94272 70113",
+    sub_email_1: "omautomation2012@gmail.com",
+    sub_email_2: "padiahiren24565@gmail.com",
     currency_symbol: "₹",
     gst_number: "27AAAAA0000A1Z5",
     min_order_value: "1000",
@@ -35,7 +43,9 @@ export default async function AdminSettingsPage() {
             <Settings className="w-6 h-6 text-sky-400" />
             <span>System & Platform Settings</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1">Configure global e-commerce parameters, business details, taxes, and database telemetry.</p>
+          <p className="text-sm text-slate-400 mt-1">
+            Configure global e-commerce parameters, main/sub contact phones, emails, taxes, and database telemetry.
+          </p>
         </div>
 
         <div className="flex items-center gap-2 font-mono text-xs text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">

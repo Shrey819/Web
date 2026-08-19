@@ -1,10 +1,46 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Mail, PhoneCall, MapPin, Award, CheckCircle2 } from "lucide-react";
 import { CursorReflowText } from "@/components/ui/CursorReflowText";
 
+const DEFAULT_SETTINGS = {
+  support_phone: "+91 90993 92066",
+  sub_contact_1_name: "Hiren Padia",
+  sub_contact_1_phone: "+91 90993 92066",
+  sub_contact_2_name: "Mahesh Pambhar",
+  sub_contact_2_phone: "+91 99130 85220",
+  sub_contact_3_name: "Dharmesh Pambhar",
+  sub_contact_3_phone: "+91 94272 70113",
+  sub_email_1: "omautomation2012@gmail.com",
+  sub_email_2: "padiahiren24565@gmail.com",
+};
+
 export function Footer() {
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    fetch("/api/settings", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          setSettings({
+            support_phone: data.support_phone || DEFAULT_SETTINGS.support_phone,
+            sub_contact_1_name: data.sub_contact_1_name || DEFAULT_SETTINGS.sub_contact_1_name,
+            sub_contact_1_phone: data.sub_contact_1_phone || DEFAULT_SETTINGS.sub_contact_1_phone,
+            sub_contact_2_name: data.sub_contact_2_name || DEFAULT_SETTINGS.sub_contact_2_name,
+            sub_contact_2_phone: data.sub_contact_2_phone || DEFAULT_SETTINGS.sub_contact_2_phone,
+            sub_contact_3_name: data.sub_contact_3_name || DEFAULT_SETTINGS.sub_contact_3_name,
+            sub_contact_3_phone: data.sub_contact_3_phone || DEFAULT_SETTINGS.sub_contact_3_phone,
+            sub_email_1: data.sub_email_1 || DEFAULT_SETTINGS.sub_email_1,
+            sub_email_2: data.sub_email_2 || DEFAULT_SETTINGS.sub_email_2,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <footer className="bg-slate-950 text-slate-200 border-t border-slate-900 pt-16 pb-12 overflow-hidden relative">
       {/* Background ambient glow */}
@@ -36,11 +72,10 @@ export function Footer() {
             <input
               type="email"
               placeholder="Enter corporate email..."
-              className="flex-1 bg-slate-950 border border-slate-700 rounded-full px-5 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
+              className="flex-1 bg-slate-950 border border-slate-700 rounded-full px-5 py-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500 font-mono"
             />
             <button
-              onClick={() => alert("2026 PDF Catalogue sent to your email address!")}
-              className="px-6 py-3.5 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm shrink-0 shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
+              className="px-6 py-3.5 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm shrink-0 shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 font-mono"
             >
               <span>Download PDF</span>
               <ArrowRight className="w-4 h-4" />
@@ -51,9 +86,9 @@ export function Footer() {
         {/* Multi-column Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-16 border-b border-slate-800/80">
           {/* Column 1: Brand Info & Social Links */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="lg:col-span-3 space-y-6">
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-500 flex items-center justify-center font-black text-slate-950 text-xl font-mono shadow-md">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-500 flex items-center justify-center font-black text-slate-950 text-xl font-mono shadow-md font-mono">
                 OM
               </div>
               <span className="font-extrabold text-2xl tracking-tight text-white font-mono">
@@ -66,7 +101,7 @@ export function Footer() {
 
             {/* Social Media Links */}
             <div className="pt-2">
-              <h5 className="text-sm font-bold uppercase tracking-wider text-amber-400 mb-3">Follow Us</h5>
+              <h5 className="text-sm font-bold uppercase tracking-wider text-amber-400 mb-3 font-mono">Follow Us</h5>
               <div className="flex items-center gap-3">
                 {/* Facebook */}
                 <a
@@ -94,7 +129,7 @@ export function Footer() {
                 </a>
                 {/* WhatsApp */}
                 <a
-                  href="https://api.whatsapp.com/send?phone=919099392066&app=facebook&entry_point=page_cta"
+                  href={`https://api.whatsapp.com/send?phone=${settings.support_phone.replace(/\D/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"
@@ -121,7 +156,7 @@ export function Footer() {
           </div>
 
           {/* Column 2: Useful Links */}
-          <div className="lg:col-span-3 space-y-4">
+          <div className="lg:col-span-2 space-y-4 font-mono">
             <h4 className="text-base sm:text-lg font-bold tracking-wider text-amber-400 uppercase">
               Useful Links
             </h4>
@@ -142,21 +177,55 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/solutions" className="hover:text-amber-400 transition-colors">
-                  Automation Solutions
+                <Link href="/contact" className="hover:text-amber-400 transition-colors">
+                  Contact Us
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-amber-400 transition-colors">
-                  Contact Us
+                <Link href="/delivery" className="hover:text-amber-400 transition-colors">
+                  Delivery & Shipping
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Contact Us Details */}
-          <div className="lg:col-span-5 space-y-4">
+          {/* Column 3: Help Links (Matches Screenshot 1) */}
+          <div className="lg:col-span-2 space-y-4 font-mono">
             <h4 className="text-base sm:text-lg font-bold tracking-wider text-amber-400 uppercase">
+              Help
+            </h4>
+            <ul className="space-y-3 text-sm sm:text-base font-medium">
+              <li>
+                <Link href="/privacy" className="hover:text-amber-400 transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/refund-policy" className="hover:text-amber-400 transition-colors">
+                  Refund Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/shipping-policy" className="hover:text-amber-400 transition-colors">
+                  Shipping Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms-of-service" className="hover:text-amber-400 transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/legal-notice" className="hover:text-amber-400 transition-colors">
+                  Notice
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 4: Contact Us Details (Dynamic Database Settings) */}
+          <div className="lg:col-span-5 space-y-4">
+            <h4 className="text-base sm:text-lg font-bold tracking-wider text-amber-400 uppercase font-mono">
               Contact Us
             </h4>
 
@@ -166,36 +235,58 @@ export function Footer() {
                 <MapPin className="w-5 h-5 text-amber-400 shrink-0 mt-1" />
                 <span className="leading-relaxed font-mono">
                   Shed No : C1B-271 R - Road,<br />
-                  Aji GIDC, Rajkot.
+                  Aji GIDC, Rajkot - 360002.
                 </span>
               </div>
 
-              {/* Phone Lines */}
+              {/* Sub Contacts Phone Lines (Dynamic from Admin Settings) */}
               <div className="flex items-start gap-3 pt-1">
                 <PhoneCall className="w-5 h-5 text-amber-400 shrink-0 mt-1" />
                 <div className="space-y-1.5 font-mono">
-                  <p>Hiren Padia : <a href="tel:+919099392066" className="font-bold text-amber-400 hover:underline">(+91) 90993 92066</a></p>
-                  <p>Mahesh Pambhar : <a href="tel:+919913085220" className="font-bold text-amber-400 hover:underline">(+91) 99130 85220</a></p>
-                  <p>Dharmesh Pambhar : <a href="tel:+919427270113" className="font-bold text-amber-400 hover:underline">(+91) 94272 70113</a></p>
+                  <p>
+                    {settings.sub_contact_1_name} :{" "}
+                    <a href={`tel:${settings.sub_contact_1_phone.replace(/\s+/g, '')}`} className="font-bold text-amber-400 hover:underline">
+                      {settings.sub_contact_1_phone}
+                    </a>
+                  </p>
+                  <p>
+                    {settings.sub_contact_2_name} :{" "}
+                    <a href={`tel:${settings.sub_contact_2_phone.replace(/\s+/g, '')}`} className="font-bold text-amber-400 hover:underline">
+                      {settings.sub_contact_2_phone}
+                    </a>
+                  </p>
+                  <p>
+                    {settings.sub_contact_3_name} :{" "}
+                    <a href={`tel:${settings.sub_contact_3_phone.replace(/\s+/g, '')}`} className="font-bold text-amber-400 hover:underline">
+                      {settings.sub_contact_3_phone}
+                    </a>
+                  </p>
                 </div>
               </div>
 
-              {/* Emails */}
+              {/* Sub Contact Emails (Dynamic from Admin Settings) */}
               <div className="flex items-start gap-3 pt-1">
                 <Mail className="w-5 h-5 text-amber-400 shrink-0 mt-1" />
                 <div className="space-y-1.5 font-mono">
-                  <p><a href="mailto:omautomation2012@gmail.com" className="hover:text-amber-400 hover:underline">omautomation2012@gmail.com</a></p>
-                  <p><a href="mailto:padiahiren24565@gmail.com" className="hover:text-amber-400 hover:underline">padiahiren24565@gmail.com</a></p>
+                  <p>
+                    <a href={`mailto:${settings.sub_email_1}`} className="hover:text-amber-400 hover:underline">
+                      {settings.sub_email_1}
+                    </a>
+                  </p>
+                  <p>
+                    <a href={`mailto:${settings.sub_email_2}`} className="hover:text-amber-400 hover:underline">
+                      {settings.sub_email_2}
+                    </a>
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Large Brand Wordmark Section with Per-Letter Hover Effect */}
+        {/* Large Brand Wordmark Section */}
         <div className="py-12 border-b border-slate-900 text-center overflow-hidden">
           <div className="text-[9vw] font-black tracking-tighter leading-none select-none font-mono flex justify-center items-center flex-wrap gap-x-6 sm:gap-x-10">
-            {/* OM */}
             <div className="flex">
               {Array.from("OM").map((char, i) => (
                 <span
@@ -207,7 +298,6 @@ export function Footer() {
               ))}
             </div>
 
-            {/* AUTOMATION */}
             <div className="flex">
               {Array.from("AUTOMATION").map((char, i) => (
                 <span
@@ -221,8 +311,8 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar: Copyright & B2B Payment Badges */}
-        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-400">
+        {/* Bottom Bar */}
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-slate-400 font-mono">
           <p>© 2026 OM Automation. All rights reserved.</p>
 
           <div className="flex items-center gap-4 text-xs text-slate-400">
