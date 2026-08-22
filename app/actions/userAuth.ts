@@ -1,6 +1,8 @@
 "use server";
 
 import { query } from "@/lib/db";
+import { createSession, invalidateSession, getCurrentUser } from "@/lib/session";
+import { UserSession } from "@/types";
 import * as argon2 from "argon2";
 import crypto from "crypto";
 
@@ -11,7 +13,7 @@ export async function registerUserAction(formData: {
   companyName?: string;
   email: string;
   password: string;
-}) {
+}): Promise<{ success: boolean; user?: UserSession; error?: string }> {
   try {
     const email = formData.email.trim().toLowerCase();
     if (!email || !formData.password || !formData.fullName) {
@@ -37,15 +39,24 @@ export async function registerUserAction(formData: {
       VALUES ($1, $2, $3, $4, 'CUSTOMER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `, [userId, displayName, email, hashedPassword]);
 
+    // 4. Create server-side session with HttpOnly cookie
+    await createSession(userId);
+
+    const user: UserSession = {
+      id: userId,
+      name: displayName,
+      email: email,
+      role: "CUSTOMER",
+      companyName: formData.companyName || "",
+      image: null,
+      avatar: null,
+      googleSub: null,
+      emailVerified: null,
+    };
+
     return {
       success: true,
-      user: {
-        id: userId,
-        name: displayName,
-        email: email,
-        role: "CUSTOMER",
-        companyName: formData.companyName || "",
-      },
+      user,
     };
   } catch (error) {
     console.error("Failed to register user:", error);
@@ -57,32 +68,42 @@ export async function registerUserAction(formData: {
 export async function loginUserAction(formData: {
   email: string;
   password: string;
-}) {
+}): Promise<{ success: boolean; user?: UserSession; error?: string }> {
   try {
     const email = formData.email.trim().toLowerCase();
 
     // Demo bypass
     if (email === "admin@demo.com" && formData.password === "demo123") {
+      const demoUser: UserSession = {
+        id: "demo-admin-id",
+        name: "Demo Admin",
+        email: "admin@demo.com",
+        role: "SUPER_ADMIN",
+        companyName: "OM Automation Corporate",
+      };
       return {
         success: true,
-        user: {
-          id: "demo-admin-id",
-          name: "Demo Admin",
-          email: "admin@demo.com",
-          role: "SUPER_ADMIN",
-          companyName: "OM Automation Corporate",
-        },
+        user: demoUser,
       };
     }
 
-    const res = await query(`SELECT id, email, name, role, password FROM "User" WHERE email = $1 LIMIT 1`, [email]);
+    const res = await query(
+      `SELECT id, email, name, role, password, image, avatar, google_sub, "emailVerified" 
+       FROM "User" 
+       WHERE email = $1 
+       LIMIT 1`,
+      [email]
+    );
     if (res.rows.length === 0) {
       return { success: false, error: "No account found with this email. Please register." };
     }
 
     const user = res.rows[0];
     if (!user.password) {
-      return { success: false, error: "Invalid account credentials." };
+      return { 
+        success: false, 
+        error: "This account was created with Google Sign-In. Please sign in using Google." 
+      };
     }
 
     const isValid = await argon2.verify(user.password, formData.password);
@@ -90,18 +111,41 @@ export async function loginUserAction(formData: {
       return { success: false, error: "Incorrect password. Please try again." };
     }
 
+    // Create server-side session with HttpOnly cookie
+    await createSession(user.id);
+
+    const sessionUser: UserSession = {
+      id: user.id,
+      name: user.name || "Customer User",
+      email: user.email,
+      role: user.role || "CUSTOMER",
+      companyName: "",
+      image: user.image || user.avatar || null,
+      avatar: user.avatar || user.image || null,
+      googleSub: user.google_sub || null,
+      emailVerified: user.emailVerified,
+    };
+
     return {
       success: true,
-      user: {
-        id: user.id,
-        name: user.name || "Customer User",
-        email: user.email,
-        role: user.role || "CUSTOMER",
-        companyName: "",
-      },
+      user: sessionUser,
     };
   } catch (error) {
     console.error("Login authentication error:", error);
     return { success: false, error: "Authentication failed." };
   }
+}
+
+export async function logoutUserAction(): Promise<{ success: boolean }> {
+  try {
+    await invalidateSession();
+    return { success: true };
+  } catch (error) {
+    console.error("Logout user action failed:", error);
+    return { success: false };
+  }
+}
+
+export async function getCurrentUserAction(): Promise<UserSession | null> {
+  return await getCurrentUser();
 }

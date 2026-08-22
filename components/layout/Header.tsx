@@ -181,7 +181,7 @@ export function Header() {
 
   const { getItemCount, openCart } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
-  const { user, isLoggedIn } = useUserStore();
+  const { user, isLoggedIn, syncSession } = useUserStore();
 
   const cartCount = getItemCount();
   const wishlistCount = wishlistItems.length;
@@ -189,36 +189,44 @@ export function Header() {
 
   useEffect(() => {
     setMounted(true);
+    syncSession().catch(() => {});
+
+    let rafId: number | null = null;
+    let lastY = window.scrollY;
+
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      if (rafId !== null) return;
 
-      // Always show bottom nav when scroll is less than 50px
-      if (currentScrollY < 50) {
-        setShowBottomNav(true);
-        lastScrollY.current = currentScrollY;
-        return;
-      }
+      rafId = window.requestAnimationFrame(() => {
+        const currentY = Math.max(0, window.scrollY);
+        const delta = currentY - lastY;
 
-      const deltaY = currentScrollY - lastScrollY.current;
-      // 15px tolerance threshold to ensure a solid 0/1 output and prevent flickering
-      if (Math.abs(deltaY) > 15) {
-        if (deltaY > 0) {
-          setShowBottomNav(false); // Scrolling down -> hide (0)
-        } else {
-          setShowBottomNav(true); // Scrolling up -> show (1)
+        setIsScrolled(currentY > 10);
+
+        // At the absolute top of page: always keep full header open
+        if (currentY <= 0) {
+          setShowBottomNav(true);
+        } else if (Math.abs(delta) > 10) {
+          if (delta > 0 && currentY > 60) {
+            // Scrolling down -> smoothly hide
+            setShowBottomNav(false);
+          } else if (delta < 0) {
+            // Scrolling up -> smoothly reveal
+            setShowBottomNav(true);
+          }
         }
-        lastScrollY.current = currentScrollY;
-      }
+
+        lastY = currentY;
+        rafId = null;
+      });
     };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, [syncSession]);
 
   const allSearchProducts = searchCatalog;
 
@@ -265,7 +273,12 @@ export function Header() {
 
   return (
     <>
-      {/* Main Header */}
+      {/* Top Promotional Announcement Bar (Natural flow at top of page) */}
+      <div className="relative z-50 bg-slate-950 text-amber-400 border-b border-slate-900 select-none overflow-hidden">
+        <AnnouncementBar />
+      </div>
+
+      {/* Main Sticky Header */}
       <header
         className={`sticky top-0 z-40 transition-all duration-300 ${
           isScrolled
@@ -273,14 +286,6 @@ export function Header() {
             : "bg-slate-950 text-white border-b border-slate-900"
         }`}
       >
-        {/* Top Infinite Announcement Bar */}
-        <div className={`transition-all duration-300 overflow-hidden ${
-          !showBottomNav && isScrolled
-            ? "max-h-0 opacity-0"
-            : "max-h-12 opacity-100"
-        }`}>
-          <AnnouncementBar />
-        </div>
         {/* ROW 1: Logo, Search Bar, User & Cart Icons */}
         <div className="w-full max-w-none px-4 sm:px-8 lg:px-12 py-3.5 flex items-center justify-between gap-4 sm:gap-6">
           {/* Logo & Mobile Menu Button */}
@@ -487,14 +492,25 @@ export function Header() {
               )}
             </Link>
 
-            {/* User Account Icon */}
+            {/* User Account Icon / Profile Avatar */}
             {mounted && isLoggedIn && user ? (
               <Link
                 href="/profile"
-                className="p-2.5 text-slate-300 hover:text-amber-400 rounded-full hover:bg-slate-800 transition-colors flex items-center justify-center"
-                title="Account Profile"
+                className="p-1 text-slate-300 hover:text-amber-400 rounded-full hover:bg-slate-800 transition-colors flex items-center justify-center"
+                title={`Signed in as ${user.name}`}
               >
-                <User className="w-6 h-6 text-amber-400" />
+                {user.image || user.avatar ? (
+                  <img
+                    src={user.image || user.avatar || ""}
+                    alt={user.name}
+                    referrerPolicy="no-referrer"
+                    className="w-8 h-8 rounded-full object-cover border-2 border-amber-400 shadow-md"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-amber-400 text-slate-950 font-mono font-bold text-xs flex items-center justify-center shadow-sm">
+                    {user.name ? user.name[0].toUpperCase() : "U"}
+                  </div>
+                )}
               </Link>
             ) : (
               <Link
@@ -683,89 +699,99 @@ export function Header() {
           )}
         </div>
 
-        {/* ROW 2: Bottom Navigation Bar */}
-        <div className={`border-t border-slate-900 bg-slate-950/80 backdrop-blur-md transition-all duration-300 overflow-hidden ${
-          !showBottomNav && isScrolled
-            ? "max-h-0 py-0 border-t-transparent opacity-0 pointer-events-none"
-            : "max-h-16 py-2.5 opacity-100"
-        }`}>
-          <div className="w-full max-w-none px-4 sm:px-8 lg:px-12 flex items-center justify-between gap-4 text-xs font-semibold font-mono">
-            {/* Left Nav Links */}
-            <nav className="flex items-center gap-6 overflow-x-auto scrollbar-none whitespace-nowrap">
-              <div
-                className="relative py-1"
-                onMouseEnter={handleMegaMenuOpen}
-                onMouseLeave={handleMegaMenuClose}
-              >
-                <button
-                  onClick={() => setIsMegaMenuOpen(!isMegaMenuOpen)}
-                  className="flex items-center gap-1 text-white font-bold hover:text-amber-400 transition-colors py-1"
+        {/* ROW 2: Bottom Navigation Bar (Hidden on Mobile/Tablet, visible on Desktop) */}
+        <div
+          className={`hidden lg:grid border-slate-900 bg-slate-950/80 backdrop-blur-md transition-[grid-template-rows,opacity,border-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            !showBottomNav && isScrolled
+              ? "grid-rows-[0fr] opacity-0 pointer-events-none border-t-0"
+              : "grid-rows-[1fr] opacity-100 border-t"
+          }`}
+        >
+          <div className="overflow-hidden min-h-0">
+            <div
+              className={`w-full max-w-none px-4 sm:px-8 lg:px-12 py-2.5 flex items-center justify-between gap-4 text-xs font-semibold font-mono transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                !showBottomNav && isScrolled
+                  ? "-translate-y-2 opacity-0"
+                  : "translate-y-0 opacity-100"
+              }`}
+            >
+              {/* Left Nav Links */}
+              <nav className="flex items-center gap-6 overflow-x-auto scrollbar-none whitespace-nowrap">
+                <div
+                  className="relative py-1"
+                  onMouseEnter={handleMegaMenuOpen}
+                  onMouseLeave={handleMegaMenuClose}
                 >
-                  <span>Shop</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                </button>
+                  <button
+                    onClick={() => setIsMegaMenuOpen(!isMegaMenuOpen)}
+                    className="flex items-center gap-1 text-white font-bold hover:text-amber-400 transition-colors py-1"
+                  >
+                    <span>Shop</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  </button>
+                </div>
+
+                <Link
+                  href="/products?filter=deals"
+                  className="text-slate-300 hover:text-amber-400 transition-colors font-bold py-1"
+                >
+                  Deals
+                </Link>
+
+                <Link
+                  href="/quote"
+                  className="text-slate-300 hover:text-amber-400 transition-colors font-bold py-1"
+                >
+                  Wholesale
+                </Link>
+
+                <div
+                  className="relative hidden sm:block py-1"
+                  onMouseEnter={() => setIsBrandsMenuOpen(true)}
+                  onMouseLeave={() => setIsBrandsMenuOpen(false)}
+                >
+                  <button className="flex items-center gap-1 text-slate-300 hover:text-amber-400 transition-colors py-1">
+                    <span>Brands</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  </button>
+                </div>
+
+                <Link
+                  href="/products?sort=newest"
+                  className="text-slate-300 hover:text-amber-400 transition-colors font-bold py-1"
+                >
+                  New Arrivals
+                </Link>
+              </nav>
+
+              {/* Right Nav Links & "Call us" Pill CTA */}
+              <div className="hidden lg:flex items-center gap-6 whitespace-nowrap text-slate-300 font-medium">
+                <Link href="/delivery" className="hover:text-white transition-colors">
+                  Delivery
+                </Link>
+
+                <Link href="/orders" className="hover:text-white transition-colors flex items-center gap-1">
+                  <PackageCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Track your Order</span>
+                </Link>
+
+                <Link href="/about" className="hover:text-white transition-colors">
+                  About Us
+                </Link>
+
+                <Link href="/contact" className="hover:text-white transition-colors">
+                  Contact Us
+                </Link>
+
+                {/* Pill Call Us Button (Dynamic Support Phone from Admin Settings) */}
+                <a
+                  href={`tel:${supportPhone.replace(/\s+/g, '')}`}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border-2 border-amber-400 hover:bg-amber-400 hover:text-slate-950 text-amber-400 font-bold transition-all shadow"
+                >
+                  <PhoneCall className="w-3.5 h-3.5" />
+                  <span>Call us</span>
+                </a>
               </div>
-
-              <Link
-                href="/products?filter=deals"
-                className="text-slate-300 hover:text-amber-400 transition-colors font-bold py-1"
-              >
-                Deals
-              </Link>
-
-              <Link
-                href="/quote"
-                className="text-slate-300 hover:text-amber-400 transition-colors font-bold py-1"
-              >
-                Wholesale
-              </Link>
-
-              <div
-                className="relative hidden sm:block py-1"
-                onMouseEnter={() => setIsBrandsMenuOpen(true)}
-                onMouseLeave={() => setIsBrandsMenuOpen(false)}
-              >
-                <button className="flex items-center gap-1 text-slate-300 hover:text-amber-400 transition-colors py-1">
-                  <span>Brands</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-              </div>
-
-              <Link
-                href="/products?sort=newest"
-                className="text-slate-300 hover:text-amber-400 transition-colors font-bold py-1"
-              >
-                New Arrivals
-              </Link>
-            </nav>
-
-            {/* Right Nav Links & "Call us" Pill CTA */}
-            <div className="hidden lg:flex items-center gap-6 whitespace-nowrap text-slate-300 font-medium">
-              <Link href="/delivery" className="hover:text-white transition-colors">
-                Delivery
-              </Link>
-
-              <Link href="/orders" className="hover:text-white transition-colors flex items-center gap-1">
-                <PackageCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Track your Order</span>
-              </Link>
-
-              <Link href="/about" className="hover:text-white transition-colors">
-                About Us
-              </Link>
-
-              <Link href="/contact" className="hover:text-white transition-colors">
-                Contact Us
-              </Link>
-
-              {/* Pill Call Us Button (Dynamic Support Phone from Admin Settings) */}
-              <a
-                href={`tel:${supportPhone.replace(/\s+/g, '')}`}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border-2 border-amber-400 hover:bg-amber-400 hover:text-slate-950 text-amber-400 font-bold transition-all shadow"
-              >
-                <PhoneCall className="w-3.5 h-3.5" />
-                <span>Call us</span>
-              </a>
             </div>
           </div>
         </div>

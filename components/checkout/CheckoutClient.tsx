@@ -94,6 +94,17 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
     }
   }, [formData.fullName, formData.companyName, formData.email, formData.street, formData.city, formData.state, formData.zip, formData.country]);
 
+  // Update form fields when user logs in via Google or email
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || user.name || "",
+        email: prev.email || user.email || "",
+      }));
+    }
+  }, [user]);
+
   const subtotal = getSubtotal();
   const discount = getDiscountAmount();
   const total = getTotal();

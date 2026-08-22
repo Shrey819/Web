@@ -96,7 +96,7 @@ export async function getUserDetailsAction(userId: string, userEmail: string | n
   try {
     // 1. Fetch User Data
     const userRes = await query(
-      `SELECT id, name, email, role, "image", "createdAt", "updatedAt", "emailVerified" 
+      `SELECT id, name, email, role, "image", "avatar", "google_sub", "given_name", "family_name", "locale", (password IS NOT NULL) as "hasPassword", "createdAt", "updatedAt", "emailVerified" 
        FROM "User" WHERE id = $1`,
       [userId]
     );
@@ -105,6 +105,13 @@ export async function getUserDetailsAction(userId: string, userEmail: string | n
       return { success: false, error: "User not found" };
     }
     const user = userRes.rows[0];
+
+    // Fetch linked Accounts (e.g. Google OAuth)
+    const accountRes = await query(
+      `SELECT id, provider, "providerAccountId", type 
+       FROM "Account" WHERE "userId" = $1`,
+      [userId]
+    );
 
     // 2. Fetch Addresses
     const addressRes = await query(
@@ -142,6 +149,7 @@ export async function getUserDetailsAction(userId: string, userEmail: string | n
         ...o,
         createdAt: o.createdAt ? new Date(o.createdAt).toISOString() : null,
       })),
+      accounts: accountRes.rows,
       totalSpend,
     };
   } catch (error: any) {

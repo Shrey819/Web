@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { toggleProductVisibility } from "@/app/actions/product";
 import { useToastStore } from "@/store/useToastStore";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useAdminThemeStore } from "@/store/useAdminThemeStore";
+import { Loader2 } from "lucide-react";
 
 interface ProductVisibilityToggleProps {
   productId: string;
@@ -13,6 +14,8 @@ interface ProductVisibilityToggleProps {
 
 export function ProductVisibilityToggle({ productId, initialStatus, productName }: ProductVisibilityToggleProps) {
   const { addToast } = useToastStore();
+  const { theme } = useAdminThemeStore();
+  const isLight = theme === "light";
   const [status, setStatus] = useState(initialStatus);
   const [isPending, setIsPending] = useState(false);
 
@@ -25,9 +28,9 @@ export function ProductVisibilityToggle({ productId, initialStatus, productName 
       if (res.success && res.newStatus) {
         setStatus(res.newStatus);
         if (res.newStatus === "ACTIVE") {
-          addToast("success", "Product Visible", `"${productName}" is now VISIBLE to normal users.`);
+          addToast("success", "Product Visible", `"${productName}" is now active in store.`);
         } else {
-          addToast("warning", "Product Hidden", `"${productName}" is now HIDDEN from normal users.`);
+          addToast("warning", "Product Hidden", `"${productName}" is now hidden as draft.`);
         }
       } else {
         addToast("error", "Toggle Failed", res.error || "Could not change visibility.");
@@ -38,30 +41,35 @@ export function ProductVisibilityToggle({ productId, initialStatus, productName 
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleToggle}
-      disabled={isPending}
-      className={`p-2 rounded-xl border transition-all flex items-center gap-1 text-xs font-semibold ${
-        isVisible
-          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
-          : "bg-slate-800/80 border-slate-700 text-slate-400 hover:bg-slate-700/80 hover:text-slate-300"
-      }`}
-      title={isVisible ? "Visible to normal users (Click to hide)" : "Hidden from normal users (Click to show)"}
-    >
-      {isPending ? (
-        <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-      ) : isVisible ? (
-        <>
-          <Eye className="w-4 h-4 text-emerald-400" />
-          <span className="hidden sm:inline">Visible</span>
-        </>
-      ) : (
-        <>
-          <EyeOff className="w-4 h-4 text-slate-400" />
-          <span className="hidden sm:inline">Hidden</span>
-        </>
-      )}
-    </button>
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={handleToggle}
+        disabled={isPending}
+        className={`w-9 h-5 rounded-full transition-colors relative p-0.5 cursor-pointer disabled:opacity-50 ${
+          isVisible ? "bg-blue-600" : isLight ? "bg-slate-300" : "bg-slate-700"
+        }`}
+        title={isVisible ? "Active in store (Click to hide)" : "Hidden/Draft (Click to show)"}
+      >
+        {isPending ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Loader2 className="w-3 h-3 text-white animate-spin" />
+          </div>
+        ) : (
+          <div
+            className={`w-4 h-4 rounded-full bg-white transition-transform ${
+              isVisible ? "translate-x-4" : "translate-x-0"
+            }`}
+          />
+        )}
+      </button>
+      <span className={`text-[11px] font-semibold ${
+        isVisible 
+          ? "text-blue-600 dark:text-blue-400 font-bold" 
+          : isLight ? "text-slate-400" : "text-slate-500"
+      }`}>
+        {isVisible ? "Active" : "Draft"}
+      </span>
+    </div>
   );
 }

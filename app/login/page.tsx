@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToastStore } from "@/store/useToastStore";
 import { useUserStore } from "@/store/useUserStore";
 import { loginUserAction } from "@/app/actions/userAuth";
-import { Lock, Mail, Loader2, ShieldCheck } from "lucide-react";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { Lock, Mail, Loader2 } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl") || "/profile";
+
   const { addToast } = useToastStore();
   const { login } = useUserStore();
 
@@ -30,7 +34,8 @@ export default function LoginPage() {
       if (res.success && res.user) {
         login(res.user);
         addToast("success", "Welcome Back!", `Signed in as ${res.user.name}`);
-        router.push("/profile");
+        router.push(returnUrl);
+        router.refresh();
       } else {
         addToast("error", "Sign In Failed", res.error || "Invalid login credentials.");
       }
@@ -58,9 +63,25 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* Google One-Click Authentication */}
+          <div className="space-y-3">
+            <GoogleSignInButton returnUrl={returnUrl} text="Continue with Google" />
+            
+            <div className="relative flex items-center justify-center">
+              <div className="border-t border-slate-200 w-full" />
+              <span className="bg-white px-3 text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider shrink-0">
+                OR
+              </span>
+              <div className="border-t border-slate-200 w-full" />
+            </div>
+          </div>
+
+          {/* Email / Password Form */}
           <form onSubmit={handleLogin} className="space-y-4 text-xs">
             <div>
-              <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">Account Email *</label>
+              <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">
+                Account Email *
+              </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                 <input
@@ -76,7 +97,15 @@ export default function LoginPage() {
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="font-semibold uppercase tracking-wider text-slate-500">Password *</label>
+                <label className="font-semibold uppercase tracking-wider text-slate-500">
+                  Password *
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-[11px] text-sky-600 hover:underline font-semibold"
+                >
+                  Forgot password?
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -102,19 +131,36 @@ export default function LoginPage() {
                   <span>Authenticating...</span>
                 </>
               ) : (
-                <span>Sign In to Account</span>
+                <span>Sign In with Email</span>
               )}
             </button>
           </form>
 
           <div className="pt-4 border-t border-slate-100 text-center type-body-small text-slate-500">
             Don&apos;t have a customer account yet?{" "}
-            <Link href="/register" className="font-bold text-sky-600 hover:underline">
+            <Link
+              href={returnUrl !== "/profile" ? `/register?returnUrl=${encodeURIComponent(returnUrl)}` : "/register"}
+              className="font-bold text-sky-600 hover:underline"
+            >
               Create New Account
             </Link>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

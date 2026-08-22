@@ -286,8 +286,8 @@ export function Footer() {
 
         {/* Large Brand Wordmark Section */}
         <div className="py-12 border-b border-slate-900 text-center overflow-hidden">
-          <div className="text-[9vw] font-black tracking-tighter leading-none select-none font-mono flex justify-center items-center flex-wrap gap-x-6 sm:gap-x-10">
-            <div className="flex">
+          <div className="text-[9vw] font-black tracking-normal leading-none select-none font-mono flex justify-center items-center flex-wrap gap-x-6 sm:gap-x-10">
+            <div className="flex gap-x-0.5 sm:gap-x-1">
               {Array.from("OM").map((char, i) => (
                 <span
                   key={`om-${i}`}
@@ -298,7 +298,7 @@ export function Footer() {
               ))}
             </div>
 
-            <div className="flex">
+            <div className="flex gap-x-0.5 sm:gap-x-1">
               {Array.from("AUTOMATION").map((char, i) => (
                 <span
                   key={`auto-${i}`}

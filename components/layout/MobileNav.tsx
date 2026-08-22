@@ -17,6 +17,8 @@ import {
   PackageCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useUserStore } from "@/store/useUserStore";
+
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -34,6 +36,7 @@ export function MobileNav({
   supportPhone = "+91 90993 92066",
 }: MobileNavProps) {
   const router = useRouter();
+  const { user, isLoggedIn } = useUserStore();
   const [currentMenu, setCurrentMenu] = useState<"main" | "shop" | "brands">("main");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -194,8 +197,22 @@ export function MobileNav({
                 </Link>
 
                 <div className="flex items-center gap-3 text-slate-700">
-                  <Link href="/profile" onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full">
-                    <User className="w-5 h-5" />
+                  <Link
+                    href={isLoggedIn && user ? "/profile" : "/login"}
+                    onClick={onClose}
+                    className="p-1 hover:bg-slate-100 rounded-full flex items-center justify-center"
+                    title={isLoggedIn && user ? user.name : "Sign In"}
+                  >
+                    {isLoggedIn && user && (user.image || user.avatar) ? (
+                      <img
+                        src={user.image || user.avatar || ""}
+                        alt={user.name}
+                        referrerPolicy="no-referrer"
+                        className="w-6 h-6 rounded-full object-cover border border-amber-500"
+                      />
+                    ) : (
+                      <User className={`w-5 h-5 ${isLoggedIn && user ? "text-amber-600" : "text-slate-700"}`} />
+                    )}
                   </Link>
 
                   <Link href="/cart" onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full relative">

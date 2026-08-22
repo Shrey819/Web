@@ -10,7 +10,7 @@ interface AdminThemeState {
 export const useAdminThemeStore = create<AdminThemeState>()(
   persist(
     (set) => ({
-      theme: "dark", // Current default system theme is Dark Mode
+      theme: "light", // Default system theme is Light Mode
       setTheme: (theme) => set({ theme }),
       toggleTheme: () =>
         set((state) => ({ theme: state.theme === "dark" ? "light" : "dark" })),

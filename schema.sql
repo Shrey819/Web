@@ -21,6 +21,11 @@ CREATE TABLE "User" (
     "emailVerified" TIMESTAMP(3),
     "password" TEXT,
     "image" TEXT,
+    "avatar" TEXT,
+    "google_sub" TEXT,
+    "given_name" VARCHAR(255),
+    "family_name" VARCHAR(255),
+    "locale" VARCHAR(50),
     "role" "Role" NOT NULL DEFAULT 'CUSTOMER',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -404,6 +409,9 @@ CREATE TABLE "AuditLog" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_google_sub_key" ON "User"("google_sub");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provider", "providerAccountId");
