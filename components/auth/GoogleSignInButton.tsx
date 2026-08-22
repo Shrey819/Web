@@ -67,9 +67,7 @@ export function GoogleSignInButton({
   const buttonContainerRef = useRef<HTMLButtonElement>(null);
   const hiddenGisRef = useRef<HTMLDivElement>(null);
 
-  const clientId =
-    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    "555181150215-3s50i965naosp23bcpst9k1uun44eamd.apps.googleusercontent.com";
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
   // Handle verified Google credential from Google Identity Services
   const handleCredentialResponse = useCallback(

@@ -4,9 +4,8 @@ import { transaction, query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { productFormSchema, type ProductFormValues } from "@/lib/validations/product";
-import { PoolClient } from "@neondatabase/serverless";
 
-const generateId = () => "cl" + crypto.randomBytes(12).toString("hex");
+const generateId = (prefix = "prd_") => prefix + crypto.randomBytes(8).toString("hex");
 
 /**
  * Generate unique slug with numeric collision fallback
@@ -39,13 +38,10 @@ async function generateUniqueSlug(baseName: string, currentId?: string): Promise
 }
 
 /**
- * Generate human-readable product code using PostgreSQL sequence
+ * Helper to generate default SKU
  */
-async function generateProductCode(client: PoolClient): Promise<string> {
-  const year = new Date().getFullYear();
-  const seqRes = await client.query(`SELECT NEXTVAL('product_code_seq') as seq`);
-  const seqNum = String(seqRes.rows[0].seq).padStart(6, '0');
-  return `PRD-${year}-${seqNum}`;
+function generateDefaultSku(productId: string) {
+  return `PRD-${productId.slice(-6).toUpperCase()}`;
 }
 
 /**
@@ -65,72 +61,45 @@ function safeRevalidate(path: string) {
 export async function createProduct(input: ProductFormValues) {
   try {
     const validated = productFormSchema.parse(input);
-    const productId = generateId();
+    const productId = validated.id || generateId("prd_");
     const slug = await generateUniqueSlug(validated.name);
-    if (!validated.sku || validated.sku.trim() === "") {
-      validated.sku = `PRD-${Date.now().toString().slice(-6)}`;
-    }
+    const sku = generateDefaultSku(productId);
 
-    let productCode = validated.productCode;
+    const priceInPaise = Math.round(validated.price * 100);
+    const strikethroughInPaise = validated.strikethroughPrice ? Math.round(validated.strikethroughPrice * 100) : null;
+    const costInPaise = validated.costPrice ? Math.round(validated.costPrice * 100) : null;
 
     await transaction(async (client) => {
-      if (!productCode) {
-        productCode = await generateProductCode(client);
-      }
-
-      // 1. Resolve Brand
-      const finalBrandId = validated.brandId || "default-brand";
-      await client.query(`
-        INSERT INTO "Brand" ("id", "name", "slug", "status", "sortOrder", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT ("slug") DO NOTHING
-      `, [finalBrandId, 'Default Brand', 'default-brand']);
+      // 1. Ensure Brand
+      const brandName = validated.brand?.trim() || "";
+      const primaryCat = validated.primaryCategoryId || validated.categoryIds[0] || validated.categoryId;
 
       // 2. Insert Core Product
       await client.query(`
         INSERT INTO "Product" (
-          "id", "name", "slug", "sku", "productCode", "barcode", "mpn", "upc", "ean", "gtin", "manufacturer",
-          "shortDescription", "description", "categoryId", "brandId", "status",
-          "basePrice", "salePrice", "compareAtPrice", "costPrice", "wholesalePrice", "dealerPrice",
-          "gstRate", "priceIncTax", "unit", "packSize", "minOrderQuantity",
-          "b2bQuoteRequired", "priceOnRequest", "featured", "bestSeller", "newArrival", "quoteOnly",
-          "isPhysical", "weight", "weightUnit", "length", "width", "height", "dimensionUnit",
-          "shippingClass", "freeShipping", "isFragile", "isDangerousGoods", "countryOfOrigin", "hsCode",
-          "seoTitle", "seoDesc", "canonicalUrl", "openGraphTitle", "openGraphDesc", "openGraphImage", "noIndex",
-          "warrantyPeriod", "warrantyType", "isReturnable", "returnWindowDays",
-          "installationAvailable", "technicalSupportAvailable", "calibrationRequired",
-          "publishedAt", "createdAt", "updatedAt"
+          "id", "name", "slug", "sku", "description", "status", "visible", "showInPos",
+          "categoryId", "primaryCategoryId", "primaryRibbon", "brand",
+          "basePrice", "price", "compareAtPrice", "strikethroughPrice", "costPrice",
+          "showPricePerUnit", "baseUnit", "baseUnitMeasurement", "totalUnits", "totalUnitsMeasurement", "taxGroup",
+          "createdAt", "updatedAt"
         )
         VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
-          $12, $13, $14, $15, $16,
-          $17, $18, $19, $20, $21, $22,
-          $23, $24, $25, $26, $27,
-          $28, $29, $30, $31, $32, $33,
-          $34, $35, $36, $37, $38, $39, $40,
-          $41, $42, $43, $44, $45, $46,
-          $47, $48, $49, $50, $51, $52, $53,
-          $54, $55, $56, $57,
-          $58, $59, $60,
-          ${validated.status === 'ACTIVE' ? 'CURRENT_TIMESTAMP' : 'NULL'},
+          $1, $2, $3, $4, $5, $6, $7, $8,
+          $9, $10, $11, $12,
+          $13, $14, $15, $16, $17,
+          $18, $19, $20, $21, $22, $23,
           CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         )
       `, [
-        productId, validated.name, slug, validated.sku, productCode, validated.barcode || null, validated.mpn || null, validated.upc || null, validated.ean || null, validated.gtin || null, validated.manufacturer || null,
-        validated.shortDescription || null, validated.description || null, validated.categoryId, finalBrandId, validated.status,
-        validated.basePrice, validated.salePrice || null, validated.compareAtPrice || null, validated.costPrice || null, validated.wholesalePrice || null, validated.dealerPrice || null,
-        validated.gstRate, validated.priceIncTax, validated.unit, validated.packSize, validated.minOrderQuantity,
-        validated.b2bQuoteRequired, validated.priceOnRequest, validated.featured, validated.bestSeller, validated.newArrival, validated.quoteOnly,
-        validated.isPhysical, validated.weight || null, validated.weightUnit, validated.length || null, validated.width || null, validated.height || null, validated.dimensionUnit,
-        validated.shippingClass || null, validated.freeShipping, validated.isFragile, validated.isDangerousGoods, validated.countryOfOrigin || null, validated.hsCode || null,
-        validated.seoTitle || null, validated.seoDesc || null, validated.canonicalUrl || null, validated.openGraphTitle || null, validated.openGraphDesc || null, validated.openGraphImage || null, validated.noIndex,
-        validated.warrantyPeriod || null, validated.warrantyType || null, validated.isReturnable, validated.returnWindowDays,
-        validated.installationAvailable, validated.technicalSupportAvailable, validated.calibrationRequired
+        productId, validated.name, slug, sku, validated.description || "", validated.visible ? 'ACTIVE' : 'DRAFT', validated.visible, validated.showInPos,
+        primaryCat, primaryCat, validated.primaryRibbon || null, brandName || null,
+        priceInPaise, priceInPaise, strikethroughInPaise, strikethroughInPaise, costInPaise,
+        validated.showPricePerUnit, validated.baseUnit, validated.baseUnitMeasurement, validated.totalUnits || null, validated.totalUnitsMeasurement, validated.taxGroup
       ]);
 
-      // 2.5 Insert Multi-Categories into ProductCategory join table
-      const catsToInsert = Array.from(new Set([validated.categoryId, ...(validated.categoryIds || [])])).filter(Boolean);
-      for (const catId of catsToInsert) {
+      // 3. Insert Category Join Table
+      const allCats = Array.from(new Set([primaryCat, ...validated.categoryIds])).filter(Boolean);
+      for (const catId of allCats) {
         await client.query(`
           INSERT INTO "ProductCategory" ("productId", "categoryId")
           VALUES ($1, $2)
@@ -138,71 +107,100 @@ export async function createProduct(input: ProductFormValues) {
         `, [productId, catId]);
       }
 
-      // 3. Insert Inventory
-      await client.query(`
-        INSERT INTO "Inventory" ("id", "productId", "quantity", "status", "reserved", "updatedAt")
-        VALUES ($1, $2, $3, $4, 0, CURRENT_TIMESTAMP)
-      `, [generateId(), productId, validated.stockQuantity, validated.stockQuantity > 0 ? 'IN_STOCK' : 'OUT_OF_STOCK']);
+      // 4. Insert Tag Assignments
+      if (validated.tagIds && validated.tagIds.length > 0) {
+        for (const tagId of validated.tagIds) {
+          await client.query(`
+            INSERT INTO "ProductTagAssignment" ("productId", "tagId")
+            VALUES ($1, $2)
+            ON CONFLICT ("productId", "tagId") DO NOTHING
+          `, [productId, tagId]);
+        }
+      }
 
-      // 4. Insert Images
+      // 5. Insert Media (max 10)
       if (validated.images && validated.images.length > 0) {
-        for (let idx = 0; idx < validated.images.length; idx++) {
-          const img = validated.images[idx];
+        const mediaList = validated.images.slice(0, 10);
+        for (let idx = 0; idx < mediaList.length; idx++) {
+          const img = mediaList[idx];
+          const mediaId = generateId("med_");
           await client.query(`
             INSERT INTO "ProductImage" ("id", "productId", "url", "alt", "isPrimary", "order", "createdAt")
             VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
-          `, [generateId(), productId, img.url, img.altText || validated.name, img.isPrimary, idx]);
+          `, [mediaId, productId, img.url, img.altText || validated.name, img.isPrimary ?? (idx === 0), idx]);
         }
       }
 
-      // 5. Insert Industrial Documents
-      if (validated.documents && validated.documents.length > 0) {
-        for (let idx = 0; idx < validated.documents.length; idx++) {
-          const doc = validated.documents[idx];
+      // 6. Insert Product Options & Choices
+      if (validated.options && validated.options.length > 0) {
+        for (let oIdx = 0; oIdx < validated.options.length; oIdx++) {
+          const opt = validated.options[oIdx];
+          const optId = opt.id || generateId("opt_");
           await client.query(`
-            INSERT INTO "ProductDocument" ("id", "productId", "title", "documentType", "fileUrl", "version", "fileSize", "sortOrder", "createdAt")
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
-          `, [generateId(), productId, doc.title, doc.documentType, doc.fileUrl, doc.version || 'v1.0', doc.fileSize || '', idx]);
-        }
-      }
+            INSERT INTO "ProductOption" ("id", "productId", "globalOptionId", "name", "fieldType", "sortOrder", "createdAt")
+            VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+          `, [optId, productId, opt.globalOptionId || null, opt.name, opt.fieldType || 'TEXT_CHOICES', oIdx]);
 
-      // 6. Insert Specifications
-      if (validated.specifications && validated.specifications.length > 0) {
-        const groupsMap = new Map<string, typeof validated.specifications>();
-        validated.specifications.forEach(s => {
-          const list = groupsMap.get(s.groupName) || [];
-          list.push(s);
-          groupsMap.set(s.groupName, list);
-        });
-
-        let groupOrder = 0;
-        for (const [groupName, specsList] of Array.from(groupsMap.entries())) {
-          const groupId = generateId();
-          await client.query(`
-            INSERT INTO "SpecificationGroup" ("id", "productId", "name", "order", "createdAt")
-            VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-          `, [groupId, productId, groupName, groupOrder++]);
-
-          for (let sIdx = 0; sIdx < specsList.length; sIdx++) {
-            const spec = specsList[sIdx];
-            await client.query(`
-              INSERT INTO "ProductSpecification" ("id", "groupId", "name", "value", "order")
-              VALUES ($1, $2, $3, $4, $5)
-            `, [generateId(), groupId, spec.name, spec.value, sIdx]);
+          if (opt.choices && opt.choices.length > 0) {
+            for (let cIdx = 0; cIdx < opt.choices.length; cIdx++) {
+              const choice = opt.choices[cIdx];
+              const choiceId = choice.id || generateId("ch_");
+              await client.query(`
+                INSERT INTO "ProductOptionChoice" ("id", "optionId", "name", "colorHex", "sortOrder", "createdAt")
+                VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+              `, [choiceId, optId, choice.name, choice.colorHex || null, cIdx]);
+            }
           }
         }
       }
 
-      // 7. Audit Log
-      await client.query(`
-        INSERT INTO "ProductAuditLog" ("id", "productId", "action", "changedBy", "newData", "changedAt")
-        VALUES ($1, $2, 'CREATED', 'admin', $3, CURRENT_TIMESTAMP)
-      `, [generateId(), productId, JSON.stringify({ name: validated.name, sku: validated.sku, productCode })]);
+      // 7. Insert Generated / Custom Variants
+      if (validated.variants && validated.variants.length > 0) {
+        for (let vIdx = 0; vIdx < validated.variants.length; vIdx++) {
+          const v = validated.variants[vIdx];
+          const varId = v.id || generateId("var_");
+          const vPrice = Math.round(Number(v.price || validated.price) * 100);
+          const vStrikethrough = v.strikethroughPrice ? Math.round(Number(v.strikethroughPrice) * 100) : strikethroughInPaise;
+          const vCost = v.cost ? Math.round(Number(v.cost) * 100) : costInPaise;
+          const vSku = v.sku || `${sku}-${vIdx + 1}`;
+
+          await client.query(`
+            INSERT INTO "ProductVariant" (
+              "id", "productId", "sku", "barcode", "price", "strikethroughPrice", "cost",
+              "trackQuantity", "stockQuantity", "inventoryStatus", "preOrderEnabled", "preOrderLimit",
+              "totalUnits", "totalUnitsMeasurement", "packageLength", "packageWidth", "packageHeight", "packageUnit",
+              "mediaUrl", "attributes", "createdAt", "updatedAt"
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `, [
+            varId, productId, vSku, v.barcode || null, vPrice, vStrikethrough, vCost,
+            Boolean(v.trackQuantity), Number(v.stockQuantity ?? 100), v.inventoryStatus || 'IN_STOCK',
+            Boolean(v.preOrderEnabled), v.preOrderLimit ? Number(v.preOrderLimit) : null,
+            v.totalUnits ? Number(v.totalUnits) : null, v.totalUnitsMeasurement || 'g',
+            v.packageLength ? Number(v.packageLength) : null, v.packageWidth ? Number(v.packageWidth) : null,
+            v.packageHeight ? Number(v.packageHeight) : null, v.packageUnit || 'cm',
+            v.mediaUrl || null, JSON.stringify(v.attributes || {})
+          ]);
+        }
+      }
+
+      // 8. Insert Assigned Info Sections
+      if (validated.infoSectionIds && validated.infoSectionIds.length > 0) {
+        for (let sIdx = 0; sIdx < validated.infoSectionIds.length; sIdx++) {
+          const secId = validated.infoSectionIds[sIdx];
+          await client.query(`
+            INSERT INTO "ProductAssignedInfoSection" ("productId", "sectionId", "sortOrder")
+            VALUES ($1, $2, $3)
+            ON CONFLICT ("productId", "sectionId") DO UPDATE SET "sortOrder" = $3
+          `, [productId, secId, sIdx]);
+        }
+      }
     });
 
     safeRevalidate("/admin/products");
     safeRevalidate("/products");
-    return { success: true, id: productId, productCode };
+    safeRevalidate("/");
+    return { success: true, id: productId };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to create product";
     console.error("Failed to create product:", error);
@@ -218,47 +216,35 @@ export async function updateProduct(productId: string, input: ProductFormValues)
     const validated = productFormSchema.parse(input);
     const slug = await generateUniqueSlug(validated.name, productId);
 
-    await transaction(async (client) => {
-      // 1. Fetch Previous State for Audit
-      const prev = await client.query(`SELECT * FROM "Product" WHERE "id" = $1`, [productId]);
-      const prevData = prev.rows[0] || {};
-      if (!validated.sku || validated.sku.trim() === "") {
-        validated.sku = prevData.sku || `PRD-${Date.now().toString().slice(-6)}`;
-      }
+    const priceInPaise = Math.round(validated.price * 100);
+    const strikethroughInPaise = validated.strikethroughPrice ? Math.round(validated.strikethroughPrice * 100) : null;
+    const costInPaise = validated.costPrice ? Math.round(validated.costPrice * 100) : null;
 
-      // 2. Update Core Product
+    await transaction(async (client) => {
+      const brandName = validated.brand?.trim() || "";
+      const primaryCat = validated.primaryCategoryId || validated.categoryIds[0] || validated.categoryId;
+
+      // 1. Update Core Product
       await client.query(`
         UPDATE "Product" SET
-          "name" = $1, "slug" = $2, "sku" = $3, "barcode" = $4, "mpn" = $5, "upc" = $6, "ean" = $7, "gtin" = $8, "manufacturer" = $9,
-          "shortDescription" = $10, "description" = $11, "categoryId" = $12, "brandId" = $13, "status" = $14,
-          "basePrice" = $15, "salePrice" = $16, "compareAtPrice" = $17, "costPrice" = $18, "wholesalePrice" = $19, "dealerPrice" = $20,
-          "gstRate" = $21, "priceIncTax" = $22, "unit" = $23, "packSize" = $24, "minOrderQuantity" = $25,
-          "b2bQuoteRequired" = $26, "priceOnRequest" = $27, "featured" = $28, "bestSeller" = $29, "newArrival" = $30, "quoteOnly" = $31,
-          "isPhysical" = $32, "weight" = $33, "weightUnit" = $34, "length" = $35, "width" = $36, "height" = $37, "dimensionUnit" = $38,
-          "shippingClass" = $39, "freeShipping" = $40, "isFragile" = $41, "isDangerousGoods" = $42, "countryOfOrigin" = $43, "hsCode" = $44,
-          "seoTitle" = $45, "seoDesc" = $46, "canonicalUrl" = $47, "openGraphTitle" = $48, "openGraphDesc" = $49, "openGraphImage" = $50, "noIndex" = $51,
-          "warrantyPeriod" = $52, "warrantyType" = $53, "isReturnable" = $54, "returnWindowDays" = $55,
-          "installationAvailable" = $56, "technicalSupportAvailable" = $57, "calibrationRequired" = $58,
+          "name" = $1, "slug" = $2, "description" = $3, "status" = $4, "visible" = $5, "showInPos" = $6,
+          "categoryId" = $7, "primaryCategoryId" = $8, "primaryRibbon" = $9, "brand" = $10,
+          "basePrice" = $11, "price" = $12, "compareAtPrice" = $13, "strikethroughPrice" = $14, "costPrice" = $15,
+          "showPricePerUnit" = $16, "baseUnit" = $17, "baseUnitMeasurement" = $18, "totalUnits" = $19, "totalUnitsMeasurement" = $20, "taxGroup" = $21,
           "updatedAt" = CURRENT_TIMESTAMP
-        WHERE "id" = $59
+        WHERE "id" = $22
       `, [
-        validated.name, slug, validated.sku, validated.barcode || null, validated.mpn || null, validated.upc || null, validated.ean || null, validated.gtin || null, validated.manufacturer || null,
-        validated.shortDescription || null, validated.description || null, validated.categoryId, validated.brandId || 'default-brand', validated.status,
-        validated.basePrice, validated.salePrice || null, validated.compareAtPrice || null, validated.costPrice || null, validated.wholesalePrice || null, validated.dealerPrice || null,
-        validated.gstRate, validated.priceIncTax, validated.unit, validated.packSize, validated.minOrderQuantity,
-        validated.b2bQuoteRequired, validated.priceOnRequest, validated.featured, validated.bestSeller, validated.newArrival, validated.quoteOnly,
-        validated.isPhysical, validated.weight || null, validated.weightUnit, validated.length || null, validated.width || null, validated.height || null, validated.dimensionUnit,
-        validated.shippingClass || null, validated.freeShipping, validated.isFragile, validated.isDangerousGoods, validated.countryOfOrigin || null, validated.hsCode || null,
-        validated.seoTitle || null, validated.seoDesc || null, validated.canonicalUrl || null, validated.openGraphTitle || null, validated.openGraphDesc || null, validated.openGraphImage || null, validated.noIndex,
-        validated.warrantyPeriod || null, validated.warrantyType || null, validated.isReturnable, validated.returnWindowDays,
-        validated.installationAvailable, validated.technicalSupportAvailable, validated.calibrationRequired,
+        validated.name, slug, validated.description || "", validated.visible ? 'ACTIVE' : 'DRAFT', validated.visible, validated.showInPos,
+        primaryCat, primaryCat, validated.primaryRibbon || null, brandName || null,
+        priceInPaise, priceInPaise, strikethroughInPaise, strikethroughInPaise, costInPaise,
+        validated.showPricePerUnit, validated.baseUnit, validated.baseUnitMeasurement, validated.totalUnits || null, validated.totalUnitsMeasurement, validated.taxGroup,
         productId
       ]);
 
-      // 2.5 Update Multi-Categories
+      // 2. Categories
       await client.query(`DELETE FROM "ProductCategory" WHERE "productId" = $1`, [productId]);
-      const catsToInsert = Array.from(new Set([validated.categoryId, ...(validated.categoryIds || [])])).filter(Boolean);
-      for (const catId of catsToInsert) {
+      const allCats = Array.from(new Set([primaryCat, ...validated.categoryIds])).filter(Boolean);
+      for (const catId of allCats) {
         await client.query(`
           INSERT INTO "ProductCategory" ("productId", "categoryId")
           VALUES ($1, $2)
@@ -266,72 +252,104 @@ export async function updateProduct(productId: string, input: ProductFormValues)
         `, [productId, catId]);
       }
 
-      // 3. Update Inventory
-      await client.query(`
-        UPDATE "Inventory" SET "quantity" = $1, "status" = $2, "updatedAt" = CURRENT_TIMESTAMP WHERE "productId" = $3
-      `, [validated.stockQuantity, validated.stockQuantity > 0 ? 'IN_STOCK' : 'OUT_OF_STOCK', productId]);
+      // 3. Tags
+      await client.query(`DELETE FROM "ProductTagAssignment" WHERE "productId" = $1`, [productId]);
+      if (validated.tagIds && validated.tagIds.length > 0) {
+        for (const tagId of validated.tagIds) {
+          await client.query(`
+            INSERT INTO "ProductTagAssignment" ("productId", "tagId")
+            VALUES ($1, $2)
+            ON CONFLICT ("productId", "tagId") DO NOTHING
+          `, [productId, tagId]);
+        }
+      }
 
-      // 4. Replace Images
+      // 4. Media
       await client.query(`DELETE FROM "ProductImage" WHERE "productId" = $1`, [productId]);
       if (validated.images && validated.images.length > 0) {
-        for (let idx = 0; idx < validated.images.length; idx++) {
-          const img = validated.images[idx];
+        const mediaList = validated.images.slice(0, 10);
+        for (let idx = 0; idx < mediaList.length; idx++) {
+          const img = mediaList[idx];
+          const mediaId = generateId("med_");
           await client.query(`
             INSERT INTO "ProductImage" ("id", "productId", "url", "alt", "isPrimary", "order", "createdAt")
             VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
-          `, [generateId(), productId, img.url, img.altText || validated.name, img.isPrimary, idx]);
+          `, [mediaId, productId, img.url, img.altText || validated.name, img.isPrimary ?? (idx === 0), idx]);
         }
       }
 
-      // 5. Replace Documents
-      await client.query(`DELETE FROM "ProductDocument" WHERE "productId" = $1`, [productId]);
-      if (validated.documents && validated.documents.length > 0) {
-        for (let idx = 0; idx < validated.documents.length; idx++) {
-          const doc = validated.documents[idx];
+      // 5. Options & Choices
+      await client.query(`DELETE FROM "ProductOption" WHERE "productId" = $1`, [productId]);
+      if (validated.options && validated.options.length > 0) {
+        for (let oIdx = 0; oIdx < validated.options.length; oIdx++) {
+          const opt = validated.options[oIdx];
+          const optId = opt.id || generateId("opt_");
           await client.query(`
-            INSERT INTO "ProductDocument" ("id", "productId", "title", "documentType", "fileUrl", "version", "fileSize", "sortOrder", "createdAt")
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
-          `, [generateId(), productId, doc.title, doc.documentType, doc.fileUrl, doc.version || 'v1.0', doc.fileSize || '', idx]);
-        }
-      }
+            INSERT INTO "ProductOption" ("id", "productId", "globalOptionId", "name", "fieldType", "sortOrder", "createdAt")
+            VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+          `, [optId, productId, opt.globalOptionId || null, opt.name, opt.fieldType || 'TEXT_CHOICES', oIdx]);
 
-      // 6. Replace Specifications
-      await client.query(`DELETE FROM "SpecificationGroup" WHERE "productId" = $1`, [productId]);
-      if (validated.specifications && validated.specifications.length > 0) {
-        const groupsMap = new Map<string, typeof validated.specifications>();
-        validated.specifications.forEach(s => {
-          const list = groupsMap.get(s.groupName) || [];
-          list.push(s);
-          groupsMap.set(s.groupName, list);
-        });
-
-        let groupOrder = 0;
-        for (const [groupName, specsList] of Array.from(groupsMap.entries())) {
-          const groupId = generateId();
-          await client.query(`
-            INSERT INTO "SpecificationGroup" ("id", "productId", "name", "order", "createdAt")
-            VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-          `, [groupId, productId, groupName, groupOrder++]);
-
-          for (let sIdx = 0; sIdx < specsList.length; sIdx++) {
-            const spec = specsList[sIdx];
-            await client.query(`
-              INSERT INTO "ProductSpecification" ("id", "groupId", "name", "value", "order")
-              VALUES ($1, $2, $3, $4, $5)
-            `, [generateId(), groupId, spec.name, spec.value, sIdx]);
+          if (opt.choices && opt.choices.length > 0) {
+            for (let cIdx = 0; cIdx < opt.choices.length; cIdx++) {
+              const choice = opt.choices[cIdx];
+              const choiceId = choice.id || generateId("ch_");
+              await client.query(`
+                INSERT INTO "ProductOptionChoice" ("id", "optionId", "name", "colorHex", "sortOrder", "createdAt")
+                VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+              `, [choiceId, optId, choice.name, choice.colorHex || null, cIdx]);
+            }
           }
         }
       }
 
-      // 7. Audit Log
-      await client.query(`
-        INSERT INTO "ProductAuditLog" ("id", "productId", "action", "changedBy", "previousData", "newData", "changedAt")
-        VALUES ($1, $2, 'UPDATED', 'admin', $3, $4, CURRENT_TIMESTAMP)
-      `, [generateId(), productId, JSON.stringify(prevData), JSON.stringify({ name: validated.name, status: validated.status })]);
+      // 6. Variants
+      if (validated.variants && validated.variants.length > 0) {
+        await client.query(`DELETE FROM "ProductVariant" WHERE "productId" = $1`, [productId]);
+        for (let vIdx = 0; vIdx < validated.variants.length; vIdx++) {
+          const v = validated.variants[vIdx];
+          const varId = v.id || generateId("var_");
+          const vPrice = Math.round(Number(v.price || validated.price) * 100);
+          const vStrikethrough = v.strikethroughPrice ? Math.round(Number(v.strikethroughPrice) * 100) : strikethroughInPaise;
+          const vCost = v.cost ? Math.round(Number(v.cost) * 100) : costInPaise;
+          const vSku = v.sku || `VAR-${productId.slice(-5)}-${vIdx + 1}`;
+
+          await client.query(`
+            INSERT INTO "ProductVariant" (
+              "id", "productId", "sku", "barcode", "price", "strikethroughPrice", "cost",
+              "trackQuantity", "stockQuantity", "inventoryStatus", "preOrderEnabled", "preOrderLimit",
+              "totalUnits", "totalUnitsMeasurement", "packageLength", "packageWidth", "packageHeight", "packageUnit",
+              "mediaUrl", "attributes", "createdAt", "updatedAt"
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `, [
+            varId, productId, vSku, v.barcode || null, vPrice, vStrikethrough, vCost,
+            Boolean(v.trackQuantity), Number(v.stockQuantity ?? 100), v.inventoryStatus || 'IN_STOCK',
+            Boolean(v.preOrderEnabled), v.preOrderLimit ? Number(v.preOrderLimit) : null,
+            v.totalUnits ? Number(v.totalUnits) : null, v.totalUnitsMeasurement || 'g',
+            v.packageLength ? Number(v.packageLength) : null, v.packageWidth ? Number(v.packageWidth) : null,
+            v.packageHeight ? Number(v.packageHeight) : null, v.packageUnit || 'cm',
+            v.mediaUrl || null, JSON.stringify(v.attributes || {})
+          ]);
+        }
+      }
+
+      // 7. Info Sections
+      await client.query(`DELETE FROM "ProductAssignedInfoSection" WHERE "productId" = $1`, [productId]);
+      if (validated.infoSectionIds && validated.infoSectionIds.length > 0) {
+        for (let sIdx = 0; sIdx < validated.infoSectionIds.length; sIdx++) {
+          const secId = validated.infoSectionIds[sIdx];
+          await client.query(`
+            INSERT INTO "ProductAssignedInfoSection" ("productId", "sectionId", "sortOrder")
+            VALUES ($1, $2, $3)
+            ON CONFLICT ("productId", "sectionId") DO UPDATE SET "sortOrder" = $3
+          `, [productId, secId, sIdx]);
+        }
+      }
     });
 
     safeRevalidate("/admin/products");
     safeRevalidate(`/admin/products/${productId}`);
+    safeRevalidate(`/admin/products/${productId}/variants`);
     safeRevalidate("/products");
     return { success: true, id: productId };
   } catch (error: unknown) {
@@ -342,77 +360,207 @@ export async function updateProduct(productId: string, input: ProductFormValues)
 }
 
 /**
- * DUPLICATE PRODUCT
+ * GET PRODUCT FOR EDITING (Full Wix Model)
  */
-export async function duplicateProduct(productId: string) {
+export async function getProductForEdit(productId: string) {
   try {
-    const original = await query(`SELECT * FROM "Product" WHERE "id" = $1`, [productId]);
-    if (original.rows.length === 0) return { success: false, error: "Product not found" };
+    const prodRes = await query(`SELECT * FROM "Product" WHERE "id" = $1 LIMIT 1`, [productId]);
+    if (prodRes.rows.length === 0) return null;
+    const p = prodRes.rows[0];
 
-    const prod = original.rows[0];
-    const newId = generateId();
-    const newName = `${prod.name} (Copy)`;
-    const newSlug = await generateUniqueSlug(newName);
-    const newSku = `${prod.sku}-COPY-${Math.floor(Math.random() * 1000)}`;
+    const [categoriesRes, tagsRes, imagesRes, optionsRes, choicesRes, variantsRes, sectionsRes] = await Promise.all([
+      query(`SELECT "categoryId" FROM "ProductCategory" WHERE "productId" = $1`, [productId]),
+      query(`SELECT "tagId" FROM "ProductTagAssignment" WHERE "productId" = $1`, [productId]),
+      query(`SELECT * FROM "ProductImage" WHERE "productId" = $1 ORDER BY "order" ASC LIMIT 10`, [productId]),
+      query(`SELECT * FROM "ProductOption" WHERE "productId" = $1 ORDER BY "sortOrder" ASC`, [productId]),
+      query(`
+        SELECT c.*, o."productId" 
+        FROM "ProductOptionChoice" c
+        JOIN "ProductOption" o ON c."optionId" = o."id"
+        WHERE o."productId" = $1
+        ORDER BY c."sortOrder" ASC
+      `, [productId]),
+      query(`SELECT * FROM "ProductVariant" WHERE "productId" = $1 ORDER BY "id" ASC`, [productId]),
+      query(`SELECT "sectionId" FROM "ProductAssignedInfoSection" WHERE "productId" = $1 ORDER BY "sortOrder" ASC`, [productId])
+    ]);
 
-    let newProductCode = "";
-
-    await transaction(async (client) => {
-      newProductCode = await generateProductCode(client);
-
-      // Clone Product
-      await client.query(`
-        INSERT INTO "Product" (
-          "id", "name", "slug", "sku", "productCode", "shortDescription", "description", "categoryId", "brandId", "status",
-          "basePrice", "salePrice", "compareAtPrice", "costPrice", "gstRate", "priceIncTax", "unit", "packSize",
-          "featured", "bestSeller", "newArrival", "createdAt", "updatedAt"
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'DRAFT', $10, $11, $12, $13, $14, $15, $16, $17, false, false, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `, [
-        newId, newName, newSlug, newSku, newProductCode, prod.shortDescription, prod.description, prod.categoryId, prod.brandId,
-        prod.basePrice, prod.salePrice, prod.compareAtPrice, prod.costPrice, prod.gstRate, prod.priceIncTax, prod.unit, prod.packSize
-      ]);
-
-      // Clone Inventory
-      await client.query(`
-        INSERT INTO "Inventory" ("id", "productId", "quantity", "status", "reserved", "updatedAt")
-        VALUES ($1, $2, 50, 'IN_STOCK', 0, CURRENT_TIMESTAMP)
-      `, [generateId(), newId]);
-
-      // Clone Images
-      const images = await client.query(`SELECT * FROM "ProductImage" WHERE "productId" = $1`, [productId]);
-      for (const img of images.rows) {
-        await client.query(`
-          INSERT INTO "ProductImage" ("id", "productId", "url", "alt", "isPrimary", "order", "createdAt")
-          VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
-        `, [generateId(), newId, img.url, img.alt, img.isPrimary, img.order]);
-      }
+    const choicesByOption = new Map<string, any[]>();
+    choicesRes.rows.forEach(c => {
+      const list = choicesByOption.get(c.optionId) || [];
+      list.push({ id: c.id, name: c.name, colorHex: c.colorHex || "", sortOrder: c.sortOrder });
+      choicesByOption.set(c.optionId, list);
     });
 
-    safeRevalidate("/admin/products");
-    return { success: true, id: newId };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to duplicate product";
-    return { success: false, error: message };
+    const options = optionsRes.rows.map(o => ({
+      id: o.id,
+      globalOptionId: o.globalOptionId,
+      name: o.name,
+      fieldType: o.fieldType || "TEXT_CHOICES",
+      sortOrder: o.sortOrder,
+      choices: choicesByOption.get(o.id) || []
+    }));
+
+    const categoryIds = categoriesRes.rows.map(r => r.categoryId);
+    const tagIds = tagsRes.rows.map(r => r.tagId);
+    const infoSectionIds = sectionsRes.rows.map(r => r.sectionId);
+
+    const price = (p.price || p.basePrice || 0) / 100;
+    const strikethroughPrice = (p.strikethroughPrice || p.compareAtPrice) ? (p.strikethroughPrice || p.compareAtPrice) / 100 : null;
+    const costPrice = p.costPrice ? p.costPrice / 100 : null;
+
+    const variants = variantsRes.rows.map(v => ({
+      id: v.id,
+      sku: v.sku,
+      barcode: v.barcode || "",
+      price: (v.price || 0) / 100,
+      strikethroughPrice: v.strikethroughPrice ? v.strikethroughPrice / 100 : null,
+      cost: v.cost ? v.cost / 100 : null,
+      trackQuantity: Boolean(v.trackQuantity),
+      stockQuantity: Number(v.stockQuantity ?? 100),
+      inventoryStatus: v.inventoryStatus || 'IN_STOCK',
+      preOrderEnabled: Boolean(v.preOrderEnabled),
+      preOrderLimit: v.preOrderLimit,
+      totalUnits: v.totalUnits,
+      totalUnitsMeasurement: v.totalUnitsMeasurement || 'g',
+      packageLength: v.packageLength,
+      packageWidth: v.packageWidth,
+      packageHeight: v.packageHeight,
+      packageUnit: v.packageUnit || 'cm',
+      mediaUrl: v.mediaUrl || "",
+      attributes: typeof v.attributes === "string" ? JSON.parse(v.attributes) : (v.attributes || {}),
+      displayName: Object.values(typeof v.attributes === "string" ? JSON.parse(v.attributes) : (v.attributes || {})).join(" | ") || v.sku || ""
+    }));
+
+    return {
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      description: p.description || "",
+      visible: Boolean(p.visible ?? (p.status !== "DRAFT")),
+      showInPos: Boolean(p.showInPos ?? true),
+      status: p.status || "ACTIVE",
+      categoryId: p.primaryCategoryId || (categoryIds[0] || p.categoryId || ""),
+      categoryIds: categoryIds.length > 0 ? categoryIds : (p.categoryId ? [p.categoryId] : []),
+      primaryCategoryId: p.primaryCategoryId || categoryIds[0] || "",
+      primaryRibbon: p.primaryRibbon || "",
+      brand: p.brand || "",
+      tagIds,
+      price,
+      strikethroughPrice,
+      costPrice,
+      showPricePerUnit: Boolean(p.showPricePerUnit),
+      baseUnit: Number(p.baseUnit ?? 100),
+      baseUnitMeasurement: p.baseUnitMeasurement || "g",
+      totalUnits: p.totalUnits ? Number(p.totalUnits) : null,
+      totalUnitsMeasurement: p.totalUnitsMeasurement || "g",
+      taxGroup: p.taxGroup || "Products (default rate)",
+      images: imagesRes.rows.map((img, idx) => ({
+        id: img.id,
+        url: img.url,
+        altText: img.alt || "",
+        isPrimary: Boolean(img.isPrimary ?? (idx === 0)),
+        sortOrder: img.order || idx
+      })),
+      options,
+      variants,
+      infoSectionIds
+    };
+  } catch (error) {
+    console.error("Failed to load product for edit:", error);
+    return null;
   }
 }
 
 /**
- * TOGGLE PRODUCT VISIBILITY (ACTIVE vs DRAFT)
+ * GET ADMIN PRODUCTS LIST WITH FILTERING & STATS
  */
-export async function toggleProductVisibility(productId: string, currentStatus: string) {
+export async function getAdminProductsList(params?: { search?: string; category?: string; status?: string }) {
   try {
-    const newStatus = currentStatus === "ACTIVE" ? "DRAFT" : "ACTIVE";
+    let whereClause = `WHERE 1=1`;
+    const queryParams: any[] = [];
+
+    if (params?.search && params.search.trim()) {
+      queryParams.push(`%${params.search.trim()}%`);
+      whereClause += ` AND (p."name" ILIKE $${queryParams.length} OR p."sku" ILIKE $${queryParams.length} OR p."brand" ILIKE $${queryParams.length})`;
+    }
+
+    const res = await query(`
+      SELECT 
+        p."id",
+        p."name",
+        p."slug",
+        p."sku",
+        p."status",
+        p."visible",
+        p."price",
+        p."basePrice",
+        p."strikethroughPrice",
+        p."compareAtPrice",
+        p."primaryRibbon",
+        p."brand",
+        p."createdAt",
+        (SELECT "url" FROM "ProductImage" WHERE "productId" = p."id" ORDER BY "isPrimary" DESC, "order" ASC LIMIT 1) as "imageUrl",
+        (SELECT COUNT(*)::int FROM "ProductVariant" WHERE "productId" = p."id") as "variantCount",
+        (SELECT MIN("price") FROM "ProductVariant" WHERE "productId" = p."id") as "minVariantPrice",
+        (SELECT MAX("price") FROM "ProductVariant" WHERE "productId" = p."id") as "maxVariantPrice",
+        (SELECT string_agg(t."name", ', ') FROM "ProductTagAssignment" pta JOIN "ProductTag" t ON pta."tagId" = t."id" WHERE pta."productId" = p."id") as "tags"
+      FROM "Product" p
+      ${whereClause}
+      ORDER BY p."createdAt" DESC
+    `, queryParams);
+
+    return res.rows.map(row => {
+      const variantCount = row.variantCount || 0;
+      let displayPrice = "";
+      if (variantCount > 0 && row.minVariantPrice) {
+        if (row.minVariantPrice === row.maxVariantPrice) {
+          displayPrice = `₹${(row.minVariantPrice / 100).toFixed(2)}`;
+        } else {
+          displayPrice = `From ₹${(row.minVariantPrice / 100).toFixed(2)}`;
+        }
+      } else {
+        const rawPrice = row.price || row.basePrice || 0;
+        displayPrice = `₹${(rawPrice / 100).toFixed(2)}`;
+      }
+
+      return {
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        sku: row.sku || "",
+        type: "Physical",
+        imageUrl: row.imageUrl || "",
+        variantCount,
+        displayPrice,
+        priceNumber: (row.price || row.basePrice || 0) / 100,
+        inventoryStatus: "In stock",
+        ribbon: row.primaryRibbon || "",
+        brand: row.brand || "",
+        tags: row.tags ? row.tags.split(", ") : [],
+        visible: Boolean(row.visible ?? (row.status !== "DRAFT"))
+      };
+    });
+  } catch (error) {
+    console.error("Failed to load admin products list:", error);
+    return [];
+  }
+}
+
+/**
+ * TOGGLE PRODUCT VISIBILITY
+ */
+export async function toggleProductVisibility(productId: string, currentVisible: boolean) {
+  try {
+    const nextVisible = !currentVisible;
     await query(`
       UPDATE "Product" 
-      SET "status" = $1, "publishedAt" = ${newStatus === 'ACTIVE' ? 'CURRENT_TIMESTAMP' : 'NULL'}, "updatedAt" = CURRENT_TIMESTAMP 
-      WHERE "id" = $2
-    `, [newStatus, productId]);
+      SET "visible" = $1, "status" = $2, "updatedAt" = CURRENT_TIMESTAMP 
+      WHERE "id" = $3
+    `, [nextVisible, nextVisible ? "ACTIVE" : "DRAFT", productId]);
 
     safeRevalidate("/admin/products");
     safeRevalidate("/products");
-    safeRevalidate("/");
-    return { success: true, newStatus };
+    return { success: true, visible: nextVisible };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to toggle visibility";
     return { success: false, error: message };
@@ -420,17 +568,32 @@ export async function toggleProductVisibility(productId: string, currentStatus: 
 }
 
 /**
- * ARCHIVE PRODUCT
+ * DUPLICATE PRODUCT
  */
-export async function archiveProduct(productId: string) {
+export async function duplicateProduct(productId: string) {
   try {
-    await query(`
-      UPDATE "Product" SET "status" = 'ARCHIVED', "archivedAt" = CURRENT_TIMESTAMP, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $1
-    `, [productId]);
-    safeRevalidate("/admin/products");
-    return { success: true };
+    const original = await getProductForEdit(productId);
+    if (!original) return { success: false, error: "Product not found" };
+
+    const newId = generateId("prd_");
+    const newName = `${original.name} (Copy)`.slice(0, 80);
+
+    const duplicateInput: ProductFormValues = {
+      ...original,
+      id: newId,
+      name: newName,
+      visible: false,
+      status: "DRAFT"
+    };
+
+    const res = await createProduct(duplicateInput);
+    if (res.success) {
+      safeRevalidate("/admin/products");
+      return { success: true, id: newId };
+    }
+    return res;
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to archive product";
+    const message = error instanceof Error ? error.message : "Failed to duplicate product";
     return { success: false, error: message };
   }
 }
@@ -440,60 +603,12 @@ export async function archiveProduct(productId: string) {
  */
 export async function deleteProduct(productId: string) {
   try {
-    await transaction(async (client) => {
-      await client.query(`DELETE FROM "Product" WHERE "id" = $1`, [productId]);
-      await client.query(`
-        INSERT INTO "ProductAuditLog" ("id", "productId", "action", "changedBy", "changedAt")
-        VALUES ($1, $2, 'DELETED', 'admin', CURRENT_TIMESTAMP)
-      `, [generateId(), productId]);
-    });
+    await query(`DELETE FROM "Product" WHERE "id" = $1`, [productId]);
     safeRevalidate("/admin/products");
+    safeRevalidate("/products");
     return { success: true };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to delete product";
     return { success: false, error: message };
-  }
-}
-
-/**
- * GET SINGLE PRODUCT FOR EDITING
- */
-export async function getProductForEdit(productId: string) {
-  try {
-    const prodRes = await query(`SELECT * FROM "Product" WHERE "id" = $1 LIMIT 1`, [productId]);
-    if (prodRes.rows.length === 0) return null;
-
-    const product = prodRes.rows[0];
-
-    const [imagesRes, docsRes, specsRes, invRes, multiCatRes] = await Promise.all([
-      query(`SELECT * FROM "ProductImage" WHERE "productId" = $1 ORDER BY "order" ASC`, [productId]),
-      query(`SELECT * FROM "ProductDocument" WHERE "productId" = $1 ORDER BY "sortOrder" ASC`, [productId]),
-      query(`
-        SELECT s."name", s."value", g."name" as "groupName" 
-        FROM "ProductSpecification" s 
-        JOIN "SpecificationGroup" g ON s."groupId" = g."id" 
-        WHERE g."productId" = $1 
-        ORDER BY g."order", s."order"
-      `, [productId]),
-      query(`SELECT "quantity" FROM "Inventory" WHERE "productId" = $1 LIMIT 1`, [productId]),
-      query(`SELECT "categoryId" FROM "ProductCategory" WHERE "productId" = $1`, [productId]),
-    ]);
-
-    const fetchedCategoryIds = multiCatRes.rows.map(r => r.categoryId);
-    const categoryIds = fetchedCategoryIds.length > 0 
-      ? fetchedCategoryIds 
-      : (product.categoryId ? [product.categoryId] : []);
-
-    return {
-      ...product,
-      categoryIds,
-      stockQuantity: invRes.rows[0]?.quantity || 0,
-      images: imagesRes.rows.map(r => ({ id: r.id, url: r.url, altText: r.alt || '', caption: '', isPrimary: r.isPrimary, sortOrder: r.order })),
-      documents: docsRes.rows.map((r, idx) => ({ id: r.id, title: r.title, documentType: r.documentType || 'datasheet', fileUrl: r.fileUrl, version: r.version || 'v1.0', fileSize: r.fileSize || '', sortOrder: r.sortOrder || idx })),
-      specifications: specsRes.rows.map((r, idx) => ({ groupName: r.groupName, name: r.name, value: r.value, unit: "", sortOrder: idx })),
-    };
-  } catch (error) {
-    console.error("Failed to fetch product for edit:", error);
-    return null;
   }
 }

@@ -72,21 +72,6 @@ export async function loginUserAction(formData: {
   try {
     const email = formData.email.trim().toLowerCase();
 
-    // Demo bypass
-    if (email === "admin@demo.com" && formData.password === "demo123") {
-      const demoUser: UserSession = {
-        id: "demo-admin-id",
-        name: "Demo Admin",
-        email: "admin@demo.com",
-        role: "SUPER_ADMIN",
-        companyName: "OM Automation Corporate",
-      };
-      return {
-        success: true,
-        user: demoUser,
-      };
-    }
-
     const res = await query(
       `SELECT id, email, name, role, password, image, avatar, google_sub, "emailVerified" 
        FROM "User" 

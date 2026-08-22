@@ -6,27 +6,31 @@ import { DEFAULT_HERO_SLIDES, DEFAULT_CATEGORY_SHOWCASES } from "@/lib/homepage"
 export async function getAdminMediaLibrary(): Promise<string[]> {
   const imagesSet = new Set<string>();
 
-  // 1. Add default hero slides and category showcase images
-  DEFAULT_HERO_SLIDES.forEach((slide) => {
-    if (slide.desktopImage) imagesSet.add(slide.desktopImage);
-    if (slide.mobileImage) imagesSet.add(slide.mobileImage);
-  });
-
-  DEFAULT_CATEGORY_SHOWCASES.forEach((showcase) => {
-    if (showcase.heroImage) imagesSet.add(showcase.heroImage);
-  });
-
   try {
-    // 2. Fetch images from ProductImage table
-    const productImgRes = await query(`SELECT DISTINCT url FROM "ProductImage" WHERE url IS NOT NULL AND url != '' LIMIT 50`);
+    // 1. Fetch images from ProductImage table (most recent first)
+    const productImgRes = await query(
+      `SELECT DISTINCT url, "createdAt" FROM "ProductImage" WHERE url IS NOT NULL AND url != '' ORDER BY "createdAt" DESC LIMIT 100`
+    );
     productImgRes.rows.forEach((r: any) => {
       if (r.url && typeof r.url === "string") {
         imagesSet.add(r.url);
       }
     });
 
+    // 2. Fetch images from ProductVariant table (mediaUrl)
+    const variantImgRes = await query(
+      `SELECT DISTINCT "mediaUrl" FROM "ProductVariant" WHERE "mediaUrl" IS NOT NULL AND "mediaUrl" != '' LIMIT 50`
+    );
+    variantImgRes.rows.forEach((r: any) => {
+      if (r.mediaUrl && typeof r.mediaUrl === "string") {
+        imagesSet.add(r.mediaUrl);
+      }
+    });
+
     // 3. Fetch images from SystemSetting table
-    const settingsRes = await query(`SELECT key, value FROM "SystemSetting" WHERE key IN ('homepage_hero_slides', 'homepage_category_showcases')`);
+    const settingsRes = await query(
+      `SELECT key, value FROM "SystemSetting" WHERE key IN ('homepage_hero_slides', 'homepage_category_showcases')`
+    );
     settingsRes.rows.forEach((r: any) => {
       if (r.value) {
         try {
@@ -47,7 +51,17 @@ export async function getAdminMediaLibrary(): Promise<string[]> {
     console.error("Error fetching media library from DB:", error);
   }
 
-  // Curated additional high-quality presets
+  // 4. Add default hero slides and category showcase images
+  DEFAULT_HERO_SLIDES.forEach((slide) => {
+    if (slide.desktopImage) imagesSet.add(slide.desktopImage);
+    if (slide.mobileImage) imagesSet.add(slide.mobileImage);
+  });
+
+  DEFAULT_CATEGORY_SHOWCASES.forEach((showcase) => {
+    if (showcase.heroImage) imagesSet.add(showcase.heroImage);
+  });
+
+  // Curated additional high-quality product presets
   const curatedPresets = [
     "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1600&auto=format&fit=crop&q=80",
     "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1600&auto=format&fit=crop&q=80",

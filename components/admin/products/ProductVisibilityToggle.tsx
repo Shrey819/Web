@@ -3,34 +3,29 @@
 import { useState } from "react";
 import { toggleProductVisibility } from "@/app/actions/product";
 import { useToastStore } from "@/store/useToastStore";
-import { useAdminThemeStore } from "@/store/useAdminThemeStore";
 import { Loader2 } from "lucide-react";
 
 interface ProductVisibilityToggleProps {
   productId: string;
-  initialStatus: string;
+  initialVisible: boolean;
   productName: string;
 }
 
-export function ProductVisibilityToggle({ productId, initialStatus, productName }: ProductVisibilityToggleProps) {
+export function ProductVisibilityToggle({ productId, initialVisible, productName }: ProductVisibilityToggleProps) {
   const { addToast } = useToastStore();
-  const { theme } = useAdminThemeStore();
-  const isLight = theme === "light";
-  const [status, setStatus] = useState(initialStatus);
+  const [isVisible, setIsVisible] = useState(initialVisible);
   const [isPending, setIsPending] = useState(false);
-
-  const isVisible = status === "ACTIVE";
 
   const handleToggle = async () => {
     setIsPending(true);
     try {
-      const res = await toggleProductVisibility(productId, status);
-      if (res.success && res.newStatus) {
-        setStatus(res.newStatus);
-        if (res.newStatus === "ACTIVE") {
-          addToast("success", "Product Visible", `"${productName}" is now active in store.`);
+      const res = await toggleProductVisibility(productId, isVisible);
+      if (res.success && res.visible !== undefined) {
+        setIsVisible(res.visible);
+        if (res.visible) {
+          addToast("success", "Product Visible", `"${productName}" is now visible in online store.`);
         } else {
-          addToast("warning", "Product Hidden", `"${productName}" is now hidden as draft.`);
+          addToast("warning", "Product Hidden", `"${productName}" is now hidden from store.`);
         }
       } else {
         addToast("error", "Toggle Failed", res.error || "Could not change visibility.");
@@ -47,9 +42,9 @@ export function ProductVisibilityToggle({ productId, initialStatus, productName 
         onClick={handleToggle}
         disabled={isPending}
         className={`w-9 h-5 rounded-full transition-colors relative p-0.5 cursor-pointer disabled:opacity-50 ${
-          isVisible ? "bg-blue-600" : isLight ? "bg-slate-300" : "bg-slate-700"
+          isVisible ? "bg-blue-600" : "bg-slate-300"
         }`}
-        title={isVisible ? "Active in store (Click to hide)" : "Hidden/Draft (Click to show)"}
+        title={isVisible ? "Visible in store (Click to hide)" : "Hidden (Click to show)"}
       >
         {isPending ? (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -65,10 +60,10 @@ export function ProductVisibilityToggle({ productId, initialStatus, productName 
       </button>
       <span className={`text-[11px] font-semibold ${
         isVisible 
-          ? "text-blue-600 dark:text-blue-400 font-bold" 
-          : isLight ? "text-slate-400" : "text-slate-500"
+          ? "text-blue-600 font-bold" 
+          : "text-slate-400"
       }`}>
-        {isVisible ? "Active" : "Draft"}
+        {isVisible ? "Visible" : "Hidden"}
       </span>
     </div>
   );

@@ -46,3 +46,5 @@ next-env.d.ts
 
 # reference data
 /mnt/
+scratch/
+_backup_product_system/

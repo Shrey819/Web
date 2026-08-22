@@ -16,7 +16,7 @@ interface CheckoutClientProps {
 }
 
 export function CheckoutClient({ settings }: CheckoutClientProps) {
-  const { items, getSubtotal, getDiscountAmount, getTotal, clearCart } = useCartStore();
+  const { items, getSubtotal, getDiscountAmount, getTotal, clearCart, syncLivePrices } = useCartStore();
   const { addToast } = useToastStore();
   const { user } = useUserStore();
 
@@ -53,6 +53,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
   // Restore saved shipping address draft from localStorage on refresh (excluding phone)
   useEffect(() => {
     setMounted(true);
+    syncLivePrices();
     try {
       const saved = localStorage.getItem("om_checkout_shipping_draft");
       if (saved) {

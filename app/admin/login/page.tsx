@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
                   name="password"
                   required
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-sky-500 transition-colors"
-                  placeholder="Password (try 'demo123')"
+                  placeholder="Enter password"
                 />
                 <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               </div>

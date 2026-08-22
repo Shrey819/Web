@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCartStore } from "@/store/useCartStore";
@@ -21,7 +21,12 @@ export function CartDrawer() {
     appliedCoupon,
     applyCoupon,
     removeCoupon,
+    syncLivePrices,
   } = useCartStore();
+
+  useEffect(() => {
+    syncLivePrices();
+  }, []);
 
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState("");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useCartStore } from "@/store/useCartStore";
@@ -20,7 +20,12 @@ export default function FullCartPage() {
     appliedCoupon,
     applyCoupon,
     removeCoupon,
+    syncLivePrices,
   } = useCartStore();
+
+  useEffect(() => {
+    syncLivePrices();
+  }, []);
 
   const { addToast } = useToastStore();
 

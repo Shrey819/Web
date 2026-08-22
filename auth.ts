@@ -30,16 +30,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = credentials.email as string;
         const password = credentials.password as string;
 
-        // DEMO BYPASS: Allow login without a database connection
-        if (email === "admin@demo.com" && password === "demo123") {
-          return {
-            id: "demo-admin-id",
-            email: "admin@demo.com",
-            name: "Demo Admin",
-            role: "SUPER_ADMIN",
-          };
-        }
-
         try {
           const res = await query(`SELECT id, email, name, role, password FROM "User" WHERE email = $1 LIMIT 1`, [email]);
           
