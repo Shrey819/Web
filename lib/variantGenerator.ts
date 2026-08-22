@@ -1,3 +1,6 @@
+export const MAX_PRODUCT_VARIANTS = 1000;
+export const MAX_PRODUCT_OPTIONS = 6;
+
 export interface OptionChoiceInput {
   id?: string;
   name: string;
@@ -35,7 +38,17 @@ export interface GeneratedVariant {
 }
 
 /**
+ * Calculate the potential Cartesian variant count for a set of options
+ */
+export function computePotentialVariantCount(options: OptionInput[]): number {
+  const active = options.filter((o) => o.choices && o.choices.length > 0);
+  if (active.length === 0) return 0;
+  return active.reduce((acc, curr) => acc * curr.choices.length, 1);
+}
+
+/**
  * Generate Cartesian combinations of options while preserving existing variant overrides.
+ * Capped at MAX_PRODUCT_VARIANTS (1000).
  */
 export function generateCartesianVariants(
   options: OptionInput[],
@@ -47,10 +60,19 @@ export function generateCartesianVariants(
   const activeOptions = options.filter((o) => o.choices && o.choices.length > 0);
   if (activeOptions.length === 0) return [];
 
-  // Helper to compute Cartesian product
+  // Helper to compute Cartesian product safely with cap limit
   const cartesian = (arrays: { optionName: string; choiceName: string }[][]) => {
     return arrays.reduce<{ optionName: string; choiceName: string }[][]>(
-      (acc, curr) => acc.flatMap((a) => curr.map((c) => [...a, c])),
+      (acc, curr) => {
+        const next: { optionName: string; choiceName: string }[][] = [];
+        for (const a of acc) {
+          for (const c of curr) {
+            next.push([...a, c]);
+            if (next.length >= MAX_PRODUCT_VARIANTS) return next;
+          }
+        }
+        return next;
+      },
       [[]]
     );
   };
@@ -59,7 +81,7 @@ export function generateCartesianVariants(
     opt.choices.map((c) => ({ optionName: opt.name, choiceName: c.name }))
   );
 
-  const combinations = cartesian(choiceArrays);
+  const combinations = cartesian(choiceArrays).slice(0, MAX_PRODUCT_VARIANTS);
 
   // Map of existing variants keyed by JSON stringified sorted attributes
   const existingMap = new Map<string, GeneratedVariant>();

@@ -436,7 +436,7 @@ export async function saveProductVariants(productId: string, variants: any[]) {
         const price = Math.round(Number(v.price || 0) * 100);
         const strikethroughPrice = v.strikethroughPrice ? Math.round(Number(v.strikethroughPrice) * 100) : null;
         const cost = v.cost ? Math.round(Number(v.cost) * 100) : null;
-        const sku = v.sku || `VAR-${productId.slice(-5)}-${i + 1}`;
+        const sku = v.sku?.trim() ? v.sku.trim() : `VAR-${productId.slice(-6)}-${i + 1}`;
 
         await client.query(`
           INSERT INTO "ProductVariant" (
@@ -467,3 +467,77 @@ export async function saveProductVariants(productId: string, variants: any[]) {
     return { success: false, error: message };
   }
 }
+
+/**
+ * =========================================================================
+ * 7. PRODUCT OPTION PRESETS (SAVE CHANGES & APPLY SETTING)
+ * =========================================================================
+ */
+export interface OptionPresetItem {
+  id: string;
+  name: string;
+  options: any[];
+  includeVariants: boolean;
+  variants?: any[] | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function getOptionPresets(): Promise<{ success: boolean; presets: OptionPresetItem[]; error?: string }> {
+  try {
+    const res = await query(`
+      SELECT "id", "name", "options", "includeVariants", "variants", "createdAt", "updatedAt"
+      FROM "ProductOptionPreset"
+      ORDER BY "updatedAt" DESC
+    `);
+    return { success: true, presets: res.rows as unknown as OptionPresetItem[] };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to load option presets";
+    return { success: false, error: message, presets: [] };
+  }
+}
+
+export async function saveOptionPreset(
+  name: string,
+  options: any[],
+  includeVariants: boolean,
+  variants?: any[]
+) {
+  try {
+    const trimmed = name.trim();
+    if (!trimmed) return { success: false, error: "Preset name cannot be empty" };
+    const id = generateId("optset_");
+
+    await query(`
+      INSERT INTO "ProductOptionPreset" ("id", "name", "options", "includeVariants", "variants", "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT ("name") DO UPDATE SET 
+        "options" = $3, 
+        "includeVariants" = $4, 
+        "variants" = $5, 
+        "updatedAt" = CURRENT_TIMESTAMP
+    `, [
+      id,
+      trimmed,
+      JSON.stringify(options || []),
+      Boolean(includeVariants),
+      includeVariants && variants ? JSON.stringify(variants) : null,
+    ]);
+
+    return { success: true, id, name: trimmed };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to save option preset";
+    return { success: false, error: message };
+  }
+}
+
+export async function deleteOptionPreset(id: string) {
+  try {
+    await query(`DELETE FROM "ProductOptionPreset" WHERE "id" = $1`, [id]);
+    return { success: true };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to delete option preset";
+    return { success: false, error: message };
+  }
+}
+

@@ -5,6 +5,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ChevronRight,
+  ChevronLeft,
+  X,
+  ZoomIn,
   Plus,
   Minus,
   Check,
@@ -82,6 +85,7 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
 
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [openAccordionIds, setOpenAccordionIds] = useState<string[]>([]);
 
@@ -102,15 +106,15 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
     ? product.images
     : [{ url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80", alt: product.name }];
 
-  // Match selected options to exact variant
+  // Match selected options to exact or partial variant override
   const activeVariant = useMemo(() => {
     if (!product.variants || product.variants.length === 0) return null;
     return product.variants.find((v) => {
       const vAttrs = v.attributes || {};
-      return Object.entries(selectedOptions).every(
-        ([optName, optVal]) => vAttrs[optName] === optVal
-      );
-    }) || product.variants[0];
+      const entries = Object.entries(vAttrs);
+      if (entries.length === 0) return false;
+      return entries.every(([optName, optVal]) => selectedOptions[optName] === optVal);
+    }) || null;
   }, [product.variants, selectedOptions]);
 
   // Active Price calculations
@@ -126,6 +130,40 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
   const activeSku = activeVariant?.sku || product.sku || "--";
   const isInStock = activeVariant ? activeVariant.inventoryStatus !== "OUT_OF_STOCK" : true;
 
+  const handlePrevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setSelectedImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setSelectedImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  // Keyboard navigation for Lightbox (Left / Right / Esc)
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsLightboxOpen(false);
+      } else if (e.key === "ArrowRight") {
+        setSelectedImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+      } else if (e.key === "ArrowLeft") {
+        setSelectedImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isLightboxOpen, images.length]);
+
   const handleOptionChange = (optionName: string, choiceName: string) => {
     setSelectedOptions((prev) => ({ ...prev, [optionName]: choiceName }));
   };
@@ -137,13 +175,14 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
   };
 
   const handleAddToCart = () => {
+    const optionSummary = Object.values(selectedOptions).filter(Boolean).join(" / ");
     const cartProduct = {
       ...product,
       id: product.id,
-      name: `${product.name} ${activeVariant ? `(${Object.values(selectedOptions).join(" / ")})` : ""}`,
+      name: optionSummary ? `${product.name} (${optionSummary})` : product.name,
       slug: product.slug,
       basePrice: activePrice,
-      images: [{ url: images[selectedImageIndex]?.url || images[0].url }],
+      images: [{ url: activeVariant?.mediaUrl || images[selectedImageIndex]?.url || images[0].url }],
     } as any;
 
     addItem(
@@ -151,7 +190,7 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
       quantity,
       activeVariant ? ({ ...activeVariant, price: activePrice } as any) : undefined
     );
-    addToast("success", "Added to Cart", `${quantity}x ${product.name} added.`);
+    addToast("success", "Added to Cart", `${quantity}x ${cartProduct.name} added.`);
   };
 
   return (
@@ -181,18 +220,24 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
               </div>
             )}
 
-            {/* Main Image Viewport */}
-            <div className="flex-1 aspect-square sm:aspect-4/5 w-full bg-slate-50 border border-slate-100 rounded-lg overflow-hidden flex items-center justify-center relative">
+            {/* Main Image Viewport with Click-to-Zoom */}
+            <div
+              onClick={() => setIsLightboxOpen(true)}
+              className="group/hero flex-1 aspect-square sm:aspect-4/5 w-full bg-slate-50 border border-slate-100 rounded-lg overflow-hidden flex items-center justify-center relative cursor-zoom-in"
+            >
               <img
                 src={images[selectedImageIndex]?.url || images[0]?.url}
                 alt={product.name}
-                className="w-full h-full object-cover transition-all duration-200"
+                className="w-full h-full object-cover group-hover/hero:scale-102 transition-all duration-300"
               />
               {product.primaryRibbon && (
                 <span className="absolute top-3 left-3 px-3 py-1 bg-slate-900 text-white text-xs font-bold uppercase tracking-wider rounded-xs shadow-xs">
                   {product.primaryRibbon}
                 </span>
               )}
+              <div className="absolute bottom-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-xs text-slate-700 opacity-0 group-hover/hero:opacity-100 transition-opacity shadow-xs">
+                <ZoomIn className="w-4 h-4" />
+              </div>
             </div>
           </div>
 
@@ -394,6 +439,92 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
           </div>
         </div>
       </div>
+
+      {/* Lightbox / Zoom Popup Modal */}
+      {isLightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 select-none animate-in fade-in duration-200"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          {/* Close button in top right corner */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsLightboxOpen(false);
+            }}
+            className="absolute top-5 right-5 z-50 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            aria-label="Close image popup"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Left Navigation Arrow */}
+          {images.length > 1 && (
+            <button
+              type="button"
+              onClick={handlePrevImage}
+              className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all hover:scale-110 cursor-pointer shadow-lg"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
+            </button>
+          )}
+
+          {/* Center Image Container */}
+          <div
+            className="relative max-w-4xl max-h-[85vh] flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={images[selectedImageIndex]?.url || images[0]?.url}
+              alt={product.name}
+              className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl transition-all duration-200"
+            />
+
+            {/* Bottom Indicator & Thumbnails */}
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <span className="text-xs font-semibold text-white/80 tracking-wider">
+                {selectedImageIndex + 1} / {images.length}
+              </span>
+
+              {images.length > 1 && (
+                <div className="flex items-center gap-2 overflow-x-auto max-w-md py-1 px-2">
+                  {images.map((img, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedImageIndex(idx);
+                      }}
+                      className={`w-10 h-10 rounded-md overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                        selectedImageIndex === idx
+                          ? "border-white scale-105 shadow-md"
+                          : "border-transparent opacity-50 hover:opacity-100"
+                      }`}
+                    >
+                      <img src={img.url} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Navigation Arrow */}
+          {images.length > 1 && (
+            <button
+              type="button"
+              onClick={handleNextImage}
+              className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all hover:scale-110 cursor-pointer shadow-lg"
+              aria-label="Next image"
+            >
+              <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

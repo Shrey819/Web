@@ -31,7 +31,10 @@ import {
   X,
   Palette,
   Check,
-  Tag as TagIcon
+  Tag as TagIcon,
+  Bookmark,
+  Layers,
+  Edit2
 } from "lucide-react";
 import Link from "next/link";
 import { CldUploadButton } from "next-cloudinary";
@@ -43,6 +46,9 @@ import { EditInfoSectionModal } from "./modals/EditInfoSectionModal";
 import { ManageGlobalOptionsModal } from "./modals/ManageGlobalOptionsModal";
 import { AddProductOptionModal } from "./modals/AddProductOptionModal";
 import { ProductMediaManagerModal } from "./modals/ProductMediaManagerModal";
+import { SaveOptionPresetModal } from "./modals/SaveOptionPresetModal";
+import { ApplyOptionPresetModal } from "./modals/ApplyOptionPresetModal";
+import { VariantMatrixEditorModal } from "./modals/VariantMatrixEditorModal";
 import { WixRichTextEditor } from "./WixRichTextEditor";
 
 interface CategoryItem {
@@ -127,9 +133,13 @@ export function ProductEditorForm({
   const [isManageOptionsOpen, setIsManageOptionsOpen] = useState(false);
   const [isAddOptionOpen, setIsAddOptionOpen] = useState(false);
   const [editingOption, setEditingOption] = useState<any | null>(null);
+  const [editingOptionIndex, setEditingOptionIndex] = useState<number | null>(null);
   const [isEditInfoSectionOpen, setIsEditInfoSectionOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<InfoSectionItem | null>(null);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [isSavePresetOpen, setIsSavePresetOpen] = useState(false);
+  const [isApplyPresetOpen, setIsApplyPresetOpen] = useState(false);
+  const [isEditVariantsModalOpen, setIsEditVariantsModalOpen] = useState(false);
 
   // Pricing & Unit pricing
   const [showPricePerUnit, setShowPricePerUnit] = useState<boolean>(
@@ -183,18 +193,28 @@ export function ProductEditorForm({
   const currentPrimaryRibbon = watch("primaryRibbon");
   const brandValue = watch("brand") || "";
 
-  // Auto-regenerate variants when options or base pricing change
+  // Prune invalid variant overrides if option choices are deleted
   useEffect(() => {
-    if (options.length > 0) {
-      const generated = generateCartesianVariants(
-        options,
-        basePrice || 450,
-        strikethroughPrice || null,
-        initialData?.sku,
-        variants
-      );
-      setVariants(generated);
-      setValue("variants", generated as any, { shouldDirty: true });
+    if (options.length > 0 && variants.length > 0) {
+      const validOptionNames = new Set(options.map((o) => o.name));
+      const validChoicesMap = new Map<string, Set<string>>();
+      options.forEach((o) => {
+        validChoicesMap.set(o.name, new Set((o.choices || []).map((c: any) => c.name)));
+      });
+
+      const validVariants = variants.filter((v) => {
+        const attrs = v.attributes || {};
+        return Object.entries(attrs).every(([optName, optVal]) => {
+          if (!validOptionNames.has(optName)) return false;
+          const choiceSet = validChoicesMap.get(optName);
+          return choiceSet ? choiceSet.has(optVal) : false;
+        });
+      });
+
+      if (validVariants.length !== variants.length) {
+        setVariants(validVariants);
+        setValue("variants", validVariants as any, { shouldDirty: true });
+      }
     }
   }, [options]);
 
@@ -238,18 +258,37 @@ export function ProductEditorForm({
   // Option handlers
   const handleSaveOption = (optData: any) => {
     let updated: any[];
-    if (optData.id) {
+    if (editingOptionIndex !== null && editingOptionIndex >= 0 && editingOptionIndex < options.length) {
+      // Direct update of the existing option at that index
+      updated = options.map((o, i) =>
+        i === editingOptionIndex
+          ? { ...o, ...optData, id: o.id || optData.id || `opt_${Date.now()}` }
+          : o
+      );
+    } else if (optData.id && options.some((o) => o.id === optData.id)) {
       updated = options.map((o) => (o.id === optData.id ? { ...o, ...optData } : o));
     } else {
-      const newOpt = {
-        id: "opt_" + Date.now(),
-        ...optData,
-        sortOrder: options.length,
-      };
-      updated = [...options, newOpt];
+      // Check if option with same name already exists to prevent duplicate rows
+      const existingIdx = options.findIndex(
+        (o) => o.name.toLowerCase().trim() === optData.name.toLowerCase().trim()
+      );
+      if (existingIdx >= 0) {
+        updated = options.map((o, i) =>
+          i === existingIdx ? { ...o, ...optData, id: o.id || `opt_${Date.now()}` } : o
+        );
+      } else {
+        const newOpt = {
+          id: "opt_" + Date.now(),
+          ...optData,
+          sortOrder: options.length,
+        };
+        updated = [...options, newOpt];
+      }
     }
     setOptions(updated);
     setValue("options", updated, { shouldDirty: true });
+    setEditingOption(null);
+    setEditingOptionIndex(null);
     addToast("success", "Option Saved", `Updated ${optData.name}`);
   };
 
@@ -258,6 +297,20 @@ export function ProductEditorForm({
     setOptions(updated);
     setValue("options", updated, { shouldDirty: true });
     addToast("info", "Option Removed", "Option removed.");
+  };
+
+  const handleApplyOptionPreset = (
+    presetOptions: any[],
+    presetVariants?: any[],
+    includeVariants?: boolean
+  ) => {
+    setOptions(presetOptions);
+    setValue("options", presetOptions, { shouldDirty: true });
+
+    if (includeVariants && presetVariants && presetVariants.length > 0) {
+      setVariants(presetVariants);
+      setValue("variants", presetVariants as any, { shouldDirty: true });
+    }
   };
 
   // Image Upload handler (Limit of 10)
@@ -333,6 +386,29 @@ export function ProductEditorForm({
         })),
       }));
 
+      const cleanVariants = (variants || []).map((v: any, vIdx: number) => ({
+        id: v.id || undefined,
+        sku: v.sku || `VAR-${vIdx + 1}`,
+        barcode: v.barcode || "",
+        price: Number(v.price ?? basePrice ?? 0),
+        strikethroughPrice: v.strikethroughPrice != null && String(v.strikethroughPrice).trim() !== "" ? Number(v.strikethroughPrice) : null,
+        cost: v.cost != null && String(v.cost).trim() !== "" ? Number(v.cost) : null,
+        trackQuantity: Boolean(v.trackQuantity),
+        stockQuantity: Number(v.stockQuantity ?? 100),
+        inventoryStatus: (v.inventoryStatus === "OUT_OF_STOCK" || (typeof v.inventoryStatus === "string" && v.inventoryStatus.toUpperCase().includes("OUT"))) ? "OUT_OF_STOCK" as const : "IN_STOCK" as const,
+        preOrderEnabled: Boolean(v.preOrderEnabled),
+        preOrderLimit: v.preOrderLimit != null && String(v.preOrderLimit).trim() !== "" ? Number(v.preOrderLimit) : null,
+        totalUnits: v.totalUnits != null && String(v.totalUnits).trim() !== "" ? Number(v.totalUnits) : null,
+        totalUnitsMeasurement: v.totalUnitsMeasurement || "g",
+        packageLength: v.packageLength != null && String(v.packageLength).trim() !== "" ? Number(v.packageLength) : null,
+        packageWidth: v.packageWidth != null && String(v.packageWidth).trim() !== "" ? Number(v.packageWidth) : null,
+        packageHeight: v.packageHeight != null && String(v.packageHeight).trim() !== "" ? Number(v.packageHeight) : null,
+        packageUnit: v.packageUnit || "cm",
+        mediaUrl: v.mediaUrl || "",
+        attributes: v.attributes || {},
+        displayName: v.displayName || "",
+      }));
+
       const payload: ProductFormValues = {
         ...data,
         name: (data.name || productName).trim(),
@@ -344,7 +420,7 @@ export function ProductEditorForm({
         showPricePerUnit,
         images,
         options: cleanOptions,
-        variants,
+        variants: cleanVariants,
       };
 
       const res = isEdit && initialData?.id
@@ -688,13 +764,26 @@ export function ProductEditorForm({
                     Add, remove or reorder options to create your product variants.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsManageOptionsOpen(true)}
-                  className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 rounded-lg border border-slate-200 hover:bg-slate-50 shadow-2xs transition-colors"
-                >
-                  Edit All Options
-                </button>
+                <div className="flex items-center gap-2">
+                  {options.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsSavePresetOpen(true)}
+                      className="px-3 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200 rounded-lg shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Bookmark className="w-3.5 h-3.5" />
+                      Save changes
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsApplyPresetOpen(true)}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Layers className="w-3.5 h-3.5 text-slate-500" />
+                    Apply setting
+                  </button>
+                </div>
               </div>
 
               {/* Options Rows */}
@@ -744,16 +833,17 @@ export function ProductEditorForm({
                         type="button"
                         onClick={() => {
                           setEditingOption(opt);
+                          setEditingOptionIndex(idx);
                           setIsAddOptionOpen(true);
                         }}
-                        className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 shadow-2xs"
+                        className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 shadow-2xs cursor-pointer"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDeleteOption(idx)}
-                        className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50"
+                        className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -761,79 +851,148 @@ export function ProductEditorForm({
                   </div>
                 ))}
 
-                {options.length < 6 && (
+                {options.length < 6 ? (
                   <button
                     type="button"
                     onClick={() => {
                       setEditingOption(null);
+                      setEditingOptionIndex(null);
                       setIsAddOptionOpen(true);
                     }}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 pt-1"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 pt-1 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" /> Add Another Option
                   </button>
+                ) : (
+                  <span className="text-xs text-slate-400 font-medium italic block pt-1">
+                    Maximum 6 product options reached
+                  </span>
                 )}
               </div>
             </div>
 
-            {/* 5. Variants Preview Card */}
+            {/* 5. Custom Variant Pricing & Overrides Card */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    Variants <span className="text-xs text-slate-400 font-medium">({variants.length} / 1000)</span>
+                    Custom Variant Pricing <span className="text-xs text-slate-400 font-medium">({variants.length} custom overrides)</span>
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Manage pricing, inventory and more for each product variant.
+                    {options.some((o) => o.choices && o.choices.length > 0)
+                      ? `All combinations dynamically use base price (₹${basePrice.toFixed(2)}) unless overridden here.`
+                      : "Add options above to create customizable variant combinations."}
                   </p>
                 </div>
-                {initialData?.id ? (
-                  <Link
-                    href={`/admin/products/${initialData.id}/variants`}
-                    className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors"
+                {options.some((o) => o.choices && o.choices.length > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditVariantsModalOpen(true)}
+                    className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    Edit Variants
-                  </Link>
-                ) : (
-                  <span className="text-xs text-slate-400 italic">Save product first to open dedicated editor</span>
+                    <Edit2 className="w-3.5 h-3.5" />
+                    {variants.length > 0 ? "Manage Overrides" : "Customize Specific Variants"}
+                  </button>
                 )}
               </div>
 
-              {/* Variants Preview Table */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs divide-y divide-slate-200">
-                  <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider">
-                    <tr>
-                      <th className="px-4 py-2.5">Variant</th>
-                      <th className="px-4 py-2.5">Price</th>
-                      <th className="px-4 py-2.5">Inventory</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white font-medium text-slate-800">
-                    {variants.slice(0, 5).map((v, i) => (
-                      <tr key={v.id || i} className="hover:bg-slate-50/50">
-                        <td className="px-4 py-2.5 font-semibold text-slate-900">{v.displayName || v.sku}</td>
-                        <td className="px-4 py-2.5">
-                          <span>₹{Number(v.price || basePrice).toFixed(2)}</span>
-                          {v.strikethroughPrice && (
-                            <span className="text-slate-400 line-through ml-2">
-                              ₹{Number(v.strikethroughPrice).toFixed(2)}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-2.5 text-emerald-600 font-semibold">
-                          {v.inventoryStatus === "IN_STOCK" ? "In stock" : "Out of stock"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {variants.length > 5 && (
-                  <div className="p-2.5 bg-slate-50 text-center text-xs font-medium text-slate-500 border-t border-slate-200">
-                    + {variants.length - 5} more variants
+              {/* Overrides Table or Clean Empty State */}
+              {variants.length === 0 ? (
+                <div className="p-6 bg-slate-50/70 border border-slate-200 rounded-xl flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-slate-800 block">
+                      Standard pricing applied to all combinations
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Every customer choice combination will automatically sell for the base price of <strong>₹{basePrice.toFixed(2)}</strong>.
+                    </p>
                   </div>
-                )}
-              </div>
+                  {options.some((o) => o.choices && o.choices.length > 0) && (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditVariantsModalOpen(true)}
+                      className="px-3.5 py-1.5 text-xs font-bold text-blue-600 bg-white border border-blue-200 hover:bg-blue-50/50 rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      + Add Custom Price / SKU
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-xs divide-y divide-slate-200">
+                    <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider">
+                      <tr>
+                        <th className="px-4 py-2.5">Custom Variant Override</th>
+                        <th className="px-4 py-2.5">Custom Price (₹)</th>
+                        <th className="px-4 py-2.5">Inventory</th>
+                        <th className="px-4 py-2.5">SKU</th>
+                        <th className="px-4 py-2.5 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white font-medium text-slate-800">
+                      {variants.slice(0, 8).map((v, i) => (
+                        <tr key={v.id || i} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="px-4 py-2.5 font-bold text-slate-900 text-xs">
+                            {v.displayName || Object.values(v.attributes || {}).join(" | ")}
+                          </td>
+                          <td className="px-4 py-2">
+                            <div className="relative w-28">
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">
+                                ₹
+                              </span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={v.price}
+                                onChange={(e) => {
+                                  const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                  const updated = variants.map((item, idx) => (idx === i ? { ...item, price: val } : item));
+                                  setVariants(updated);
+                                  setValue("variants", updated as any, { shouldDirty: true });
+                                }}
+                                className="w-full pl-6 pr-2 py-1 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-lg text-xs font-bold text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                              />
+                            </div>
+                          </td>
+                          <td className="px-4 py-2">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                v.inventoryStatus === "OUT_OF_STOCK"
+                                  ? "bg-red-50 text-red-700 border border-red-200"
+                                  : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              }`}
+                            >
+                              {v.inventoryStatus === "OUT_OF_STOCK" ? "Out of stock" : "In stock"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2 font-mono text-slate-500 text-xs">
+                            {v.sku || "--"}
+                          </td>
+                          <td className="px-4 py-2 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = variants.filter((_, idx) => idx !== i);
+                                setVariants(updated);
+                                setValue("variants", updated as any, { shouldDirty: true });
+                              }}
+                              className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 cursor-pointer"
+                              title="Delete override"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {variants.length > 8 && (
+                    <div className="p-2.5 bg-slate-50 text-center text-xs font-medium text-slate-500 border-t border-slate-200">
+                      + {variants.length - 8} more custom overrides
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* 6. Additional Info Sections Card */}
@@ -1172,7 +1331,10 @@ export function ProductEditorForm({
         onClose={() => {
           setIsAddOptionOpen(false);
           setEditingOption(null);
+          setEditingOptionIndex(null);
         }}
+        existingOptions={options}
+        editingIndex={editingOptionIndex}
         initialOption={editingOption}
         onSave={handleSaveOption}
       />
@@ -1182,6 +1344,32 @@ export function ProductEditorForm({
         onClose={() => setIsMediaModalOpen(false)}
         onAddImages={handleAddImagesFromMediaManager}
         maxSelectable={10 - images.length}
+      />
+
+      <SaveOptionPresetModal
+        isOpen={isSavePresetOpen}
+        onClose={() => setIsSavePresetOpen(false)}
+        options={options}
+        variants={variants}
+      />
+
+      <ApplyOptionPresetModal
+        isOpen={isApplyPresetOpen}
+        onClose={() => setIsApplyPresetOpen(false)}
+        onApplyPreset={handleApplyOptionPreset}
+      />
+
+      <VariantMatrixEditorModal
+        isOpen={isEditVariantsModalOpen}
+        onClose={() => setIsEditVariantsModalOpen(false)}
+        productName={productName}
+        basePrice={basePrice}
+        options={options}
+        initialVariants={variants}
+        onApplyVariants={(updatedVariants) => {
+          setVariants(updatedVariants);
+          setValue("variants", updatedVariants as any, { shouldDirty: true });
+        }}
       />
     </div>
   );

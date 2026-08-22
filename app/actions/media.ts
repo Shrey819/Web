@@ -2,12 +2,40 @@
 
 import { query } from "@/lib/db";
 import { DEFAULT_HERO_SLIDES, DEFAULT_CATEGORY_SHOWCASES } from "@/lib/homepage";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
 
 export async function getAdminMediaLibrary(): Promise<string[]> {
   const imagesSet = new Set<string>();
 
+  // 1. Fetch newest uploaded assets directly from Cloudinary (Newest first)
+  if (process.env.CLOUDINARY_API_SECRET && process.env.CLOUDINARY_API_KEY) {
+    try {
+      const cldRes = await cloudinary.api.resources({
+        type: "upload",
+        max_results: 100,
+      });
+
+      if (cldRes?.resources && Array.isArray(cldRes.resources)) {
+        cldRes.resources.forEach((r: any) => {
+          if (r.secure_url) {
+            imagesSet.add(r.secure_url);
+          }
+        });
+      }
+    } catch (cldErr) {
+      console.warn("Could not fetch Cloudinary resources:", cldErr);
+    }
+  }
+
+  // 2. Fetch images from ProductImage table (most recent first)
   try {
-    // 1. Fetch images from ProductImage table (most recent first)
     const productImgRes = await query(
       `SELECT DISTINCT url, "createdAt" FROM "ProductImage" WHERE url IS NOT NULL AND url != '' ORDER BY "createdAt" DESC LIMIT 100`
     );
@@ -17,7 +45,7 @@ export async function getAdminMediaLibrary(): Promise<string[]> {
       }
     });
 
-    // 2. Fetch images from ProductVariant table (mediaUrl)
+    // 3. Fetch images from ProductVariant table (mediaUrl)
     const variantImgRes = await query(
       `SELECT DISTINCT "mediaUrl" FROM "ProductVariant" WHERE "mediaUrl" IS NOT NULL AND "mediaUrl" != '' LIMIT 50`
     );
@@ -27,7 +55,7 @@ export async function getAdminMediaLibrary(): Promise<string[]> {
       }
     });
 
-    // 3. Fetch images from SystemSetting table
+    // 4. Fetch images from SystemSetting table
     const settingsRes = await query(
       `SELECT key, value FROM "SystemSetting" WHERE key IN ('homepage_hero_slides', 'homepage_category_showcases')`
     );
@@ -51,7 +79,7 @@ export async function getAdminMediaLibrary(): Promise<string[]> {
     console.error("Error fetching media library from DB:", error);
   }
 
-  // 4. Add default hero slides and category showcase images
+  // 5. Add default hero slides and category showcase images
   DEFAULT_HERO_SLIDES.forEach((slide) => {
     if (slide.desktopImage) imagesSet.add(slide.desktopImage);
     if (slide.mobileImage) imagesSet.add(slide.mobileImage);

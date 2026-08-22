@@ -135,6 +135,7 @@ ALTER TABLE "ProductOptionChoice"
 
 -- 7. Ensure ProductVariant columns for full matrix capabilities
 ALTER TABLE "ProductVariant"
+  ADD COLUMN IF NOT EXISTS "barcode" TEXT,
   ADD COLUMN IF NOT EXISTS "strikethroughPrice" INTEGER,
   ADD COLUMN IF NOT EXISTS "cost" INTEGER,
   ADD COLUMN IF NOT EXISTS "trackQuantity" BOOLEAN DEFAULT false,

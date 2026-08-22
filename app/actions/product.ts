@@ -162,7 +162,7 @@ export async function createProduct(input: ProductFormValues) {
           const vPrice = Math.round(Number(v.price || validated.price) * 100);
           const vStrikethrough = v.strikethroughPrice ? Math.round(Number(v.strikethroughPrice) * 100) : strikethroughInPaise;
           const vCost = v.cost ? Math.round(Number(v.cost) * 100) : costInPaise;
-          const vSku = v.sku || `${sku}-${vIdx + 1}`;
+          const vSku = v.sku?.trim() ? v.sku.trim() : `${sku || productId.slice(-6)}-${vIdx + 1}`;
 
           await client.query(`
             INSERT INTO "ProductVariant" (
@@ -311,7 +311,7 @@ export async function updateProduct(productId: string, input: ProductFormValues)
           const vPrice = Math.round(Number(v.price || validated.price) * 100);
           const vStrikethrough = v.strikethroughPrice ? Math.round(Number(v.strikethroughPrice) * 100) : strikethroughInPaise;
           const vCost = v.cost ? Math.round(Number(v.cost) * 100) : costInPaise;
-          const vSku = v.sku || `VAR-${productId.slice(-5)}-${vIdx + 1}`;
+          const vSku = v.sku?.trim() ? v.sku.trim() : `VAR-${productId.slice(-6)}-${vIdx + 1}`;
 
           await client.query(`
             INSERT INTO "ProductVariant" (

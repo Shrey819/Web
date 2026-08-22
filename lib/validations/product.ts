@@ -1,5 +1,26 @@
 import { z } from "zod";
 
+const toNullableNumber = z.preprocess((val) => {
+  if (val === "" || val === null || val === undefined) return null;
+  const num = Number(val);
+  return isNaN(num) ? null : num;
+}, z.number().nullish());
+
+const toRequiredNumber = z.preprocess((val) => {
+  if (val === "" || val === null || val === undefined) return 0;
+  const num = Number(val);
+  return isNaN(num) ? 0 : num;
+}, z.number().default(0));
+
+const toInventoryStatus = z.preprocess((val) => {
+  if (typeof val === "string") {
+    const clean = val.toUpperCase().replace(/\s+/g, "_");
+    if (clean === "OUT_OF_STOCK") return "OUT_OF_STOCK";
+    return "IN_STOCK";
+  }
+  return "IN_STOCK";
+}, z.enum(["IN_STOCK", "OUT_OF_STOCK"]).default("IN_STOCK"));
+
 export const productMediaSchema = z.object({
   id: z.string().nullish(),
   url: z.string().min(1, "Media URL is required"),
@@ -28,19 +49,19 @@ export const productVariantSchema = z.object({
   id: z.string().nullish(),
   sku: z.string().nullish().default(""),
   barcode: z.string().nullish().default(""),
-  price: z.number().min(0, "Price must be 0 or greater").default(0),
-  strikethroughPrice: z.number().min(0).nullish(),
-  cost: z.number().min(0).nullish(),
+  price: toRequiredNumber,
+  strikethroughPrice: toNullableNumber,
+  cost: toNullableNumber,
   trackQuantity: z.boolean().nullish().default(false),
-  stockQuantity: z.number().int().min(0).nullish().default(100),
-  inventoryStatus: z.enum(["IN_STOCK", "OUT_OF_STOCK"]).nullish().default("IN_STOCK"),
+  stockQuantity: toNullableNumber.transform((v) => (v != null ? Math.round(v) : 100)),
+  inventoryStatus: toInventoryStatus,
   preOrderEnabled: z.boolean().nullish().default(false),
-  preOrderLimit: z.number().int().nullish(),
-  totalUnits: z.number().nullish(),
+  preOrderLimit: toNullableNumber.transform((v) => (v != null ? Math.round(v) : null)),
+  totalUnits: toNullableNumber,
   totalUnitsMeasurement: z.string().nullish().default("g"),
-  packageLength: z.number().nullish(),
-  packageWidth: z.number().nullish(),
-  packageHeight: z.number().nullish(),
+  packageLength: toNullableNumber,
+  packageWidth: toNullableNumber,
+  packageHeight: toNullableNumber,
   packageUnit: z.string().nullish().default("cm"),
   mediaUrl: z.string().nullish().default(""),
   attributes: z.record(z.string(), z.string()).nullish().default({}),
@@ -68,13 +89,13 @@ export const productFormSchema = z.object({
   tagIds: z.array(z.string()).default([]),
 
   // Pricing
-  price: z.number().min(0, "Price must be 0 or greater").default(0),
-  strikethroughPrice: z.number().min(0).nullish(),
-  costPrice: z.number().min(0).nullish(),
+  price: toRequiredNumber,
+  strikethroughPrice: toNullableNumber,
+  costPrice: toNullableNumber,
   showPricePerUnit: z.boolean().default(false),
-  baseUnit: z.number().min(0).default(100),
+  baseUnit: toRequiredNumber.default(100),
   baseUnitMeasurement: z.string().default("g"),
-  totalUnits: z.number().nullish(),
+  totalUnits: toNullableNumber,
   totalUnitsMeasurement: z.string().default("g"),
   taxGroup: z.string().nullish().default(""),
 
@@ -83,7 +104,7 @@ export const productFormSchema = z.object({
 
   // Options & Variants
   options: z.array(productOptionSchema).max(6, "Maximum 6 options allowed").default([]),
-  variants: z.array(productVariantSchema).default([]),
+  variants: z.array(productVariantSchema).max(1000, "Maximum 1,000 variants allowed").default([]),
 
   // Additional Info Sections
   infoSectionIds: z.array(z.string()).default([]),
