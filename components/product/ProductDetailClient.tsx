@@ -389,7 +389,7 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
             {product.description && (
               <div className="pt-4 border-t border-slate-100 text-xs text-slate-700 leading-relaxed font-normal">
                 <div
-                  className={`overflow-hidden text-slate-700 font-normal [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>p]:mb-1.5 [&>li]:my-0.5 leading-relaxed ${
+                  className={`wix-rich-content overflow-hidden text-slate-700 font-normal leading-relaxed ${
                     !isDescriptionExpanded ? "max-h-24" : ""
                   }`}
                   dangerouslySetInnerHTML={{ __html: product.description }}
@@ -427,7 +427,7 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
 
                       {isOpen && (
                         <div
-                          className="pt-2.5 pb-1 text-xs text-slate-600 leading-relaxed [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>p]:mb-1.5 [&>li]:my-0.5 animate-in fade-in duration-150"
+                          className="wix-rich-content pt-2.5 pb-1 text-xs text-slate-600 leading-relaxed animate-in fade-in duration-150"
                           dangerouslySetInnerHTML={{ __html: sec.content }}
                         />
                       )}

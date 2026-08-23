@@ -40,6 +40,7 @@ interface WixRichTextEditorProps {
   onChange: (html: string) => void;
   placeholder?: string;
   className?: string;
+  maxLength?: number;
 }
 
 export function WixRichTextEditor({
@@ -47,6 +48,7 @@ export function WixRichTextEditor({
   onChange,
   placeholder = "Write product description...",
   className = "",
+  maxLength,
 }: WixRichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
@@ -140,6 +142,30 @@ export function WixRichTextEditor({
   const exec = (command: string, val: string | null = null) => {
     if (editorRef.current) {
       editorRef.current.focus();
+
+      const inner = editorRef.current.innerHTML.trim();
+      const isEmpty = !inner || inner === "<br>" || inner === "<p><br></p>" || inner === "<div><br></div>";
+
+      if (isEmpty && (command === "insertOrderedList" || command === "insertUnorderedList")) {
+        const tag = command === "insertOrderedList" ? "ol" : "ul";
+        editorRef.current.innerHTML = `<${tag}><li><br></li></${tag}>`;
+        const li = editorRef.current.querySelector("li");
+        if (li) {
+          const range = document.createRange();
+          range.selectNodeContents(li);
+          range.collapse(false);
+          const sel = window.getSelection();
+          if (sel) {
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        }
+        handleInput();
+        saveSelection();
+        updateToolbarStates();
+        return;
+      }
+
       restoreSelection();
     }
 
@@ -209,13 +235,88 @@ export function WixRichTextEditor({
   };
 
   const handleLink = () => {
+    saveSelection();
+    const sel = window.getSelection();
+    const selectedText = sel ? sel.toString().trim() : "";
+
     const url = prompt("Enter URL:", "https://");
-    if (url) {
-      exec("createLink", url);
+    if (!url || url.trim() === "" || url.trim() === "https://") return;
+
+    const cleanUrl =
+      url.trim().startsWith("http://") ||
+      url.trim().startsWith("https://") ||
+      url.trim().startsWith("mailto:") ||
+      url.trim().startsWith("/")
+        ? url.trim()
+        : `https://${url.trim()}`;
+
+    if (!selectedText) {
+      if (editorRef.current) {
+        editorRef.current.focus();
+        restoreSelection();
+        const anchor = document.createElement("a");
+        anchor.href = cleanUrl;
+        anchor.target = "_blank";
+        anchor.rel = "noopener noreferrer";
+        anchor.textContent = cleanUrl;
+
+        const selObj = window.getSelection();
+        if (selObj && selObj.rangeCount > 0) {
+          const range = selObj.getRangeAt(0);
+          range.insertNode(anchor);
+          range.selectNodeContents(anchor);
+          range.collapse(false);
+          selObj.removeAllRanges();
+          selObj.addRange(range);
+        } else {
+          editorRef.current.appendChild(anchor);
+        }
+      }
+    } else {
+      exec("createLink", cleanUrl);
+      if (editorRef.current) {
+        const links = editorRef.current.querySelectorAll("a");
+        links.forEach((a) => {
+          if (!a.getAttribute("target")) {
+            a.setAttribute("target", "_blank");
+            a.setAttribute("rel", "noopener noreferrer");
+          }
+        });
+      }
     }
+
+    handleInput();
+    saveSelection();
+    updateToolbarStates();
   };
 
+  const currentLength = (value || "").replace(/<[^>]*>?/gm, "").length;
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Character limit enforcement
+    if (maxLength && maxLength > 0) {
+      const isNavOrControl =
+        e.key === "Backspace" ||
+        e.key === "Delete" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight" ||
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "Tab" ||
+        e.key === "Escape" ||
+        e.ctrlKey ||
+        e.metaKey;
+
+      if (!isNavOrControl) {
+        const sel = window.getSelection();
+        const isReplacingSelection = sel && sel.toString().length > 0;
+        if (currentLength >= maxLength && !isReplacingSelection) {
+          e.preventDefault();
+          return;
+        }
+      }
+    }
+
     // Handle Tab for list indentation
     if (e.key === "Tab") {
       e.preventDefault();
@@ -483,6 +584,23 @@ export function WixRichTextEditor({
         >
           <WixBulletListIcon className="w-4 h-4" />
         </button>
+
+        {/* Character Count Indicator */}
+        {maxLength != null && maxLength > 0 && (
+          <div className="ml-auto pl-2">
+            <span
+              className={`text-[11px] font-semibold select-none px-2 py-0.5 rounded-md ${
+                currentLength > maxLength
+                  ? "bg-red-50 text-red-600 font-bold border border-red-200"
+                  : currentLength >= maxLength * 0.9
+                  ? "bg-amber-50 text-amber-700"
+                  : "text-slate-400"
+              }`}
+            >
+              {currentLength} / {maxLength}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Editable Viewport */}
@@ -509,7 +627,7 @@ export function WixRichTextEditor({
           saveSelection();
           updateToolbarStates();
         }}
-        className="w-full min-h-[140px] max-h-[360px] overflow-y-auto p-4 text-sm text-slate-900 focus:outline-hidden leading-relaxed [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:my-1.5 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:my-1.5 [&>p]:mb-1.5 [&>li]:my-0.5 [&>li]:pl-1 [&>ul_ul]:list-circle [&>ol_ol]:list-[lower-alpha]"
+        className="wix-rich-editor w-full min-h-[140px] max-h-[360px] overflow-y-auto p-4 text-sm text-slate-900 focus:outline-hidden leading-relaxed"
         data-placeholder={placeholder}
         style={{
           outline: "none",

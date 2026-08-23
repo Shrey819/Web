@@ -114,6 +114,10 @@ const COLOR_NAME_MAP: Record<string, string> = {
   "light grey": "#cbd5e1",
   charcoal: "#1e293b",
   black: "#000000",
+  rad: "#ef4444",
+  yello: "#eab308",
+  blu: "#2563eb",
+  grn: "#16a34a",
 };
 
 export function resolveColor(input: string): string | null {
@@ -433,11 +437,12 @@ export function AddProductOptionModal({
                         choiceInputsRef.current[idx] = el;
                       }}
                       type="text"
+                      maxLength={50}
                       placeholder={fieldType === "SWATCH_CHOICES" ? "e.g., Red or Green" : "e.g., Small, Medium or 4"}
                       value={choice.name}
                       onChange={(e) => handleUpdateChoice(idx, e.target.value)}
                       onKeyDown={(e) => handleChoiceKeyDown(e, idx)}
-                      className="w-full pl-3 pr-10 py-1.5 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-800"
+                      className="w-full pl-3 pr-10 py-1.5 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-800 font-medium"
                     />
 
                     {fieldType === "SWATCH_CHOICES" && (

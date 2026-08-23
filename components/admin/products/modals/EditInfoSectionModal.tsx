@@ -144,6 +144,7 @@ export function EditInfoSectionModal({ isOpen, onClose, section, onSaved }: Edit
               value={content}
               onChange={setContent}
               placeholder="Write detailed section contents here..."
+              maxLength={500}
             />
           </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, X, Plus, Folder, Loader2 } from "lucide-react";
 import { createInlineCategory } from "@/app/actions/productManagement";
 import { useToastStore } from "@/store/useToastStore";
@@ -36,6 +36,14 @@ export function AssignCategoriesModal({
   const [showCreateInline, setShowCreateInline] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedIds(initialSelected || []);
+      setCategories(initialCategories || []);
+      setSearch("");
+    }
+  }, [isOpen, initialSelected, initialCategories]);
 
   if (!isOpen) return null;
 

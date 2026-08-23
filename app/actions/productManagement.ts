@@ -167,6 +167,11 @@ export async function createTag(name: string) {
   try {
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: "Tag name cannot be empty" };
+    const existing = await query(`SELECT "id", "name" FROM "ProductTag" WHERE LOWER("name") = LOWER($1) LIMIT 1`, [trimmed]);
+    if (existing.rows.length > 0) {
+      const row = existing.rows[0] as any;
+      return { success: true, id: row.id, name: row.name };
+    }
     const id = generateId("tag_");
     await query(`
       INSERT INTO "ProductTag" ("id", "name", "createdAt")
@@ -201,6 +206,131 @@ export async function deleteTag(id: string) {
     return { success: true };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to delete tag";
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * =========================================================================
+ * 2.5 BRAND MANAGEMENT
+ * =========================================================================
+ */
+export interface BrandItem {
+  id: string;
+  name: string;
+  slug?: string;
+  productCount?: number;
+}
+
+export async function getGlobalBrands(): Promise<{ success: boolean; brands: BrandItem[]; error?: string }> {
+  try {
+    const res = await query(`
+      SELECT 
+        b."id", 
+        b."name", 
+        b."slug",
+        (SELECT COUNT(DISTINCT "id") FROM "Product" WHERE LOWER("brand") = LOWER(b."name"))::int as "productCount"
+      FROM "Brand" b
+      ORDER BY b."name" ASC
+    `);
+
+    const brandsMap = new Map<string, BrandItem>();
+    (res.rows as BrandItem[]).forEach((b) => brandsMap.set(b.name.toLowerCase().trim(), b));
+
+    const distinctProds = await query(`
+      SELECT DISTINCT TRIM("brand") as "name" 
+      FROM "Product" 
+      WHERE "brand" IS NOT NULL AND TRIM("brand") != ''
+    `);
+
+    for (const row of distinctProds.rows as any[]) {
+      const name = String(row.name).trim();
+      const key = name.toLowerCase();
+      if (!brandsMap.has(key)) {
+        const genId = "brand_" + key.replace(/[^a-z0-9]/g, "_");
+        brandsMap.set(key, {
+          id: genId,
+          name: name,
+          slug: key.replace(/[^a-z0-9]+/g, "-"),
+          productCount: 1,
+        });
+      }
+    }
+
+    const result = Array.from(brandsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+    return { success: true, brands: result };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to load brands";
+    return { success: false, error: message, brands: [] };
+  }
+}
+
+export async function createBrand(name: string): Promise<{ success: boolean; id?: string; name?: string; error?: string }> {
+  try {
+    const trimmed = name.trim();
+    if (!trimmed) return { success: false, error: "Brand name cannot be empty" };
+    if (trimmed.length > 50) return { success: false, error: "Brand name cannot exceed 50 characters" };
+    const slug = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `brand-${Date.now()}`;
+    const id = "brand_" + Date.now();
+
+    await query(`
+      INSERT INTO "Brand" ("id", "name", "slug", "status", "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT ("slug") DO UPDATE SET "name" = $2
+    `, [id, trimmed, slug]);
+
+    revalidatePath("/admin/products");
+    return { success: true, id, name: trimmed };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to create brand";
+    return { success: false, error: message };
+  }
+}
+
+export async function renameBrand(
+  id: string,
+  newName: string,
+  oldName?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const trimmed = newName.trim();
+    if (!trimmed) return { success: false, error: "Brand name cannot be empty" };
+    if (trimmed.length > 50) return { success: false, error: "Brand name cannot exceed 50 characters" };
+    const newSlug = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+    await query(`
+      UPDATE "Brand" 
+      SET "name" = $1, "slug" = $2, "updatedAt" = CURRENT_TIMESTAMP 
+      WHERE "id" = $3
+    `, [trimmed, newSlug, id]);
+
+    if (oldName && oldName.trim()) {
+      await query(`
+        UPDATE "Product" 
+        SET "brand" = $1 
+        WHERE LOWER("brand") = LOWER($2)
+      `, [trimmed, oldName.trim()]);
+    }
+
+    revalidatePath("/admin/products");
+    return { success: true };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to rename brand";
+    return { success: false, error: message };
+  }
+}
+
+export async function deleteBrand(id: string, name?: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (name) {
+      await query(`DELETE FROM "Brand" WHERE "id" = $1 OR LOWER("name") = LOWER($2)`, [id, name.trim()]);
+    } else {
+      await query(`DELETE FROM "Brand" WHERE "id" = $1`, [id]);
+    }
+    revalidatePath("/admin/products");
+    return { success: true };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to delete brand";
     return { success: false, error: message };
   }
 }
@@ -312,6 +442,57 @@ export async function getGlobalInfoSections(): Promise<{ success: boolean; secti
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to load info sections";
     return { success: false, error: message, sections: [] };
+  }
+}
+
+export async function getLastUsedInfoSectionIds(): Promise<string[]> {
+  try {
+    const res = await query(`
+      SELECT pai."sectionId"
+      FROM "ProductAssignedInfoSection" pai
+      JOIN "Product" p ON p."id" = pai."productId"
+      WHERE p."updatedAt" = (
+        SELECT MAX(p2."updatedAt") 
+        FROM "Product" p2 
+        JOIN "ProductAssignedInfoSection" pai2 ON pai2."productId" = p2."id"
+      )
+      ORDER BY pai."sortOrder" ASC
+    `);
+    return (res.rows as any[]).map((r) => r.sectionId);
+  } catch {
+    return [];
+  }
+}
+
+export async function getLastUsedCategoryIds(): Promise<{ categoryIds: string[]; primaryCategoryId?: string }> {
+  try {
+    const latestProdRes = await query(`
+      SELECT p."id", p."categoryId", p."primaryCategoryId"
+      FROM "Product" p
+      ORDER BY p."updatedAt" DESC
+      LIMIT 1
+    `);
+    if (latestProdRes.rows.length === 0) {
+      return { categoryIds: [] };
+    }
+    const latestProduct = latestProdRes.rows[0] as any;
+    const catRes = await query(`
+      SELECT "categoryId" 
+      FROM "ProductCategory" 
+      WHERE "productId" = $1
+    `, [latestProduct.id]);
+    
+    const categoryIds = (catRes.rows as any[]).map((r) => r.categoryId);
+    const primaryCategoryId = latestProduct.primaryCategoryId || latestProduct.categoryId || categoryIds[0] || "";
+    
+    const finalCategoryIds = categoryIds.length > 0 
+      ? categoryIds 
+      : (primaryCategoryId ? [primaryCategoryId] : []);
+
+    return { categoryIds: finalCategoryIds, primaryCategoryId };
+  } catch (error) {
+    console.error("Error fetching last used category ids:", error);
+    return { categoryIds: [] };
   }
 }
 
@@ -527,6 +708,41 @@ export async function saveOptionPreset(
     return { success: true, id, name: trimmed };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to save option preset";
+    return { success: false, error: message };
+  }
+}
+
+export async function updateOptionPreset(
+  id: string,
+  name: string,
+  options: any[],
+  includeVariants: boolean = false,
+  variants?: any[]
+) {
+  try {
+    const trimmed = name.trim();
+    if (!trimmed) return { success: false, error: "Preset name cannot be empty" };
+
+    await query(`
+      UPDATE "ProductOptionPreset" 
+      SET 
+        "name" = $1, 
+        "options" = $2, 
+        "includeVariants" = $3, 
+        "variants" = $4, 
+        "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = $5
+    `, [
+      trimmed,
+      JSON.stringify(options || []),
+      Boolean(includeVariants),
+      includeVariants && variants ? JSON.stringify(variants) : null,
+      id,
+    ]);
+
+    return { success: true, id, name: trimmed };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to update option preset";
     return { success: false, error: message };
   }
 }

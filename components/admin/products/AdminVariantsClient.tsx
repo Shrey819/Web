@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -44,6 +44,7 @@ interface VariantRecord {
   mediaUrl?: string;
   attributes: Record<string, string>;
   displayName?: string;
+  isDirty?: boolean;
 }
 
 interface AdminVariantsClientProps {
@@ -52,6 +53,24 @@ interface AdminVariantsClientProps {
   basePrice: number;
   initialVariants: VariantRecord[];
 }
+
+const DEFAULT_VARIANT_COLUMNS: ColumnConfig[] = [
+  { id: "variant", label: "Variant", visible: true, required: true },
+  { id: "price", label: "Price", visible: true, hasInfo: true },
+  { id: "strikethroughPrice", label: "Strikethrough price", visible: true, hasInfo: true },
+  { id: "inventory", label: "Inventory", visible: true, hasInfo: true },
+  { id: "quantity", label: "Quantity", visible: true, hasInfo: true },
+  { id: "preOrder", label: "Pre-order", visible: true, hasInfo: true },
+  { id: "preOrderLimit", label: "Pre-order limit", visible: true, hasInfo: true },
+  { id: "cost", label: "Cost of goods", visible: true, hasInfo: true },
+  { id: "profit", label: "Profit", visible: false, hasInfo: true },
+  { id: "margin", label: "Margin", visible: false, hasInfo: true },
+  { id: "totalUnits", label: "Total units in variant", visible: true, hasInfo: true },
+  { id: "pricePerUnit", label: "Price per unit", visible: true, hasInfo: true },
+  { id: "addDimensions", label: "Add package dimensions", visible: true, hasInfo: true },
+  { id: "dimensions", label: "Dimensions", visible: true },
+  { id: "sku", label: "SKU", visible: true },
+];
 
 export function AdminVariantsClient({
   productId,
@@ -74,24 +93,44 @@ export function AdminVariantsClient({
   const [bulkStrikethrough, setBulkStrikethrough] = useState("");
   const [bulkInventoryStatus, setBulkInventoryStatus] = useState("IN_STOCK");
 
-  // Variant table columns configuration
-  const [columns, setColumns] = useState<ColumnConfig[]>([
-    { id: "variant", label: "Variant", visible: true, required: true },
-    { id: "price", label: "Price", visible: true, hasInfo: true },
-    { id: "strikethroughPrice", label: "Strikethrough price", visible: true, hasInfo: true },
-    { id: "inventory", label: "Inventory", visible: true, hasInfo: true },
-    { id: "quantity", label: "Quantity", visible: true, hasInfo: true },
-    { id: "preOrder", label: "Pre-order", visible: true, hasInfo: true },
-    { id: "preOrderLimit", label: "Pre-order limit", visible: true, hasInfo: true },
-    { id: "cost", label: "Cost of goods", visible: true, hasInfo: true },
-    { id: "profit", label: "Profit", visible: false, hasInfo: true },
-    { id: "margin", label: "Margin", visible: false, hasInfo: true },
-    { id: "totalUnits", label: "Total units in variant", visible: true, hasInfo: true },
-    { id: "pricePerUnit", label: "Price per unit", visible: true, hasInfo: true },
-    { id: "addDimensions", label: "Add package dimensions", visible: true, hasInfo: true },
-    { id: "dimensions", label: "Dimensions", visible: true },
-    { id: "sku", label: "SKU", visible: true },
-  ]);
+  // Variant table columns configuration with localStorage persistence
+  const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_VARIANT_COLUMNS);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("admin_variants_columns_config");
+        if (saved) {
+          const parsed: ColumnConfig[] = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const merged = parsed.map((c) => {
+              const def = DEFAULT_VARIANT_COLUMNS.find((d) => d.id === c.id);
+              return def ? { ...def, ...c } : c;
+            });
+            DEFAULT_VARIANT_COLUMNS.forEach((def) => {
+              if (!merged.some((m) => m.id === def.id)) {
+                merged.push(def);
+              }
+            });
+            setColumns(merged);
+          }
+        }
+      } catch (e) {
+        console.error("Error reading saved variant columns:", e);
+      }
+    }
+  }, []);
+
+  const handleUpdateColumns = (updated: ColumnConfig[]) => {
+    setColumns(updated);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("admin_variants_columns_config", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Error saving variant columns:", e);
+      }
+    }
+  };
 
   // Extract unique choices for filter dropdown
   const allChoices = useMemo(() => {
@@ -745,7 +784,7 @@ export function AdminVariantsClient({
         isOpen={isCustomizeColumnsOpen}
         onClose={() => setIsCustomizeColumnsOpen(false)}
         columns={columns}
-        onChange={setColumns}
+        onChange={handleUpdateColumns}
       />
     </div>
   );

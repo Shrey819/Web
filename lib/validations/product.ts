@@ -31,7 +31,7 @@ export const productMediaSchema = z.object({
 
 export const productOptionChoiceSchema = z.object({
   id: z.string().nullish(),
-  name: z.string().min(1, "Choice name is required"),
+  name: z.string().min(1, "Choice name is required").max(50, "Choice name cannot exceed 50 characters"),
   colorHex: z.string().nullish().default(""),
   sortOrder: z.number().int().nullish().default(0),
 });
@@ -71,6 +71,7 @@ export const productVariantSchema = z.object({
 export const productFormSchema = z.object({
   id: z.string().nullish(),
   name: z.string().min(1, "Product name is required").max(80, "Product name cannot exceed 80 characters"),
+  slug: z.string().nullish().default(""),
   description: z.string().nullish().default(""),
   
   // Visibility

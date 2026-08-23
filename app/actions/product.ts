@@ -38,6 +38,67 @@ async function generateUniqueSlug(baseName: string, currentId?: string): Promise
 }
 
 /**
+ * Public action to check and return an available unique slug
+ */
+export async function checkAndGetUniqueProductSlug(
+  baseNameOrSlug: string,
+  currentProductId?: string
+): Promise<{ success: boolean; slug: string }> {
+  try {
+    const slug = await generateUniqueSlug(baseNameOrSlug, currentProductId);
+    return { success: true, slug };
+  } catch {
+    const fallback =
+      baseNameOrSlug
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "") || `product-${Date.now()}`;
+    return { success: true, slug: fallback };
+  }
+}
+
+/**
+ * Check if a custom-typed slug already exists in database
+ */
+export async function checkSlugAvailability(
+  slug: string,
+  currentProductId?: string
+): Promise<{ exists: boolean; availableSlug: string; message?: string; existingProductName?: string }> {
+  try {
+    const cleanSlug = slug
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+
+    if (!cleanSlug) {
+      return { exists: false, availableSlug: "" };
+    }
+
+    const existing = await query(
+      `SELECT "id", "name" FROM "Product" WHERE "slug" = $1 ${currentProductId ? 'AND "id" != $2' : ''} LIMIT 1`,
+      currentProductId ? [cleanSlug, currentProductId] : [cleanSlug]
+    );
+
+    if (existing.rows.length > 0) {
+      const availableSlug = await generateUniqueSlug(cleanSlug, currentProductId);
+      const existingProduct = existing.rows[0] as any;
+      return {
+        exists: true,
+        availableSlug,
+        existingProductName: existingProduct.name,
+        message: `This URL is already in use by "${existingProduct.name}".`,
+      };
+    }
+
+    return { exists: false, availableSlug: cleanSlug };
+  } catch {
+    return { exists: false, availableSlug: slug };
+  }
+}
+
+/**
  * Helper to generate default SKU
  */
 function generateDefaultSku(productId: string) {
@@ -62,7 +123,7 @@ export async function createProduct(input: ProductFormValues) {
   try {
     const validated = productFormSchema.parse(input);
     const productId = validated.id || generateId("prd_");
-    const slug = await generateUniqueSlug(validated.name);
+    const slug = await generateUniqueSlug(validated.slug?.trim() || validated.name);
     const sku = generateDefaultSku(productId);
 
     const priceInPaise = Math.round(validated.price * 100);
@@ -214,7 +275,7 @@ export async function createProduct(input: ProductFormValues) {
 export async function updateProduct(productId: string, input: ProductFormValues) {
   try {
     const validated = productFormSchema.parse(input);
-    const slug = await generateUniqueSlug(validated.name, productId);
+    const slug = await generateUniqueSlug(validated.slug?.trim() || validated.name, productId);
 
     const priceInPaise = Math.round(validated.price * 100);
     const strikethroughInPaise = validated.strikethroughPrice ? Math.round(validated.strikethroughPrice * 100) : null;

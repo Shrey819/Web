@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -18,11 +18,24 @@ import {
   Package,
   Layers,
   Sparkles,
-  Info
+  Info,
+  Building2,
+  Bookmark,
+  Tag,
+  FileText,
+  Sliders,
+  FolderTree,
 } from "lucide-react";
 import { toggleProductVisibility, duplicateProduct, deleteProduct } from "@/app/actions/product";
 import { useToastStore } from "@/store/useToastStore";
 import { CustomizeColumnsDrawer, ColumnConfig } from "./modals/CustomizeColumnsDrawer";
+import { ManageBrandsModal } from "./modals/ManageBrandsModal";
+import { ManageRibbonsModal } from "./modals/ManageRibbonsModal";
+import { ManageTagsModal } from "./modals/ManageTagsModal";
+import { SelectInfoSectionsModal } from "./modals/SelectInfoSectionsModal";
+import { EditInfoSectionModal } from "./modals/EditInfoSectionModal";
+import { ManageGlobalOptionsModal } from "./modals/ManageGlobalOptionsModal";
+import { ApplyOptionPresetModal } from "./modals/ApplyOptionPresetModal";
 
 interface ProductRow {
   id: string;
@@ -45,6 +58,17 @@ interface AdminProductsClientProps {
   products: ProductRow[];
 }
 
+const DEFAULT_PRODUCT_COLUMNS: ColumnConfig[] = [
+  { id: "name", label: "Name", visible: true, required: true },
+  { id: "type", label: "Type", visible: true },
+  { id: "sku", label: "SKU", visible: true },
+  { id: "price", label: "Price", visible: true },
+  { id: "inventory", label: "Inventory", visible: true },
+  { id: "ribbon", label: "Ribbon", visible: true },
+  { id: "brand", label: "Brand", visible: true },
+  { id: "tags", label: "Tags", visible: false },
+];
+
 export function AdminProductsClient({ products: initialProducts }: AdminProductsClientProps) {
   const router = useRouter();
   const { addToast } = useToastStore();
@@ -55,17 +79,67 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [isCustomizeColumnsOpen, setIsCustomizeColumnsOpen] = useState(false);
 
-  // Column visibility configuration matching Wix
-  const [columns, setColumns] = useState<ColumnConfig[]>([
-    { id: "name", label: "Name", visible: true, required: true },
-    { id: "type", label: "Type", visible: true },
-    { id: "sku", label: "SKU", visible: true },
-    { id: "price", label: "Price", visible: true },
-    { id: "inventory", label: "Inventory", visible: true },
-    { id: "ribbon", label: "Ribbon", visible: true },
-    { id: "brand", label: "Brand", visible: false },
-    { id: "tags", label: "Tags", visible: false },
-  ]);
+  // Global Management Modals State
+  const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
+  const [isManageBrandsOpen, setIsManageBrandsOpen] = useState(false);
+  const [isManageRibbonsOpen, setIsManageRibbonsOpen] = useState(false);
+  const [isManageTagsOpen, setIsManageTagsOpen] = useState(false);
+  const [isManageSectionsOpen, setIsManageSectionsOpen] = useState(false);
+  const [isEditSectionOpen, setIsEditSectionOpen] = useState(false);
+  const [editingSection, setEditingSection] = useState<any>(null);
+  const [infoSectionsList, setInfoSectionsList] = useState<any[]>([]);
+  const [isManageOptionsOpen, setIsManageOptionsOpen] = useState(false);
+  const [isApplyPresetOpen, setIsApplyPresetOpen] = useState(false);
+  const moreActionsRef = useRef<HTMLDivElement>(null);
+
+  // Column visibility configuration matching Wix with localStorage persistence
+  const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_PRODUCT_COLUMNS);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreActionsRef.current && !moreActionsRef.current.contains(e.target as Node)) {
+        setIsMoreActionsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("admin_products_columns_config");
+        if (saved) {
+          const parsed: ColumnConfig[] = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const merged = parsed.map((c) => {
+              const def = DEFAULT_PRODUCT_COLUMNS.find((d) => d.id === c.id);
+              return def ? { ...def, ...c } : c;
+            });
+            DEFAULT_PRODUCT_COLUMNS.forEach((def) => {
+              if (!merged.some((m) => m.id === def.id)) {
+                merged.push(def);
+              }
+            });
+            setColumns(merged);
+          }
+        }
+      } catch (e) {
+        console.error("Error reading saved product columns:", e);
+      }
+    }
+  }, []);
+
+  const handleUpdateColumns = (updated: ColumnConfig[]) => {
+    setColumns(updated);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("admin_products_columns_config", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Error saving product columns:", e);
+      }
+    }
+  };
 
   const filtered = products.filter((p) => {
     const query = search.toLowerCase().trim();
@@ -139,9 +213,118 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Global Tables More Actions Dropdown */}
+          <div ref={moreActionsRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setIsMoreActionsOpen(!isMoreActionsOpen)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
+              <span>More Actions</span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${
+                  isMoreActionsOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isMoreActionsOpen && (
+              <div className="absolute right-0 top-full mt-1.5 z-50 w-64 bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Global Catalog Tables
+                </div>
+
+                <div className="py-1 space-y-0.5">
+                  <Link
+                    href="/admin/categories"
+                    onClick={() => setIsMoreActionsOpen(false)}
+                    className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FolderTree className="w-4 h-4 text-slate-400" />
+                      <span>Manage Categories</span>
+                    </div>
+                    <ExternalLink className="w-3 h-3 text-slate-400" />
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMoreActionsOpen(false);
+                      setIsManageBrandsOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                  >
+                    <Building2 className="w-4 h-4 text-slate-400" />
+                    <span>Manage Brands</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMoreActionsOpen(false);
+                      setIsManageRibbonsOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                  >
+                    <Bookmark className="w-4 h-4 text-slate-400" />
+                    <span>Manage Ribbons</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMoreActionsOpen(false);
+                      setIsManageTagsOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                  >
+                    <Tag className="w-4 h-4 text-slate-400" />
+                    <span>Manage Tags</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsMoreActionsOpen(false);
+                      const res = await (await import("@/app/actions/productManagement")).getGlobalInfoSections();
+                      if (res.success) {
+                        setInfoSectionsList(res.sections || []);
+                      }
+                      setIsManageSectionsOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                  >
+                    <FileText className="w-4 h-4 text-slate-400" />
+                    <span>Manage Info Sections</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMoreActionsOpen(false);
+                      setIsApplyPresetOpen(true);
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Sliders className="w-4 h-4 text-slate-400" />
+                      <span>Apply Option Setting</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">
+                      Presets
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <Link
             href="/admin/products/new"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" /> New Product
           </Link>
@@ -439,7 +622,74 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
         isOpen={isCustomizeColumnsOpen}
         onClose={() => setIsCustomizeColumnsOpen(false)}
         columns={columns}
-        onChange={setColumns}
+        onChange={handleUpdateColumns}
+      />
+
+      {/* Global Modals for More Actions */}
+      <ManageBrandsModal
+        isOpen={isManageBrandsOpen}
+        onClose={() => setIsManageBrandsOpen(false)}
+        onBrandsUpdated={() => router.refresh()}
+      />
+
+      <ManageRibbonsModal
+        isOpen={isManageRibbonsOpen}
+        onClose={() => setIsManageRibbonsOpen(false)}
+        onRibbonsUpdated={() => router.refresh()}
+      />
+
+      <ManageTagsModal
+        isOpen={isManageTagsOpen}
+        onClose={() => setIsManageTagsOpen(false)}
+        onTagsUpdated={() => router.refresh()}
+      />
+
+      <SelectInfoSectionsModal
+        isOpen={isManageSectionsOpen}
+        onClose={() => setIsManageSectionsOpen(false)}
+        selectedIds={[]}
+        initialSections={infoSectionsList}
+        onApply={(_, updatedList) => {
+          setInfoSectionsList(updatedList);
+        }}
+        onOpenCreateSection={() => {
+          setEditingSection(null);
+          setIsEditSectionOpen(true);
+        }}
+        onOpenEditSection={(sec) => {
+          setEditingSection(sec);
+          setIsEditSectionOpen(true);
+        }}
+      />
+
+      <EditInfoSectionModal
+        isOpen={isEditSectionOpen}
+        onClose={() => {
+          setIsEditSectionOpen(false);
+          setEditingSection(null);
+        }}
+        section={editingSection}
+        onSaved={(saved) => {
+          setInfoSectionsList((prev) => {
+            const exists = prev.some((s) => s.id === saved.id);
+            return exists
+              ? prev.map((s) => (s.id === saved.id ? { ...s, ...saved } : s))
+              : [...prev, saved];
+          });
+        }}
+      />
+
+      <ApplyOptionPresetModal
+        isOpen={isApplyPresetOpen}
+        onClose={() => setIsApplyPresetOpen(false)}
+        onApplyPreset={() => {
+          setIsApplyPresetOpen(false);
+          addToast(
+            "info",
+            "Option Presets",
+            "To apply this preset to a product, open the product editor and click 'Option Presets'."
+          );
+        }}
       />
     </div>
   );

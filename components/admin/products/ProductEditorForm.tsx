@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { productFormSchema, type ProductFormValues } from "@/lib/validations/product";
-import { createProduct, updateProduct, deleteProduct } from "@/app/actions/product";
+import {
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  checkAndGetUniqueProductSlug,
+  checkSlugAvailability,
+} from "@/app/actions/product";
 import { useToastStore } from "@/store/useToastStore";
 import { generateCartesianVariants, type GeneratedVariant } from "@/lib/variantGenerator";
 import {
@@ -34,7 +40,12 @@ import {
   Tag as TagIcon,
   Bookmark,
   Layers,
-  Edit2
+  Edit2,
+  ChevronDown,
+  Globe,
+  RotateCcw,
+  Copy,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { CldUploadButton } from "next-cloudinary";
@@ -49,6 +60,7 @@ import { ProductMediaManagerModal } from "./modals/ProductMediaManagerModal";
 import { SaveOptionPresetModal } from "./modals/SaveOptionPresetModal";
 import { ApplyOptionPresetModal } from "./modals/ApplyOptionPresetModal";
 import { VariantMatrixEditorModal } from "./modals/VariantMatrixEditorModal";
+import { SelectInfoSectionsModal } from "./modals/SelectInfoSectionsModal";
 import { WixRichTextEditor } from "./WixRichTextEditor";
 
 interface CategoryItem {
@@ -77,12 +89,23 @@ interface InfoSectionItem {
   productCount?: number;
 }
 
+interface BrandItem {
+  id: string;
+  name: string;
+  slug?: string;
+  productCount?: number;
+}
+
 interface ProductEditorFormProps {
   initialData?: any;
   categories: CategoryItem[];
   allRibbons?: RibbonItem[];
   allTags?: TagItem[];
   allInfoSections?: InfoSectionItem[];
+  allBrands?: BrandItem[];
+  defaultSectionIds?: string[];
+  defaultCategoryIds?: string[];
+  defaultPrimaryCategoryId?: string;
   isEdit?: boolean;
 }
 
@@ -92,6 +115,10 @@ export function ProductEditorForm({
   allRibbons = [],
   allTags = [],
   allInfoSections = [],
+  allBrands = [],
+  defaultSectionIds = [],
+  defaultCategoryIds = [],
+  defaultPrimaryCategoryId,
   isEdit = false,
 }: ProductEditorFormProps) {
   const router = useRouter();
@@ -105,21 +132,63 @@ export function ProductEditorForm({
   const [ribbonsList, setRibbonsList] = useState<RibbonItem[]>(allRibbons);
   const [tagsList, setTagsList] = useState<TagItem[]>(allTags);
   const [infoSectionsList, setInfoSectionsList] = useState<InfoSectionItem[]>(allInfoSections);
+  const [brandsList, setBrandsList] = useState<BrandItem[]>(allBrands);
+
+  // Brand Combobox State
+  const brandRef = useRef<HTMLDivElement>(null);
+  const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
+  const [brandSearch, setBrandSearch] = useState("");
+  const [isCreatingBrand, setIsCreatingBrand] = useState(false);
+
+  // Tag Direct Input & Autocomplete State
+  const tagContainerRef = useRef<HTMLDivElement>(null);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+  const [tagInput, setTagInput] = useState("");
+  const [isTagSuggestOpen, setIsTagSuggestOpen] = useState(false);
+  const [highlightedTagIdx, setHighlightedTagIdx] = useState(-1);
+  const [isCreatingTag, setIsCreatingTag] = useState(false);
 
   // Selected State
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(() => {
-    if (initialData?.categoryIds && initialData.categoryIds.length > 0) return initialData.categoryIds;
-    if (initialData?.categoryId) return [initialData.categoryId];
+    if (isEdit && initialData) {
+      if (initialData?.categoryIds && initialData.categoryIds.length > 0) return initialData.categoryIds;
+      if (initialData?.categoryId) return [initialData.categoryId];
+      return [initialCategories[0]?.id || "cat_default"];
+    }
+    if (defaultCategoryIds && defaultCategoryIds.length > 0) {
+      return defaultCategoryIds;
+    }
     return [initialCategories[0]?.id || "cat_default"];
   });
-  const [primaryCatId, setPrimaryCatId] = useState<string>(
-    initialData?.primaryCategoryId || initialData?.categoryId || initialCategories[0]?.id || ""
-  );
+  const [primaryCatId, setPrimaryCatId] = useState<string>(() => {
+    if (isEdit && initialData) {
+      return initialData?.primaryCategoryId || initialData?.categoryId || initialCategories[0]?.id || "";
+    }
+    if (defaultPrimaryCategoryId) {
+      return defaultPrimaryCategoryId;
+    }
+    if (defaultCategoryIds && defaultCategoryIds.length > 0) {
+      return defaultCategoryIds[0];
+    }
+    return initialCategories[0]?.id || "";
+  });
 
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialData?.tagIds || []);
-  const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>(
-    initialData?.infoSectionIds || (allInfoSections.slice(0, 4).map((s) => s.id))
-  );
+  const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>(() => {
+    if (isEdit && initialData) {
+      return initialData.infoSectionIds || [];
+    }
+    if (defaultSectionIds && defaultSectionIds.length > 0) {
+      return defaultSectionIds;
+    }
+    return allInfoSections.slice(0, 3).map((s) => s.id);
+  });
+  const [isInfoSectionsEnabled, setIsInfoSectionsEnabled] = useState<boolean>(() => {
+    if (isEdit && initialData) {
+      return Boolean(initialData.infoSectionIds && initialData.infoSectionIds.length > 0);
+    }
+    return true;
+  });
 
   // Options & Variants Matrix State
   const [options, setOptions] = useState<any[]>(initialData?.options || []);
@@ -134,6 +203,7 @@ export function ProductEditorForm({
   const [isAddOptionOpen, setIsAddOptionOpen] = useState(false);
   const [editingOption, setEditingOption] = useState<any | null>(null);
   const [editingOptionIndex, setEditingOptionIndex] = useState<number | null>(null);
+  const [isSelectInfoSectionsOpen, setIsSelectInfoSectionsOpen] = useState(false);
   const [isEditInfoSectionOpen, setIsEditInfoSectionOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<InfoSectionItem | null>(null);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
@@ -146,9 +216,23 @@ export function ProductEditorForm({
     Boolean(initialData?.showPricePerUnit ?? false)
   );
 
+  // SEO & Slug State
+  const [isCustomSlug, setIsCustomSlug] = useState<boolean>(Boolean(initialData?.slug));
+  const [isEditingSlug, setIsEditingSlug] = useState<boolean>(false);
+  const [isCopiedSlug, setIsCopiedSlug] = useState<boolean>(false);
+  const [slugAvailability, setSlugAvailability] = useState<{
+    checked: boolean;
+    exists: boolean;
+    suggestedSlug?: string;
+    existingProductName?: string;
+    message?: string;
+  }>({ checked: false, exists: false });
+  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+
   const defaultValues: Partial<ProductFormValues> = {
     id: initialData?.id,
     name: initialData?.name || "",
+    slug: initialData?.slug || "",
     description: initialData?.description || "",
     visible: initialData?.visible ?? true,
     showInPos: initialData?.showInPos ?? true,
@@ -186,12 +270,75 @@ export function ProductEditorForm({
   });
 
   const productName = watch("name") || "";
+  const slugValue = watch("slug") || "";
   const basePrice = Number(watch("price") || 0);
   const strikethroughPrice = Number(watch("strikethroughPrice") || 0);
   const isVisible = watch("visible");
   const isPosVisible = watch("showInPos");
   const currentPrimaryRibbon = watch("primaryRibbon");
   const brandValue = watch("brand") || "";
+
+  // Auto-generate slug from product name with database collision check if user hasn't manually customized it
+  useEffect(() => {
+    if (!isCustomSlug && productName.trim()) {
+      const timer = setTimeout(async () => {
+        const res = await checkAndGetUniqueProductSlug(productName.trim(), initialData?.id);
+        if (res.success && res.slug) {
+          setValue("slug", res.slug, { shouldDirty: true });
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [productName, isCustomSlug, initialData?.id, setValue]);
+
+  // Real-time check if custom-entered slug is already in use by another product
+  useEffect(() => {
+    const trimmed = (slugValue || "").trim();
+    if (!trimmed) {
+      setSlugAvailability({ checked: false, exists: false });
+      return;
+    }
+
+    setIsCheckingSlug(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await checkSlugAvailability(trimmed, initialData?.id);
+        if (res.exists) {
+          setSlugAvailability({
+            checked: true,
+            exists: true,
+            suggestedSlug: res.availableSlug,
+            existingProductName: res.existingProductName,
+            message: res.message,
+          });
+        } else {
+          setSlugAvailability({
+            checked: true,
+            exists: false,
+            suggestedSlug: res.availableSlug,
+          });
+        }
+      } finally {
+        setIsCheckingSlug(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [slugValue, initialData?.id]);
+
+  const handleResetSlug = async () => {
+    const nameToCheck = productName.trim();
+    if (!nameToCheck) {
+      addToast("warning", "Enter Name", "Please enter product name first.");
+      return;
+    }
+    const res = await checkAndGetUniqueProductSlug(nameToCheck, initialData?.id);
+    if (res.success && res.slug) {
+      setIsCustomSlug(false);
+      setValue("slug", res.slug, { shouldDirty: true });
+      addToast("success", "URL Reset", `Available unique URL assigned: /products/${res.slug}`);
+    }
+  };
 
   // Prune invalid variant overrides if option choices are deleted
   useEffect(() => {
@@ -233,8 +380,245 @@ export function ProductEditorForm({
   }, [selectedTagIds]);
 
   useEffect(() => {
-    setValue("infoSectionIds", selectedSectionIds, { shouldDirty: true });
-  }, [selectedSectionIds]);
+    setValue("infoSectionIds", isInfoSectionsEnabled ? selectedSectionIds : [], { shouldDirty: true });
+  }, [selectedSectionIds, isInfoSectionsEnabled]);
+
+  // For new products: restore last saved info sections template from localStorage
+  useEffect(() => {
+    if (!isEdit && !initialData?.id && typeof window !== "undefined") {
+      try {
+        const savedLast = localStorage.getItem("admin_last_info_sections");
+        const savedLastEnabled = localStorage.getItem("admin_last_info_sections_enabled");
+        if (savedLast) {
+          const parsed = JSON.parse(savedLast);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const valid = parsed.filter((id) => allInfoSections.some((s) => s.id === id));
+            if (valid.length > 0) {
+              setSelectedSectionIds(valid);
+              setValue("infoSectionIds", valid, { shouldDirty: false });
+            }
+          }
+        }
+        if (savedLastEnabled !== null) {
+          setIsInfoSectionsEnabled(savedLastEnabled === "true");
+        }
+      } catch (e) {
+        console.error("Error reading last info sections:", e);
+      }
+    }
+  }, [isEdit, initialData?.id, allInfoSections, setValue]);
+
+  // For new products: restore last saved categories template from localStorage
+  useEffect(() => {
+    if (!isEdit && !initialData?.id && typeof window !== "undefined") {
+      try {
+        const savedLastCats = localStorage.getItem("admin_last_categories");
+        const savedLastPrimary = localStorage.getItem("admin_last_primary_category");
+        if (savedLastCats) {
+          const parsed = JSON.parse(savedLastCats);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const valid = parsed.filter((id) => categoriesList.some((c) => c.id === id));
+            if (valid.length > 0) {
+              setSelectedCategoryIds(valid);
+              setValue("categoryIds", valid, { shouldDirty: false });
+              const primary = savedLastPrimary && valid.includes(savedLastPrimary) ? savedLastPrimary : valid[0];
+              setPrimaryCatId(primary);
+              setValue("categoryId", primary, { shouldDirty: false });
+              setValue("primaryCategoryId", primary, { shouldDirty: false });
+            }
+          }
+        } else if (defaultCategoryIds && defaultCategoryIds.length > 0) {
+          const valid = defaultCategoryIds.filter((id) => categoriesList.some((c) => c.id === id));
+          if (valid.length > 0) {
+            setSelectedCategoryIds(valid);
+            setValue("categoryIds", valid, { shouldDirty: false });
+            const primary = defaultPrimaryCategoryId && valid.includes(defaultPrimaryCategoryId) ? defaultPrimaryCategoryId : valid[0];
+            setPrimaryCatId(primary);
+            setValue("categoryId", primary, { shouldDirty: false });
+            setValue("primaryCategoryId", primary, { shouldDirty: false });
+          }
+        }
+      } catch (e) {
+        console.error("Error reading last categories:", e);
+      }
+    }
+  }, [isEdit, initialData?.id, defaultCategoryIds, defaultPrimaryCategoryId, categoriesList, setValue]);
+
+  // Sync brands list if prop changes
+  useEffect(() => {
+    if (allBrands && allBrands.length > 0) {
+      setBrandsList(allBrands);
+    }
+  }, [allBrands]);
+
+  // Click outside to close brand dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (brandRef.current && !brandRef.current.contains(e.target as Node)) {
+        setIsBrandDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const currentBrandValue = watch("brand") || "";
+  const filteredBrands = brandsList.filter((b) =>
+    b.name.toLowerCase().includes(brandSearch.toLowerCase())
+  );
+  const hasExactBrandMatch = brandsList.some(
+    (b) => b.name.toLowerCase() === brandSearch.trim().toLowerCase()
+  );
+
+  const handleSelectBrand = (brandName: string) => {
+    setValue("brand", brandName, { shouldDirty: true });
+    setBrandSearch("");
+    setIsBrandDropdownOpen(false);
+  };
+
+  const handleCreateNewBrand = async (brandNameToCreate: string) => {
+    const trimmed = brandNameToCreate.trim();
+    if (!trimmed) return;
+    setIsCreatingBrand(true);
+    try {
+      const res = await (await import("@/app/actions/productManagement")).createBrand(trimmed);
+      if (res.success && res.id) {
+        const newBrand = { id: res.id, name: trimmed, productCount: 0 };
+        setBrandsList((prev) =>
+          [...prev.filter((b) => b.name.toLowerCase() !== trimmed.toLowerCase()), newBrand].sort((a, b) =>
+            a.name.localeCompare(b.name)
+          )
+        );
+        setValue("brand", trimmed, { shouldDirty: true });
+        setBrandSearch("");
+        setIsBrandDropdownOpen(false);
+        addToast("success", "Brand Created", `"${trimmed}" added and selected.`);
+      } else {
+        addToast("error", "Error", res.error || "Could not create brand.");
+      }
+    } finally {
+      setIsCreatingBrand(false);
+    }
+  };
+
+  const handleDeleteBrand = async (brand: BrandItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (confirm(`Are you sure you want to delete brand "${brand.name}"?`)) {
+      const res = await (await import("@/app/actions/productManagement")).deleteBrand(brand.id, brand.name);
+      if (res.success) {
+        setBrandsList((prev) => prev.filter((b) => b.id !== brand.id));
+        if (currentBrandValue.toLowerCase() === brand.name.toLowerCase()) {
+          setValue("brand", "", { shouldDirty: true });
+        }
+        addToast("success", "Brand Deleted", `"${brand.name}" deleted.`);
+      } else {
+        addToast("error", "Error", res.error || "Could not delete brand.");
+      }
+    }
+  };
+
+  // Tag input helpers & suggestions
+  const matchingTagSuggestions = useMemo(() => {
+    if (!tagInput.trim()) return [];
+    const query = tagInput.trim().toLowerCase();
+    return tagsList.filter(
+      (t) => t.name.toLowerCase().includes(query) && !selectedTagIds.includes(t.id)
+    );
+  }, [tagInput, tagsList, selectedTagIds]);
+
+  const hasExactTagMatch = useMemo(() => {
+    const query = tagInput.trim().toLowerCase();
+    return tagsList.some((t) => t.name.toLowerCase() === query);
+  }, [tagInput, tagsList]);
+
+  // Click outside to close tag suggestions
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (tagContainerRef.current && !tagContainerRef.current.contains(e.target as Node)) {
+        setIsTagSuggestOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleAssignTagById = (tagId: string) => {
+    if (!selectedTagIds.includes(tagId)) {
+      setSelectedTagIds((prev) => [...prev, tagId]);
+    }
+    setTagInput("");
+    setIsTagSuggestOpen(false);
+    setHighlightedTagIdx(-1);
+    tagInputRef.current?.focus();
+  };
+
+  const handleCreateAndAssignTag = async (rawName: string) => {
+    const trimmed = rawName.trim().replace(/^,+|,+$/g, "");
+    if (!trimmed) return;
+
+    // Check if tag already exists in tagsList
+    const existing = tagsList.find((t) => t.name.toLowerCase() === trimmed.toLowerCase());
+    if (existing) {
+      handleAssignTagById(existing.id);
+      return;
+    }
+
+    setIsCreatingTag(true);
+    try {
+      const res = await (await import("@/app/actions/productManagement")).createTag(trimmed);
+      if (res.success && res.id) {
+        const newTag = { id: res.id, name: res.name || trimmed };
+        setTagsList((prev) => [...prev.filter((t) => t.id !== newTag.id), newTag]);
+        setSelectedTagIds((prev) => (prev.includes(newTag.id) ? prev : [...prev, newTag.id]));
+        setTagInput("");
+        setIsTagSuggestOpen(false);
+        setHighlightedTagIdx(-1);
+        tagInputRef.current?.focus();
+      } else {
+        addToast("error", "Failed", res.error || "Could not create tag.");
+      }
+    } finally {
+      setIsCreatingTag(false);
+    }
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === "Tab" || e.key === ",") {
+      e.preventDefault();
+      if (
+        matchingTagSuggestions.length > 0 &&
+        highlightedTagIdx >= 0 &&
+        highlightedTagIdx < matchingTagSuggestions.length
+      ) {
+        handleAssignTagById(matchingTagSuggestions[highlightedTagIdx].id);
+      } else if (
+        matchingTagSuggestions.length > 0 &&
+        (e.key === "Tab" || (e.key === "Enter" && hasExactTagMatch))
+      ) {
+        handleAssignTagById(matchingTagSuggestions[0].id);
+      } else if (tagInput.trim()) {
+        handleCreateAndAssignTag(tagInput);
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!isTagSuggestOpen) {
+        setIsTagSuggestOpen(true);
+      }
+      setHighlightedTagIdx((prev) =>
+        prev < matchingTagSuggestions.length - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedTagIdx((prev) =>
+        prev > 0 ? prev - 1 : matchingTagSuggestions.length - 1
+      );
+    } else if (e.key === "Backspace" && !tagInput && selectedTagIds.length > 0) {
+      setSelectedTagIds((prev) => prev.slice(0, -1));
+    } else if (e.key === "Escape") {
+      setIsTagSuggestOpen(false);
+    }
+  };
 
   const handleGenerateAiDescription = () => {
     if (!productName.trim()) {
@@ -416,7 +800,7 @@ export function ProductEditorForm({
         categoryIds: activeCategories,
         primaryCategoryId: activePrimaryCat,
         tagIds: selectedTagIds,
-        infoSectionIds: selectedSectionIds,
+        infoSectionIds: isInfoSectionsEnabled ? selectedSectionIds : [],
         showPricePerUnit,
         images,
         options: cleanOptions,
@@ -428,6 +812,25 @@ export function ProductEditorForm({
         : await createProduct(payload);
 
       if (res.success) {
+        if (typeof window !== "undefined") {
+          try {
+            if (isInfoSectionsEnabled && selectedSectionIds.length > 0) {
+              localStorage.setItem("admin_last_info_sections", JSON.stringify(selectedSectionIds));
+              localStorage.setItem("admin_last_info_sections_enabled", "true");
+            } else {
+              localStorage.setItem("admin_last_info_sections_enabled", "false");
+            }
+
+            if (selectedCategoryIds.length > 0) {
+              localStorage.setItem("admin_last_categories", JSON.stringify(selectedCategoryIds));
+              if (primaryCatId) {
+                localStorage.setItem("admin_last_primary_category", primaryCatId);
+              }
+            }
+          } catch (e) {
+            console.error("Error saving last preferences:", e);
+          }
+        }
         addToast("success", isEdit ? "Product Updated" : "Product Created", "All changes saved successfully!");
         router.push("/admin/products");
         router.refresh();
@@ -566,6 +969,7 @@ export function ProductEditorForm({
                   value={watch("description") || ""}
                   onChange={(html) => setValue("description", html, { shouldDirty: true })}
                   placeholder="Enter detailed product description or instructions..."
+                  maxLength={1000}
                 />
               </div>
             </div>
@@ -997,83 +1401,167 @@ export function ProductEditorForm({
 
             {/* 6. Additional Info Sections Card */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-6 space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    Additional info sections <span className="text-xs text-slate-400 font-medium">({selectedSectionIds.length} / 10)</span>
+                    Additional info sections{" "}
+                    {isInfoSectionsEnabled && (
+                      <span className="text-xs text-slate-400 font-medium">
+                        ({selectedSectionIds.length} / 10)
+                      </span>
+                    )}
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Display more relevant info about the product, like a return policy or size chart.
                   </p>
                 </div>
-              </div>
 
-              {/* Sections List */}
-              <div className="space-y-3 pt-2">
-                {selectedSectionIds.map((secId, sIdx) => {
-                  const section = infoSectionsList.find((s) => s.id === secId) || {
-                    id: secId,
-                    title: "Section " + (sIdx + 1),
-                    internalName: "Section " + (sIdx + 1),
-                    content: "Information content...",
-                  };
-                  return (
-                    <div
-                      key={secId}
-                      className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between gap-4"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="text-slate-400 cursor-grab">
-                          <GripVertical className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-slate-900">
-                            {section.title} <span className="text-slate-400 font-normal">/ {section.internalName}</span>
-                          </div>
-                          <div className="text-xs text-slate-500 truncate max-w-sm mt-0.5">
-                            {section.content?.replace(/<[^>]*>?/gm, "") || "Content..."}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingSection(section);
-                            setIsEditInfoSectionOpen(true);
-                          }}
-                          className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 shadow-2xs"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSelectedSectionIds((prev) => prev.filter((id) => id !== secId))
-                          }
-                          className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {selectedSectionIds.length < 10 && (
+                {/* Right-side Controls: Add / Select Button + On/Off Switch */}
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => {
-                      setEditingSection(null);
-                      setIsEditInfoSectionOpen(true);
-                    }}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 pt-1"
+                    onClick={() => setIsSelectInfoSectionsOpen(true)}
+                    className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-xl shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Plus className="w-4 h-4" /> Add Another Info Section
+                    <Plus className="w-3.5 h-3.5 text-blue-600" />
+                    Add / Select
                   </button>
-                )}
+
+                  <div className="h-4 w-px bg-slate-200" />
+
+                  {/* On/Off Toggle Switch */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isInfoSectionsEnabled}
+                      onClick={() => setIsInfoSectionsEnabled(!isInfoSectionsEnabled)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                        isInfoSectionsEnabled ? "bg-blue-600" : "bg-slate-300"
+                      }`}
+                      title={isInfoSectionsEnabled ? "Turn off info sections" : "Turn on info sections"}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                          isInfoSectionsEnabled ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                    <span className="text-xs font-bold text-slate-700 min-w-7">
+                      {isInfoSectionsEnabled ? "On" : "Off"}
+                    </span>
+                  </div>
+                </div>
               </div>
+
+              {/* Card Body */}
+              {!isInfoSectionsEnabled ? (
+                <div className="p-5 bg-slate-50/70 border border-slate-200 rounded-xl flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-slate-800 block">
+                      Info sections are turned off
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Sections will not appear on the product page until you turn the switch on.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsInfoSectionsEnabled(true)}
+                    className="px-3.5 py-1.5 text-xs font-bold text-blue-600 bg-white border border-blue-200 hover:bg-blue-50/50 rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    Turn On
+                  </button>
+                </div>
+              ) : selectedSectionIds.length === 0 ? (
+                <div className="p-6 bg-slate-50/70 border border-slate-200 rounded-xl flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-slate-800 block">
+                      No info sections assigned
+                    </span>
+                    <p className="text-xs text-slate-500">
+                      Choose from your saved library of sections (e.g. Return Policy, Shipping Info).
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsSelectInfoSectionsOpen(true)}
+                    className="px-3.5 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Select Sections
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3 pt-1">
+                  {selectedSectionIds.map((secId, sIdx) => {
+                    const section = infoSectionsList.find((s) => s.id === secId) || {
+                      id: secId,
+                      title: "Section " + (sIdx + 1),
+                      internalName: "Section " + (sIdx + 1),
+                      content: "Information content...",
+                    };
+                    return (
+                      <div
+                        key={secId}
+                        className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between gap-4"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="text-slate-400 cursor-grab shrink-0">
+                            <GripVertical className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-900 truncate">
+                              {section.title}{" "}
+                              {section.internalName && section.internalName !== section.title && (
+                                <span className="text-slate-400 font-normal">
+                                  / {section.internalName}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-slate-500 truncate max-w-sm mt-0.5">
+                              {section.content?.replace(/<[^>]*>?/gm, "") || "Content..."}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingSection(section);
+                              setIsEditInfoSectionOpen(true);
+                            }}
+                            className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 shadow-2xs cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedSectionIds((prev) => prev.filter((id) => id !== secId))
+                            }
+                            className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 cursor-pointer"
+                            title="Remove from product"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {selectedSectionIds.length < 10 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsSelectInfoSectionsOpen(true)}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 pt-1 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" /> Add Another Info Section
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1163,10 +1651,21 @@ export function ProductEditorForm({
                           type="button"
                           onClick={() => {
                             if (selectedCategoryIds.length > 1) {
-                              setSelectedCategoryIds((prev) => prev.filter((id) => id !== cId));
+                              const remaining = selectedCategoryIds.filter((id) => id !== cId);
+                              setSelectedCategoryIds(remaining);
+                              setValue("categoryIds", remaining, { shouldDirty: true });
+                              if (primaryCatId === cId) {
+                                const newPrimary = remaining[0];
+                                setPrimaryCatId(newPrimary);
+                                setValue("categoryId", newPrimary, { shouldDirty: true });
+                                setValue("primaryCategoryId", newPrimary, { shouldDirty: true });
+                              }
+                            } else {
+                              addToast("warning", "Required", "Product must belong to at least 1 category.");
                             }
                           }}
-                          className="p-1 text-slate-400 hover:text-red-600"
+                          className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                          title="Remove category"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -1210,58 +1709,381 @@ export function ProductEditorForm({
             </div>
 
             {/* 10. Brand Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-2">
+            <div ref={brandRef} className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-2 relative">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
                 <span className="flex items-center gap-1">
                   Brand <Info className="w-3.5 h-3.5 text-slate-400" />
                 </span>
-                <span className="text-slate-400 font-normal">{brandValue.length} / 50</span>
+                <span className="text-slate-400 font-normal">{currentBrandValue.length} / 50</span>
               </div>
-              <input
-                type="text"
-                maxLength={50}
-                {...register("brand")}
-                placeholder="e.g. Samsung or Siemens"
-                className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900"
-              />
+
+              <div className="relative">
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    maxLength={50}
+                    value={isBrandDropdownOpen ? brandSearch : currentBrandValue}
+                    onFocus={() => {
+                      setBrandSearch(currentBrandValue);
+                      setIsBrandDropdownOpen(true);
+                    }}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setBrandSearch(val);
+                      setValue("brand", val, { shouldDirty: true });
+                      if (!isBrandDropdownOpen) setIsBrandDropdownOpen(true);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (brandSearch.trim()) {
+                          if (filteredBrands.length > 0) {
+                            handleSelectBrand(filteredBrands[0].name);
+                          } else {
+                            handleCreateNewBrand(brandSearch.trim());
+                          }
+                        }
+                      } else if (e.key === "Escape") {
+                        setIsBrandDropdownOpen(false);
+                      }
+                    }}
+                    placeholder="Search or select a brand..."
+                    className="w-full pl-3.5 pr-8 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isBrandDropdownOpen) {
+                        setBrandSearch(currentBrandValue);
+                      }
+                      setIsBrandDropdownOpen(!isBrandDropdownOpen);
+                    }}
+                    className="absolute right-2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                  >
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-150 ${isBrandDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+                </div>
+
+                {/* Dropdown Menu */}
+                {isBrandDropdownOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+                    {/* Add new option button if query doesn't match */}
+                    {brandSearch.trim() && !hasExactBrandMatch && (
+                      <button
+                        type="button"
+                        onClick={() => handleCreateNewBrand(brandSearch.trim())}
+                        disabled={isCreatingBrand}
+                        className="w-full px-3.5 py-2 text-left text-xs text-blue-600 hover:bg-blue-50/80 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        {isCreatingBrand ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                        <span>Add &quot;<strong>{brandSearch.trim()}</strong>&quot; as new brand</span>
+                      </button>
+                    )}
+
+                    {/* Filtered Brands */}
+                    {filteredBrands.length > 0 ? (
+                      filteredBrands.map((b) => {
+                        const isSelected = currentBrandValue.toLowerCase() === b.name.toLowerCase();
+                        return (
+                          <div
+                            key={b.id}
+                            onClick={() => handleSelectBrand(b.name)}
+                            className={`group px-3.5 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                              isSelected ? "bg-blue-50/90 text-blue-700 font-bold" : "text-slate-700 hover:bg-slate-50 font-medium"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span>{b.name}</span>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100">
+                              {b.productCount != null && b.productCount > 0 && (
+                                <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md font-normal">
+                                  {b.productCount} {b.productCount === 1 ? "product" : "products"}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteBrand(b, e)}
+                                title={`Delete "${b.name}"`}
+                                className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : !brandSearch.trim() ? (
+                      <div className="p-3 text-center text-xs text-slate-400 italic">
+                        No brands in database. Type a name to add.
+                      </div>
+                    ) : hasExactBrandMatch ? null : (
+                      <div className="p-2.5 text-center text-xs text-slate-400 italic">
+                        No matching brands. Click above to add.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* 11. Product Tags Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-3">
+            <div ref={tagContainerRef} className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-3 relative">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900">Product tags</h2>
+                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                  Product tags <Info className="w-3.5 h-3.5 text-slate-400" />
+                </h2>
                 <button
                   type="button"
                   onClick={() => setIsManageTagsOpen(true)}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-800 cursor-pointer"
                 >
                   + Assign Tags
                 </button>
               </div>
 
-              <div className="flex flex-wrap gap-1.5">
+              {/* Tag Input Box with Badges */}
+              <div
+                onClick={() => tagInputRef.current?.focus()}
+                className="w-full min-h-[42px] p-2 bg-white border border-slate-200 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 flex flex-wrap items-center gap-1.5 cursor-text transition-all"
+              >
                 {selectedTagIds.map((tId) => {
                   const tag = tagsList.find((t) => t.id === tId) || { id: tId, name: tId };
                   return (
                     <span
                       key={tId}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-800 hover:bg-slate-200 rounded-md text-xs font-semibold group transition-colors"
                     >
                       {tag.name}
                       <button
                         type="button"
-                        onClick={() => setSelectedTagIds((prev) => prev.filter((id) => id !== tId))}
-                        className="text-slate-400 hover:text-slate-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTagIds((prev) => prev.filter((id) => id !== tId));
+                        }}
+                        className="text-slate-400 hover:text-red-600 p-0.5 rounded-xs cursor-pointer"
+                        title="Remove tag"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </span>
                   );
                 })}
-                {selectedTagIds.length === 0 && (
-                  <span className="text-xs text-slate-400 italic">No tags assigned.</span>
-                )}
+
+                <input
+                  ref={tagInputRef}
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => {
+                    setTagInput(e.target.value);
+                    setIsTagSuggestOpen(true);
+                    setHighlightedTagIdx(0);
+                  }}
+                  onFocus={() => {
+                    if (tagInput.trim()) setIsTagSuggestOpen(true);
+                  }}
+                  onKeyDown={handleTagInputKeyDown}
+                  placeholder={selectedTagIds.length === 0 ? "Type tag & press Enter..." : "Add more tags..."}
+                  className="flex-1 min-w-[140px] px-1 py-0.5 text-xs bg-transparent border-none outline-hidden focus:outline-hidden font-medium text-slate-900 placeholder:text-slate-400"
+                />
               </div>
+
+              {/* Autocomplete Suggestions Popup */}
+              {isTagSuggestOpen && tagInput.trim() && (
+                <div className="absolute left-5 right-5 top-[calc(100%-8px)] z-50 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-52 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+                  {/* Create New Tag Action */}
+                  {!hasExactTagMatch && (
+                    <button
+                      type="button"
+                      onClick={() => handleCreateAndAssignTag(tagInput)}
+                      disabled={isCreatingTag}
+                      className="w-full px-3.5 py-2 text-left text-xs text-blue-600 hover:bg-blue-50 font-semibold flex items-center justify-between transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        {isCreatingTag ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                        <span>Add &quot;<strong>{tagInput.trim()}</strong>&quot; as new tag</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 uppercase font-mono">Press Enter</span>
+                    </button>
+                  )}
+
+                  {/* Matching Existing Tags */}
+                  {matchingTagSuggestions.map((tag, sIdx) => {
+                    const isHighlighted = sIdx === highlightedTagIdx;
+                    return (
+                      <div
+                        key={tag.id}
+                        onClick={() => handleAssignTagById(tag.id)}
+                        className={`px-3.5 py-2 text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                          isHighlighted ? "bg-blue-50 text-blue-700 font-semibold" : "text-slate-700 hover:bg-slate-50 font-medium"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <TagIcon className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{tag.name}</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">Tab / Enter</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <p className="text-[11px] text-slate-400">
+                Type tag name and hit <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-600">Enter</kbd> or <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-600">Tab</kbd> to add quickly.
+              </p>
+            </div>
+
+            {/* 12. Product URL & SEO Card */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-blue-600" />
+                  Product URL & SEO <Info className="w-3.5 h-3.5 text-slate-400" />
+                </h2>
+                <div className="flex items-center gap-2">
+                  {isCustomSlug && (
+                    <button
+                      type="button"
+                      onClick={handleResetSlug}
+                      className="text-xs text-slate-500 hover:text-blue-600 flex items-center gap-1 cursor-pointer font-medium transition-colors"
+                      title="Regenerate unique URL from product name"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Reset
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingSlug(!isEditingSlug)}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    {isEditingSlug ? "Done" : "Edit URL"}
+                  </button>
+                </div>
+              </div>
+
+              {/* URL Preview Box */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1.5">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Storefront URL Preview
+                </div>
+                <div className="flex items-center justify-between gap-2 overflow-hidden">
+                  <span className="text-xs text-slate-700 font-mono truncate">
+                    <span className="text-slate-400 font-normal">/products/</span>
+                    <strong className="text-blue-600 font-semibold">{slugValue || "product-url-slug"}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        const fullUrl = `${window.location.origin}/products/${slugValue || ""}`;
+                        navigator.clipboard.writeText(fullUrl);
+                        setIsCopiedSlug(true);
+                        setTimeout(() => setIsCopiedSlug(false), 2000);
+                        addToast("success", "Copied", "Product URL copied to clipboard!");
+                      }
+                    }}
+                    className="p-1 text-slate-400 hover:text-slate-700 rounded-md hover:bg-slate-200/60 transition-colors shrink-0 cursor-pointer"
+                    title="Copy full product URL"
+                  >
+                    {isCopiedSlug ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Editable Slug Input */}
+              {isEditingSlug && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                    <div className="flex items-center gap-1.5">
+                      <span>Custom URL Handle</span>
+                      {isCheckingSlug ? (
+                        <span className="text-[10px] text-slate-400 font-normal flex items-center gap-1">
+                          <Loader2 className="w-2.5 h-2.5 animate-spin" /> Checking...
+                        </span>
+                      ) : slugAvailability.checked && slugValue.trim() ? (
+                        slugAvailability.exists ? (
+                          <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-sm flex items-center gap-1">
+                            <AlertCircle className="w-2.5 h-2.5" /> Already Exists
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-sm flex items-center gap-1">
+                            <Check className="w-2.5 h-2.5" /> Available
+                          </span>
+                        )
+                      ) : null}
+                    </div>
+                    <span className="text-slate-400 font-normal font-mono">{slugValue.length} / 80</span>
+                  </div>
+
+                  <div className="relative flex items-center">
+                    <span className="absolute left-3 text-xs text-slate-400 font-mono select-none">
+                      /products/
+                    </span>
+                    <input
+                      type="text"
+                      maxLength={80}
+                      value={slugValue}
+                      onChange={(e) => {
+                        const clean = e.target.value
+                          .toLowerCase()
+                          .replace(/\s+/g, "-")
+                          .replace(/[^a-z0-9-]/g, "");
+                        setIsCustomSlug(true);
+                        setValue("slug", clean, { shouldDirty: true });
+                      }}
+                      placeholder="e.g. schneider-electric-relay"
+                      className={`w-full pl-20 pr-3.5 py-2 text-xs bg-white border rounded-lg focus:outline-hidden focus:ring-2 font-mono text-slate-900 font-medium transition-colors ${
+                        slugAvailability.exists
+                          ? "border-red-400 focus:ring-red-500 bg-red-50/20 text-red-900"
+                          : slugAvailability.checked && slugValue.trim()
+                          ? "border-emerald-400 focus:ring-emerald-500"
+                          : "border-slate-200 focus:ring-blue-500"
+                      }`}
+                    />
+                  </div>
+
+                  {/* Warning message if slug already exists */}
+                  {slugAvailability.exists && (
+                    <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg flex flex-col gap-1 text-xs text-red-700 animate-in fade-in duration-150">
+                      <div className="flex items-center gap-1.5 font-semibold">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                        <span>This URL is already taken!</span>
+                      </div>
+                      {slugAvailability.existingProductName && (
+                        <p className="text-[11px] text-red-600">
+                          Used by: <strong>&quot;{slugAvailability.existingProductName}&quot;</strong>
+                        </p>
+                      )}
+                      {slugAvailability.suggestedSlug && (
+                        <div className="flex items-center justify-between pt-1 border-t border-red-200/60 mt-0.5">
+                          <span className="text-[11px] text-slate-600">
+                            Available: <strong className="font-mono text-blue-700 font-bold">{slugAvailability.suggestedSlug}</strong>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setValue("slug", slugAvailability.suggestedSlug!, { shouldDirty: true });
+                            }}
+                            className="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline cursor-pointer"
+                          >
+                            Use Suggested
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <p className="text-[11px] text-slate-400">
+                SEO-friendly web address for Google and direct customer visits.
+              </p>
             </div>
           </div>
         </div>
@@ -1306,9 +2128,33 @@ export function ProductEditorForm({
         }}
       />
 
+      <SelectInfoSectionsModal
+        isOpen={isSelectInfoSectionsOpen}
+        onClose={() => setIsSelectInfoSectionsOpen(false)}
+        selectedIds={selectedSectionIds}
+        initialSections={infoSectionsList}
+        onApply={(newSelectedIds, updatedList) => {
+          setSelectedSectionIds(newSelectedIds);
+          setInfoSectionsList(updatedList);
+          setIsInfoSectionsEnabled(newSelectedIds.length > 0);
+          setValue("infoSectionIds", newSelectedIds, { shouldDirty: true });
+        }}
+        onOpenCreateSection={() => {
+          setEditingSection(null);
+          setIsEditInfoSectionOpen(true);
+        }}
+        onOpenEditSection={(sec) => {
+          setEditingSection(sec);
+          setIsEditInfoSectionOpen(true);
+        }}
+      />
+
       <EditInfoSectionModal
         isOpen={isEditInfoSectionOpen}
-        onClose={() => setIsEditInfoSectionOpen(false)}
+        onClose={() => {
+          setIsEditInfoSectionOpen(false);
+          setEditingSection(null);
+        }}
         section={editingSection}
         onSaved={(saved) => {
           setInfoSectionsList((prev) => {
@@ -1318,6 +2164,7 @@ export function ProductEditorForm({
           if (!selectedSectionIds.includes(saved.id)) {
             setSelectedSectionIds((prev) => [...prev, saved.id]);
           }
+          setIsInfoSectionsEnabled(true);
         }}
       />
 
