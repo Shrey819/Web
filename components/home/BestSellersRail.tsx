@@ -34,16 +34,20 @@ export function BestSellersRail() {
 
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={() => scroll("left")}
               className="w-11 h-11 rounded-full bg-white border border-slate-200 hover:bg-slate-900 hover:text-white flex items-center justify-center shadow-md transition-colors"
               aria-label="Previous best sellers"
+              suppressHydrationWarning
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
+              type="button"
               onClick={() => scroll("right")}
               className="w-11 h-11 rounded-full bg-white border border-slate-200 hover:bg-slate-900 hover:text-white flex items-center justify-center shadow-md transition-colors"
               aria-label="Next best sellers"
+              suppressHydrationWarning
             >
               <ChevronRight className="w-5 h-5" />
             </button>

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { trackUserAction } from "@/lib/trackerClient";
+import { useUserStore } from "@/store/useUserStore";
 
 function getOrCreateSessionId(): string {
   if (typeof window === "undefined") return "";
@@ -45,15 +47,16 @@ function detectBrowserAndOS() {
   return { browser, os };
 }
 
-import { useUserStore } from "@/store/useUserStore";
-
 export function UserTracker() {
   const pathname = usePathname();
   const pageStartTimeRef = useRef<number>(Date.now());
   const prevPathnameRef = useRef<string>(pathname);
   const sessionIdRef = useRef<string>("");
   const { user } = useUserStore();
+  const lastTrackedClickRef = useRef<{ text: string; time: number }>({ text: "", time: 0 });
+  const scrollMilestonesRef = useRef<Set<number>>(new Set());
 
+  // 1. Heartbeat & Session Lifecycle
   useEffect(() => {
     sessionIdRef.current = getOrCreateSessionId();
     const { browser, os } = detectBrowserAndOS();
@@ -76,7 +79,10 @@ export function UserTracker() {
 
       fetch("/api/tracker/heartbeat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "69420",
+        },
         body: JSON.stringify(payload),
       }).catch((e) => console.error("Tracker initial ping error:", e));
     };
@@ -101,7 +107,10 @@ export function UserTracker() {
 
       fetch("/api/tracker/heartbeat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "69420",
+        },
         body: JSON.stringify(payload),
       }).catch(() => {});
     }, 10000);
@@ -109,7 +118,7 @@ export function UserTracker() {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Track Route Changes
+  // 2. Track Route Changes
   useEffect(() => {
     if (prevPathnameRef.current === pathname) return;
 
@@ -118,6 +127,7 @@ export function UserTracker() {
 
     pageStartTimeRef.current = Date.now();
     prevPathnameRef.current = pathname;
+    scrollMilestonesRef.current.clear();
 
     const { browser, os } = detectBrowserAndOS();
     const deviceType = detectDeviceType();
@@ -139,12 +149,17 @@ export function UserTracker() {
 
     fetch("/api/tracker/heartbeat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "69420",
+      },
       body: JSON.stringify(payload),
     }).catch(() => {});
+
+    trackUserAction("NAVIGATE", `Navigated to ${pathname}`);
   }, [pathname]);
 
-  // Track page unload / tab close
+  // 3. Track Page Unload
   useEffect(() => {
     const handleUnload = () => {
       const previousPageDuration = Math.floor((Date.now() - pageStartTimeRef.current) / 1000);
@@ -170,6 +185,134 @@ export function UserTracker() {
 
     window.addEventListener("beforeunload", handleUnload);
     return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [pathname]);
+
+  // 4. Global Smart Click & Tap Telemetry
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // Find nearest button, link, or interactive element
+      const interactiveEl = target.closest("button, a, input, select, textarea, [role='button'], [data-track]") as HTMLElement | null;
+      if (!interactiveEl) return;
+
+      // Skip internal admin tracker clicks to avoid feedback loops
+      if (window.location.pathname.startsWith("/admin/live-tracker")) return;
+
+      const tagName = interactiveEl.tagName.toLowerCase();
+      let label = "";
+
+      const ariaLabel = interactiveEl.getAttribute("aria-label") || interactiveEl.getAttribute("title");
+      const textContent = interactiveEl.textContent?.trim().replace(/\s+/g, " ");
+
+      if (ariaLabel) {
+        label = ariaLabel;
+      } else if (textContent && textContent.length < 80) {
+        label = textContent;
+      } else if (tagName === "input") {
+        label = (interactiveEl as HTMLInputElement).placeholder || (interactiveEl as HTMLInputElement).name || "Search Field";
+      }
+
+      if (!label) return;
+
+      // Debounce duplicate clicks within 600ms
+      const now = Date.now();
+      if (lastTrackedClickRef.current.text === label && now - lastTrackedClickRef.current.time < 600) {
+        return;
+      }
+      lastTrackedClickRef.current = { text: label, time: now };
+
+      const href = interactiveEl.getAttribute("href");
+      if (href && (href.startsWith("/product/") || href.startsWith("/products/"))) {
+        trackUserAction("PRODUCT_CLICK", `Viewed Product: "${label}" (${href})`);
+      } else if (href && href.startsWith("/category/")) {
+        trackUserAction("CATEGORY_CLICK", `Browsed Category: "${label}" (${href})`);
+      } else if (href && (href.startsWith("tel:") || href.startsWith("mailto:") || href.includes("whatsapp.com"))) {
+        trackUserAction("CONTACT_CLICK", `Clicked Contact Link: "${label}" (${href})`);
+      } else if (tagName === "button" || interactiveEl.getAttribute("role") === "button") {
+        trackUserAction("CLICK", `Clicked Button: "${label}"`);
+      } else {
+        trackUserAction("CLICK", `Clicked: "${label}"`);
+      }
+    };
+
+    window.addEventListener("click", handleGlobalClick, { capture: true });
+    return () => window.removeEventListener("click", handleGlobalClick, { capture: true });
+  }, []);
+
+  // 5. Scroll Depth Tracking (25%, 50%, 75%, 100%)
+  useEffect(() => {
+    let scrollTimer: NodeJS.Timeout | null = null;
+
+    const handleScroll = () => {
+      if (scrollTimer) return;
+
+      scrollTimer = setTimeout(() => {
+        scrollTimer = null;
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        if (docHeight <= 0) return;
+
+        const percent = Math.round((scrollTop / docHeight) * 100);
+        const milestones = [25, 50, 75, 100];
+
+        for (const milestone of milestones) {
+          if (percent >= milestone && !scrollMilestonesRef.current.has(milestone)) {
+            scrollMilestonesRef.current.add(milestone);
+            trackUserAction("SCROLL_DEPTH", `Scrolled ${milestone}% of ${window.location.pathname}`);
+          }
+        }
+      }, 500);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimer) clearTimeout(scrollTimer);
+    };
+  }, [pathname]);
+
+  // 6. Throttled Hover / Product Card Attention Telemetry
+  useEffect(() => {
+    let hoverTimeout: NodeJS.Timeout | null = null;
+    let currentHoverTarget: HTMLElement | null = null;
+
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      const card = target.closest(".group, [data-product-card], [data-vertical-card]") as HTMLElement | null;
+      if (!card || card === currentHoverTarget) return;
+
+      currentHoverTarget = card;
+      if (hoverTimeout) clearTimeout(hoverTimeout);
+
+      hoverTimeout = setTimeout(() => {
+        const titleEl = card.querySelector("h3, h4, .type-product-title, .font-bold");
+        const titleText = titleEl?.textContent?.trim().replace(/\s+/g, " ") || "";
+        if (titleText && titleText.length > 2 && titleText.length < 80) {
+          trackUserAction("HOVER_CARD", `Inspecting card: "${titleText}"`);
+        }
+      }, 1500);
+    };
+
+    const handleMouseOut = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && currentHoverTarget && !currentHoverTarget.contains(target)) {
+        if (hoverTimeout) clearTimeout(hoverTimeout);
+        currentHoverTarget = null;
+      }
+    };
+
+    window.addEventListener("mouseover", handleMouseOver, { passive: true });
+    window.addEventListener("mouseout", handleMouseOut, { passive: true });
+
+    return () => {
+      window.removeEventListener("mouseover", handleMouseOver);
+      window.removeEventListener("mouseout", handleMouseOut);
+      if (hoverTimeout) clearTimeout(hoverTimeout);
+    };
   }, [pathname]);
 
   return null;

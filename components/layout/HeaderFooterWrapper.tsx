@@ -8,11 +8,15 @@ export function HeaderFooterWrapper({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
   
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+
   return (
     <>
-      {!isAdmin && <Header />}
-      <main className="flex-1">{children}</main>
-      {!isAdmin && <Footer />}
+      <Header />
+      <main className="flex-1 min-w-0">{children}</main>
+      <Footer />
     </>
   );
 }

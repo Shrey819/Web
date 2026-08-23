@@ -37,7 +37,10 @@ export function trackUserAction(actionType: string, details: string) {
   } else {
     fetch("/api/tracker/action", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "69420",
+      },
       body: payload,
       keepalive: true,
     }).catch(() => {});

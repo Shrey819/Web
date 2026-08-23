@@ -51,7 +51,7 @@ export function AdminThemeProvider({
     >
       {/* Admin Sidebar */}
       <aside
-        className={`w-64 border-r flex flex-col fixed inset-y-0 z-50 transition-colors duration-300 ${
+        className={`w-64 shrink-0 border-r flex flex-col min-h-screen sticky top-0 h-screen z-40 transition-colors duration-300 ${
           isLight
             ? "bg-white border-slate-200 text-slate-700"
             : "bg-slate-900 border-slate-800 text-slate-300"
@@ -277,8 +277,8 @@ export function AdminThemeProvider({
       </aside>
 
       {/* Main Content Container */}
-      <main className="flex-1 ml-64 min-h-screen relative">
-        <div className="p-8">{children}</div>
+      <main className="flex-1 min-w-0 min-h-screen overflow-x-hidden">
+        <div className="p-3 sm:p-4 lg:p-5 max-w-full mx-auto w-full">{children}</div>
       </main>
     </div>
   );

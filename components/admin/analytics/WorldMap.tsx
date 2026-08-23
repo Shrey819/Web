@@ -3,7 +3,17 @@
 import { useState } from "react";
 import Image from "next/image";
 import { ActiveSession } from "@/app/actions/tracker";
-import { Smartphone, Monitor, Globe, User, ShieldAlert, Navigation } from "lucide-react";
+import {
+  Smartphone,
+  Monitor,
+  Globe,
+  User,
+  ShieldAlert,
+  Navigation,
+  Maximize2,
+  Minimize2,
+  Radio,
+} from "lucide-react";
 
 interface WorldMapProps {
   sessions: ActiveSession[];
@@ -13,7 +23,7 @@ interface WorldMapProps {
 /**
  * Miller Cylindrical Projection (Exact for MapChart_Map.png)
  * MapChart PNG parameters:
- * Width: 6460px, Height: 3403px (Aspect Ratio ~1.898)
+ * Width: 6460px, Height: 3403px (Aspect Ratio = 6460 / 3403 ≈ 1.898325)
  * Top Latitude: +83.6°N, Bottom Latitude: -55.6°S
  * Left Longitude: -180°W, Right Longitude: +180°E
  */
@@ -45,58 +55,75 @@ function latLngToPercentCoords(lat: number, lng: number) {
 
 export function WorldMap({ sessions, onSelectSession }: WorldMapProps) {
   const [hoveredSession, setHoveredSession] = useState<ActiveSession | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   return (
-    <div className="relative w-full bg-slate-950 rounded-3xl p-6 border border-slate-800 shadow-2xl overflow-hidden text-slate-100 font-mono">
+    <div
+      className={`relative w-full bg-slate-950 border border-slate-800 shadow-xl overflow-hidden text-slate-100 font-mono transition-all duration-300 ${
+        isFullscreen
+          ? "fixed inset-2 sm:inset-4 z-[99999] rounded-2xl p-3 sm:p-5 flex flex-col justify-between backdrop-blur-2xl ring-2 ring-sky-500/50"
+          : "rounded-2xl p-3 sm:p-4"
+      }`}
+    >
       {/* Ambient Radial Backdrop */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-900/20 via-slate-950 to-slate-950 pointer-events-none" />
 
       {/* Map Header */}
-      <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 pb-4 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
-            <Globe className="w-5 h-5 animate-spin-slow" />
+      <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 mb-3 pb-2.5 border-b border-slate-800/80">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 shrink-0">
+            <Globe className="w-4 h-4 animate-spin-slow" />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-white flex items-center gap-2">
-              High-Precision MapChart Vector Map
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <h3 className="font-bold text-sm sm:text-base text-white flex flex-wrap items-center gap-2">
+              <span>World Vector Map</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                 {sessions.length} Active Now
               </span>
             </h3>
-            <p className="text-xs text-slate-400">
-              Miller Cylindrical Projection • 100% Exact Lat/Lng Beacon Placement.
+            <p className="text-[11px] text-slate-400 hidden sm:block">
+              Miller Cylindrical Projection • Exact Lat/Lng Beacon Placement
             </p>
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-4 text-xs bg-slate-900/90 px-3.5 py-2 rounded-2xl border border-slate-800">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-            <span className="text-slate-300">Logged User</span>
+        {/* Legend & Fullscreen Button */}
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex items-center gap-2.5 text-[11px] bg-slate-900/90 px-2.5 py-1 rounded-xl border border-slate-800">
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+              <span className="text-slate-300">User</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_6px_#38bdf8]" />
+              <span className="text-slate-300">Guest</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <ShieldAlert className="w-3 h-3 text-amber-400" />
+              <span className="text-slate-400">VPN</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
-            <span className="text-slate-300">Guest Visitor</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-slate-400">VPN / Proxy</span>
-          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="p-1.5 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-colors flex items-center gap-1 text-[11px] font-bold shadow cursor-pointer"
+            title={isFullscreen ? "Exit Fullscreen" : "Expand Map Fullscreen"}
+          >
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 text-amber-400" /> : <Maximize2 className="w-3.5 h-3.5 text-sky-400" />}
+            <span>{isFullscreen ? "Exit" : "Full"}</span>
+          </button>
         </div>
       </div>
 
-      {/* MAP CANVAS WITH MAX-W 1720px AND 1.898/1 ASPECT RATIO */}
-      <div className="relative w-full max-w-[1720px] aspect-[1.898/1] mx-auto bg-slate-900/90 rounded-2xl border border-slate-800 overflow-hidden shadow-inner">
+      {/* MAP CANVAS WITH EXACT 6460/3403 PROPORTIONS - 100% VISIBLE FULL MAP */}
+      <div className={`relative w-full max-w-4xl mx-auto bg-slate-900 rounded-xl border border-slate-800/80 overflow-hidden shadow-xl select-none ${isFullscreen ? "max-w-none" : ""}`}>
         {/* MapChart Map Base Image with Dark High-Tech Filter */}
-        <Image
+        <img
           src="/MapChart_Map.png"
           alt="World Map with Country Borders"
-          fill
-          priority
-          className="object-cover w-full h-full pointer-events-none opacity-85 filter invert brightness-[0.7] contrast-[1.3] hue-rotate-180"
+          className="w-full h-auto block pointer-events-none opacity-90 filter invert brightness-[0.7] contrast-[1.3] hue-rotate-180 select-none mx-auto"
         />
 
         {/* Grid Overlay */}

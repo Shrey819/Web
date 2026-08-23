@@ -49,7 +49,7 @@ export function QuickViewModal() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeQuickView}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 sm:p-6"
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4 sm:p-6"
           >
             {/* Modal Dialog */}
             <motion.div
@@ -61,8 +61,9 @@ export function QuickViewModal() {
             >
               {/* Close button */}
               <button
+                type="button"
                 onClick={closeQuickView}
-                className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+                className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer touch-manipulation"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />

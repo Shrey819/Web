@@ -31,12 +31,28 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
 
   const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Prevent background main page scrolling while MegaMenu popup is active
+  // Prevent background main page scrolling without resetting window.scrollY (zero scroll jump)
   useEffect(() => {
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target || !target.closest("#megamenu-panel")) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target || !target.closest("#megamenu-panel")) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+
     return () => {
-      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchmove", handleTouchMove);
     };
   }, []);
 
@@ -124,11 +140,19 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
   const displayProducts = activeProducts.slice(0, 8);
 
   return (
-    <div
-      className="absolute top-full left-0 right-0 bg-slate-950 text-white border-b border-slate-800 shadow-2xl backdrop-blur-2xl transition-all duration-300 z-50 py-6 px-4 sm:px-8 before:content-[''] before:absolute before:-top-6 before:left-0 before:right-0 before:h-6"
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave || onClose}
-    >
+    <>
+      {/* Background Dimming Backdrop (Clean without blur) */}
+      <div
+        className="fixed inset-0 top-0 bg-black/40 z-40 transition-opacity duration-200"
+        onClick={onClose}
+      />
+
+      <div
+        id="megamenu-panel"
+        className="absolute top-full left-0 right-0 bg-slate-950 text-white border-b border-slate-800 shadow-2xl transition-all duration-300 z-50 py-6 px-4 sm:px-8 before:content-[''] before:absolute before:-top-6 before:left-0 before:right-0 before:h-6"
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave || onClose}
+      >
       <div className="w-full max-w-none px-4 sm:px-8 lg:px-12 flex flex-col md:flex-row gap-6 max-h-[75vh]">
         {/* LEFT COLUMN: All Active Database Categories */}
         <div className="w-full md:w-80 shrink-0 bg-slate-900/90 rounded-2xl border border-slate-800 p-2 overflow-y-auto overscroll-contain max-h-[60vh] scrollbar-thin space-y-1">
@@ -273,5 +297,6 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
         </div>
       </div>
     </div>
+    </>
   );
 }

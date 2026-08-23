@@ -159,7 +159,7 @@ export function MobileNav({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 lg:hidden"
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[9999] lg:hidden"
           />
 
           {/* Drawer Panel (Takes Full Width of browser matching request) */}
@@ -168,7 +168,7 @@ export function MobileNav({
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 250 }}
-            className="fixed top-0 left-0 right-0 bottom-0 w-full h-full bg-white text-slate-800 z-50 lg:hidden flex flex-col overflow-y-auto"
+            className="fixed top-0 left-0 right-0 bottom-0 w-full h-full bg-white text-slate-800 z-[10000] lg:hidden flex flex-col overflow-y-auto"
           >
             <div>
               {/* Promotion Bar */}
@@ -179,11 +179,16 @@ export function MobileNav({
               {/* Header Row */}
               <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200">
                 <button
-                  onClick={onClose}
-                  className="p-1 rounded-full hover:bg-slate-100 text-slate-700 transition-colors"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onClose();
+                  }}
+                  className="p-2 rounded-full hover:bg-slate-100 active:bg-slate-200 text-slate-700 transition-colors touch-manipulation cursor-pointer"
                   aria-label="Close menu"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-6 h-6 pointer-events-none" />
                 </button>
 
                 {/* Logo text matching Desktop */}

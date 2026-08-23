@@ -133,9 +133,11 @@ export const CinematicProductSection: React.FC<CinematicProductSectionProps> = (
         <div className="flex items-center justify-center gap-3 pt-2">
           {/* Play/Pause Toggle */}
           <button
+            type="button"
             onClick={() => setIsPlaying(!isPlaying)}
             className="p-1.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors"
             title={isPlaying ? "Pause Rotation" : "Play Rotation"}
+            suppressHydrationWarning
           >
             {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
           </button>
@@ -147,6 +149,7 @@ export const CinematicProductSection: React.FC<CinematicProductSectionProps> = (
               return (
                 <button
                   key={p.id}
+                  type="button"
                   onClick={() => handleSelectProduct(idx)}
                   className={`h-2.5 rounded-full transition-all duration-300 ${
                     isCurrent
@@ -154,6 +157,7 @@ export const CinematicProductSection: React.FC<CinematicProductSectionProps> = (
                       : "w-2.5 bg-slate-700 hover:bg-slate-500"
                   }`}
                   title={`Select ${p.name}`}
+                  suppressHydrationWarning
                 />
               );
             })}

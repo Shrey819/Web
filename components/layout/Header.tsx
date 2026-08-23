@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useUserStore } from "@/store/useUserStore";
+import { trackUserAction } from "@/lib/trackerClient";
 import { AnnouncementBar } from "./AnnouncementBar";
 import { MegaMenu } from "./MegaMenu";
 import { MobileNav } from "./MobileNav";
@@ -150,33 +151,25 @@ export function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Lock background page scroll while searching is active
-  useEffect(() => {
-    const isSearching = (isSearchFocused || isMobileSearchFocused) && searchQuery.trim().length > 0;
-    if (isSearching) {
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-    };
-  }, [isSearchFocused, isMobileSearchFocused, searchQuery]);
+
 
   const megaMenuTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMegaMenuOpen = () => {
-    if (megaMenuTimerRef.current) clearTimeout(megaMenuTimerRef.current);
+    if (megaMenuTimerRef.current) {
+      clearTimeout(megaMenuTimerRef.current);
+      megaMenuTimerRef.current = null;
+    }
     setIsMegaMenuOpen(true);
   };
 
   const handleMegaMenuClose = () => {
+    if (megaMenuTimerRef.current) {
+      clearTimeout(megaMenuTimerRef.current);
+    }
     megaMenuTimerRef.current = setTimeout(() => {
       setIsMegaMenuOpen(false);
-    }, 250); // 250ms smooth hover transition grace delay
+    }, 180); // 180ms hover intent grace delay
   };
 
   const { getItemCount, openCart } = useCartStore();
@@ -199,24 +192,7 @@ export function Header() {
 
       rafId = window.requestAnimationFrame(() => {
         const currentY = Math.max(0, window.scrollY);
-        const delta = currentY - lastY;
-
         setIsScrolled(currentY > 10);
-
-        // At the absolute top of page: always keep full header open
-        if (currentY <= 0) {
-          setShowBottomNav(true);
-        } else if (Math.abs(delta) > 10) {
-          if (delta > 0 && currentY > 60) {
-            // Scrolling down -> smoothly hide
-            setShowBottomNav(false);
-          } else if (delta < 0) {
-            // Scrolling up -> smoothly reveal
-            setShowBottomNav(true);
-          }
-        }
-
-        lastY = currentY;
         rafId = null;
       });
     };
@@ -266,47 +242,63 @@ export function Header() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      trackUserAction("SEARCH_QUERY", `Searched for "${searchQuery.trim()}"`);
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setIsSearchFocused(false);
+      setIsMobileSearchFocused(false);
     }
   };
 
   return (
     <>
-      {/* Top Promotional Announcement Bar (Natural flow at top of page) */}
-      <div className="relative z-50 bg-slate-950 text-amber-400 border-b border-slate-900 select-none overflow-hidden">
-        <AnnouncementBar />
-      </div>
-
-      {/* Main Sticky Header */}
+      {/* Main Sticky Header - Always at topmost position (top: 0) on all pages */}
       <header
-        className={`sticky top-0 z-40 transition-all duration-300 ${
+        className={`sticky top-0 z-[9999] overflow-visible transition-all duration-300 w-full ${
           isScrolled
-            ? "bg-slate-950/95 text-white shadow-2xl backdrop-blur-xl border-b border-slate-800"
+            ? "bg-slate-950 text-white shadow-2xl border-b border-slate-800"
             : "bg-slate-950 text-white border-b border-slate-900"
         }`}
       >
+        {/* Top Promotional Announcement Bar - Only shown at the top of the page, collapses on scroll */}
+        <div
+          className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out bg-slate-950 text-amber-400 select-none overflow-hidden ${
+            isScrolled
+              ? "grid-rows-[0fr] opacity-0 pointer-events-none"
+              : "grid-rows-[1fr] opacity-100 border-b border-slate-900"
+          }`}
+        >
+          <div className="overflow-hidden min-h-0">
+            <AnnouncementBar />
+          </div>
+        </div>
         {/* ROW 1: Logo, Search Bar, User & Cart Icons */}
-        <div className="w-full max-w-none px-4 sm:px-8 lg:px-12 py-3.5 flex items-center justify-between gap-4 sm:gap-6">
+        <div className="w-full max-w-none px-3 sm:px-8 lg:px-12 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-6">
           {/* Logo & Mobile Menu Button */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
-              onClick={() => setIsMobileNavOpen(true)}
-              className="lg:hidden p-2 text-slate-300 hover:text-white rounded-xl hover:bg-slate-800 transition-colors"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsMobileNavOpen(true);
+                trackUserAction("MENU_OPEN", "Opened Mobile Navigation Menu");
+              }}
+              className="lg:hidden p-1.5 sm:p-2 text-slate-300 hover:text-amber-400 active:text-amber-400 active:scale-90 active:bg-slate-800 rounded-xl hover:bg-slate-800 transition-all touch-manipulation cursor-pointer select-none relative z-10 shrink-0"
               aria-label="Open navigation menu"
+              suppressHydrationWarning
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6 pointer-events-none" />
             </button>
 
-            <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-500 flex items-center justify-center font-black text-slate-950 text-base shadow-md group-hover:scale-105 transition-transform font-mono">
+            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-500 flex items-center justify-center font-black text-slate-950 text-xs sm:text-base shadow-md group-hover:scale-105 transition-transform font-mono shrink-0">
                 OM
               </div>
-              <div className="flex flex-col">
-                <span className="font-extrabold text-lg sm:text-xl tracking-tight leading-none text-white font-mono">
+              <div className="flex flex-col min-w-0">
+                <span className="font-extrabold text-sm sm:text-xl tracking-tight leading-none text-white font-mono truncate">
                   OM <span className="text-amber-400">AUTOMATION</span>
                 </span>
-                <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase">
+                <span className="text-[8px] sm:text-[10px] font-mono tracking-widest text-slate-400 uppercase hidden xs:block">
                   Industrial Hardware
                 </span>
               </div>
@@ -324,6 +316,7 @@ export function Header() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 className="w-full bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 focus:border-amber-400 text-white rounded-full pl-11 pr-24 py-2.5 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none transition-all shadow-inner font-mono"
+                suppressHydrationWarning
               />
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-slate-400">
                 {searchQuery.trim().length > 0 && (
@@ -476,11 +469,11 @@ export function Header() {
           </div>
 
           {/* Right Action Icons: User Account & Shopping Cart */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Wishlist Icon */}
             <Link
               href="/wishlist"
-              className="relative p-2.5 text-slate-300 hover:text-white rounded-full hover:bg-slate-800 transition-colors hidden sm:flex"
+              className="relative p-2 sm:p-2.5 text-slate-300 hover:text-white rounded-full hover:bg-slate-800 transition-colors hidden sm:flex"
               aria-label="Wishlist saved items"
               title="Saved Wishlist"
             >
@@ -496,7 +489,7 @@ export function Header() {
             {mounted && isLoggedIn && user ? (
               <Link
                 href="/profile"
-                className="p-1 text-slate-300 hover:text-amber-400 rounded-full hover:bg-slate-800 transition-colors flex items-center justify-center"
+                className="p-1 text-slate-300 hover:text-amber-400 rounded-full hover:bg-slate-800 transition-colors flex items-center justify-center shrink-0"
                 title={`Signed in as ${user.name}`}
               >
                 {user.image || user.avatar ? (
@@ -504,10 +497,10 @@ export function Header() {
                     src={user.image || user.avatar || ""}
                     alt={user.name}
                     referrerPolicy="no-referrer"
-                    className="w-8 h-8 rounded-full object-cover border-2 border-amber-400 shadow-md"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-amber-400 shadow-md shrink-0"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-amber-400 text-slate-950 font-mono font-bold text-xs flex items-center justify-center shadow-sm">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-400 text-slate-950 font-mono font-bold text-[11px] sm:text-xs flex items-center justify-center shadow-sm shrink-0">
                     {user.name ? user.name[0].toUpperCase() : "U"}
                   </div>
                 )}
@@ -515,23 +508,30 @@ export function Header() {
             ) : (
               <Link
                 href="/login"
-                className="p-2.5 text-slate-300 hover:text-amber-400 rounded-full hover:bg-slate-800 transition-colors flex items-center justify-center"
+                className="p-1.5 sm:p-2.5 text-slate-300 hover:text-amber-400 rounded-full hover:bg-slate-800 transition-colors flex items-center justify-center shrink-0"
                 title="Sign In / Register"
               >
-                <User className="w-6 h-6 text-slate-200 hover:text-amber-400 transition-colors" />
+                <User className="w-5 h-5 sm:w-6 sm:h-6 text-slate-200 hover:text-amber-400 transition-colors" />
               </Link>
             )}
 
             {/* Shopping Cart Icon */}
             <button
-              onClick={openCart}
-              className="relative p-2.5 text-slate-300 hover:text-white rounded-full hover:bg-slate-800 transition-colors flex items-center justify-center"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openCart();
+                trackUserAction("CART_OPEN", "Opened Shopping Cart Drawer");
+              }}
+              className="relative p-1.5 sm:p-2.5 text-slate-300 hover:text-white active:scale-90 active:bg-slate-800 rounded-full hover:bg-slate-800 transition-all flex items-center justify-center touch-manipulation cursor-pointer select-none relative z-10 shrink-0"
               aria-label="Shopping Cart"
               title="Open Cart"
+              suppressHydrationWarning
             >
-              <ShoppingBag className="w-6 h-6 text-white" />
+              <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-white pointer-events-none" />
               {mounted && getItemCount() > 0 && (
-                <span className="absolute top-1 right-1 bg-amber-400 text-slate-950 font-mono text-[10px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shadow">
+                <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 bg-amber-400 text-slate-950 font-mono text-[9px] sm:text-[10px] font-black w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full flex items-center justify-center shadow pointer-events-none">
                   {getItemCount()}
                 </span>
               )}
@@ -550,6 +550,7 @@ export function Header() {
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsMobileSearchFocused(true)}
               className="w-full bg-slate-900 border border-slate-700 text-white rounded-full pl-10 pr-24 py-2 text-xs placeholder:text-slate-400 focus:outline-none font-mono"
+              suppressHydrationWarning
             />
             <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-slate-400">
               {searchQuery.trim().length > 0 && (
@@ -699,32 +700,20 @@ export function Header() {
           )}
         </div>
 
-        {/* ROW 2: Bottom Navigation Bar (Hidden on Mobile/Tablet, visible on Desktop) */}
-        <div
-          className={`hidden lg:grid border-slate-900 bg-slate-950/80 backdrop-blur-md transition-[grid-template-rows,opacity,border-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-            !showBottomNav && isScrolled
-              ? "grid-rows-[0fr] opacity-0 pointer-events-none border-t-0"
-              : "grid-rows-[1fr] opacity-100 border-t"
-          }`}
-        >
-          <div className="overflow-hidden min-h-0">
-            <div
-              className={`w-full max-w-none px-4 sm:px-8 lg:px-12 py-2.5 flex items-center justify-between gap-4 text-xs font-semibold font-mono transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                !showBottomNav && isScrolled
-                  ? "-translate-y-2 opacity-0"
-                  : "translate-y-0 opacity-100"
-              }`}
-            >
+        {/* ROW 2: Bottom Navigation Bar (Always visible and accessible at all scroll positions) */}
+        <div className="hidden lg:block border-t border-slate-900 bg-slate-950">
+          <div className="w-full max-w-none px-4 sm:px-8 lg:px-12 py-2 flex items-center justify-between gap-4 text-xs font-semibold font-mono">
               {/* Left Nav Links */}
               <nav className="flex items-center gap-6 overflow-x-auto scrollbar-none whitespace-nowrap">
                 <div
-                  className="relative py-1"
+                  className="relative py-1 group/shop after:content-[''] after:absolute after:-left-2 after:-right-2 after:top-0 after:bottom-[-20px] after:z-30 cursor-pointer"
                   onMouseEnter={handleMegaMenuOpen}
                   onMouseLeave={handleMegaMenuClose}
                 >
                   <button
+                    type="button"
                     onClick={() => setIsMegaMenuOpen(!isMegaMenuOpen)}
-                    className="flex items-center gap-1 text-white font-bold hover:text-amber-400 transition-colors py-1"
+                    className="flex items-center gap-1 text-white font-bold hover:text-amber-400 transition-colors py-1 cursor-pointer"
                   >
                     <span>Shop</span>
                     <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -794,7 +783,6 @@ export function Header() {
               </div>
             </div>
           </div>
-        </div>
 
         {/* Mega Menu Overlay */}
         {isMegaMenuOpen && (

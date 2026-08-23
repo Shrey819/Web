@@ -24,6 +24,13 @@ import {
   Activity,
   Zap,
   ShieldAlert,
+  MousePointer,
+  Eye,
+  Menu,
+  Layers,
+  ArrowDown,
+  Compass,
+  PhoneCall,
 } from "lucide-react";
 
 export default function LiveTrackerPage() {
@@ -43,7 +50,12 @@ export default function LiveTrackerPage() {
 
   const fetchLiveMetrics = async () => {
     try {
-      const res = await fetch("/api/tracker/live");
+      setLoading(true);
+      const res = await fetch("/api/tracker/live", {
+        headers: {
+          "ngrok-skip-browser-warning": "69420",
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setSessions(data.sessions || []);
@@ -58,7 +70,8 @@ export default function LiveTrackerPage() {
     } catch (error) {
       console.error("Failed to refresh live metrics:", error);
     } finally {
-      setLoading(false);
+      // Small timeout for smooth feedback animation
+      setTimeout(() => setLoading(false), 300);
     }
   };
 
@@ -93,6 +106,27 @@ export default function LiveTrackerPage() {
         return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><ShoppingCart className="w-3 h-3" /> Add to Cart</span>;
       case "REMOVE_FROM_CART":
         return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200"><ShoppingCart className="w-3 h-3" /> Remove Cart</span>;
+      case "CART_OPEN":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200"><ShoppingCart className="w-3 h-3" /> Cart Opened</span>;
+      case "CLICK":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><MousePointer className="w-3 h-3" /> User Click</span>;
+      case "HOVER_CARD":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-200"><Eye className="w-3 h-3" /> Inspect Card</span>;
+      case "PRODUCT_CLICK":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200"><Layers className="w-3 h-3" /> View Product</span>;
+      case "CATEGORY_CLICK":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200"><Compass className="w-3 h-3" /> Browse Category</span>;
+      case "CONTACT_CLICK":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><PhoneCall className="w-3 h-3" /> Contact CTA</span>;
+      case "MENU_OPEN":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"><Menu className="w-3 h-3" /> Menu Open</span>;
+      case "SCROLL_DEPTH":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200"><ArrowDown className="w-3 h-3" /> Scroll</span>;
+      case "NAVIGATE":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200"><Compass className="w-3 h-3" /> Page Navigate</span>;
+      case "SEARCH":
+      case "SEARCH_QUERY":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200"><Search className="w-3 h-3" /> Search</span>;
       case "APPLY_COUPON":
         return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><Tag className="w-3 h-3" /> Apply Coupon</span>;
       case "REMOVE_COUPON":
@@ -111,100 +145,105 @@ export default function LiveTrackerPage() {
   };
 
   return (
-    <div className="space-y-8 pb-16">
+    <div className="space-y-3.5 pb-8">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-sm">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="type-label text-sky-700 bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="type-label text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full text-[10px] font-bold border border-sky-200">
               Hybrid Telemetry Engine (1st IP, 2nd Timezone)
             </span>
-            <span className="flex items-center gap-1.5 text-xs font-mono text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              Auto-Purge Inactive (30 min)
+            <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+              Auto-Purge (30m)
             </span>
           </div>
-          <h1 className="text-3xl font-mono font-extrabold text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-mono font-extrabold text-slate-900">
             Active User & Action Tracker
           </h1>
-          <p className="text-sm text-slate-500 font-mono mt-1">
-            MapChart vector country map, hybrid IP/Timezone location, logged identity, actions telemetry, and 30-min auto-purge.
+          <p className="text-xs text-slate-500 font-mono">
+            MapChart vector country map, hybrid IP/Timezone location, actions telemetry & 30-min auto-purge.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="text-right text-xs font-mono text-slate-500 hidden sm:block" suppressHydrationWarning>
+        <div className="flex items-center gap-2.5">
+          <div className="text-right text-[11px] font-mono text-slate-500 hidden sm:block" suppressHydrationWarning>
             <div>Last Polled: {mounted && lastRefreshed ? lastRefreshed.toLocaleTimeString() : "--:--:--"}</div>
-            <div className="text-emerald-600 font-bold">5s Auto-Refresh Active</div>
+            <div className="text-emerald-600 font-bold">5s Auto-Refresh</div>
           </div>
           <button
             onClick={fetchLiveMetrics}
+            disabled={loading}
             suppressHydrationWarning
-            className="p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-mono text-xs flex items-center gap-2 shadow-md transition-colors"
+            className={`p-2 px-3 rounded-xl font-mono text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer ${
+              loading
+                ? "bg-slate-700 text-slate-300 opacity-90"
+                : "bg-slate-900 hover:bg-slate-800 active:scale-95 text-white"
+            }`}
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            <span>Sync Live Now</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-sky-400" : ""}`} />
+            <span>{loading ? "Syncing..." : "Sync Live"}</span>
           </button>
         </div>
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-2">
-          <div className="flex items-center justify-between text-slate-500 text-xs">
-            <span>Users Online Now</span>
-            <Users className="w-4 h-4 text-emerald-600" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 font-mono">
+        <div className="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 text-[11px]">
+            <span>Online Now</span>
+            <Users className="w-3.5 h-3.5 text-emerald-600" />
           </div>
-          <div className="text-4xl font-extrabold text-slate-900 flex items-center gap-2">
+          <div className="text-2xl font-black text-slate-900 flex items-center gap-1.5">
             {totalActive}
-            <span className="text-xs font-normal text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+            <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200">
               Live
             </span>
           </div>
-          <p className="text-[11px] text-slate-500">Active user sessions</p>
+          <p className="text-[10px] text-slate-400">Active user sessions</p>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-2">
-          <div className="flex items-center justify-between text-slate-500 text-xs">
+        <div className="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 text-[11px]">
             <span>Device Split</span>
-            <Monitor className="w-4 h-4 text-sky-600" />
+            <Monitor className="w-3.5 h-3.5 text-sky-600" />
           </div>
-          <div className="flex items-baseline justify-between pt-1">
-            <div className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
-              <Monitor className="w-4 h-4 text-sky-600" /> {desktopPercent}% Desktop
+          <div className="flex items-baseline justify-between pt-0.5">
+            <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
+              <Monitor className="w-3 h-3 text-sky-600" /> {desktopPercent}% Desk
             </div>
-            <div className="flex items-center gap-1.5 text-sm font-bold text-amber-600">
-              <Smartphone className="w-4 h-4 text-amber-500" /> {mobilePercent}% Mobile
+            <div className="flex items-center gap-1 text-xs font-bold text-amber-600">
+              <Smartphone className="w-3 h-3 text-amber-500" /> {mobilePercent}% Mob
             </div>
           </div>
-          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden flex">
+          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden flex">
             <div style={{ width: `${desktopPercent}%` }} className="bg-sky-500 h-full" />
             <div style={{ width: `${mobilePercent}%` }} className="bg-amber-400 h-full" />
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-2">
-          <div className="flex items-center justify-between text-slate-500 text-xs">
+        <div className="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 text-[11px]">
             <span>Logged vs Guest</span>
-            <User className="w-4 h-4 text-indigo-600" />
+            <User className="w-3.5 h-3.5 text-indigo-600" />
           </div>
-          <div className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+          <div className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-1 pt-0.5">
             <span className="text-emerald-600 font-mono">{sessions.filter((s) => !!s.userName).length} Logged</span>
-            <span className="text-slate-400 font-mono">/ {sessions.filter((s) => !s.userName).length} Guests</span>
+            <span className="text-slate-400 font-mono">/ {sessions.filter((s) => !s.userName).length} Guest</span>
           </div>
-          <p className="text-[11px] text-slate-500">Identified customer accounts</p>
+          <p className="text-[10px] text-slate-400">Identified accounts</p>
         </div>
 
-        <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-3xl p-6 border border-slate-800 shadow-sm space-y-2">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Location Resolution</span>
-            <Globe className="w-4 h-4 text-emerald-400" />
+        <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-2xl p-3 border border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-400 text-[11px]">
+            <span>Resolution</span>
+            <Globe className="w-3.5 h-3.5 text-emerald-400" />
           </div>
-          <div className="text-lg font-extrabold text-emerald-400 flex items-center gap-1.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" /> 1st: IP / 2nd: Timezone
+          <div className="text-xs sm:text-sm font-bold text-emerald-400 flex items-center gap-1 pt-0.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> 1st IP / 2nd TZ
           </div>
-          <p className="text-[11px] text-slate-400">
-            Permission-free IP geolocation + Timezone fallback.
+          <p className="text-[10px] text-slate-400">
+            Zero-permission geolocation
           </p>
         </div>
       </div>
@@ -214,19 +253,19 @@ export default function LiveTrackerPage() {
 
       {/* Live Recent Actions Telemetry Stream */}
       {recentActions.length > 0 && (
-        <div className="bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-xl space-y-4 font-mono">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <h3 className="font-bold text-sm text-white flex items-center gap-2">
-              <Zap className="w-4 h-4 text-amber-400" /> Live Actions Telemetry Feed
+        <div className="bg-slate-900 text-white rounded-2xl p-3 sm:p-4 border border-slate-800 shadow-lg space-y-2.5 font-mono">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h3 className="font-bold text-xs text-white flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-400" /> Live Actions Telemetry Feed
             </h3>
-            <span className="text-xs text-slate-400">Showing last {recentActions.length} user actions</span>
+            <span className="text-[11px] text-slate-400">Last {recentActions.length} actions</span>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+          <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
             {recentActions.slice(0, 8).map((act) => (
               <div
                 key={act.id}
-                className="bg-slate-950/80 rounded-2xl p-3.5 border border-slate-800 shrink-0 w-72 space-y-1.5 shadow-md"
+                className="bg-slate-950/80 rounded-xl p-2.5 border border-slate-800 shrink-0 w-64 space-y-1 shadow-sm"
               >
                 <div className="flex items-center justify-between">
                   {renderActionBadge(act.actionType)}
@@ -234,7 +273,7 @@ export default function LiveTrackerPage() {
                     {new Date(act.createdAt).toLocaleTimeString()}
                   </span>
                 </div>
-                <div className="text-xs text-slate-200 font-bold truncate">
+                <div className="text-[11px] text-slate-200 font-bold truncate">
                   {act.details}
                 </div>
               </div>
@@ -244,33 +283,33 @@ export default function LiveTrackerPage() {
       )}
 
       {/* Live Sessions Table */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
+      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2.5 border-b border-slate-100">
           <div>
-            <h3 className="font-mono font-bold text-lg text-slate-900">
-              Active User Sessions ({filteredSessions.length})
+            <h3 className="font-mono font-bold text-base text-slate-900">
+              Active Sessions ({filteredSessions.length})
             </h3>
-            <p className="text-xs text-slate-500 font-mono">
-              Click any user row to view their user identity, action logs, and page navigation timeline.
+            <p className="text-[11px] text-slate-500 font-mono">
+              Click user row to inspect identity, logs & timeline.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-56">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search User Name, IP, Page..."
+                placeholder="Search User, IP, Page..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs font-mono rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
+                className="w-full pl-8 pr-3 py-1.5 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:border-sky-500"
               />
             </div>
 
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl font-mono text-xs">
+            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl font-mono text-xs">
               <button
                 onClick={() => setFilterDevice("ALL")}
-                className={`px-3 py-1 rounded-xl font-bold transition-colors ${
+                className={`px-2.5 py-1 rounded-lg font-bold transition-colors ${
                   filterDevice === "ALL" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -278,7 +317,7 @@ export default function LiveTrackerPage() {
               </button>
               <button
                 onClick={() => setFilterDevice("Desktop")}
-                className={`px-3 py-1 rounded-xl font-bold transition-colors ${
+                className={`px-2.5 py-1 rounded-lg font-bold transition-colors ${
                   filterDevice === "Desktop" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -286,7 +325,7 @@ export default function LiveTrackerPage() {
               </button>
               <button
                 onClick={() => setFilterDevice("Mobile")}
-                className={`px-3 py-1 rounded-xl font-bold transition-colors ${
+                className={`px-2.5 py-1 rounded-lg font-bold transition-colors ${
                   filterDevice === "Mobile" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
                 }`}
               >

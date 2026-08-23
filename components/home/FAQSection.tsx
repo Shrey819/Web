@@ -39,9 +39,11 @@ export function FAQSection() {
                 className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden transition-all"
               >
                 <button
+                  type="button"
                   onClick={() => toggleFaq(faq.id)}
                   className="w-full p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-slate-900 hover:text-sky-600 transition-colors"
                   aria-expanded={isOpen}
+                  suppressHydrationWarning
                 >
                   <span className="flex-1">{faq.question}</span>
                   <ChevronDown

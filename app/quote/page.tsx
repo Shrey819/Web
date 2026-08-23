@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useToastStore } from "@/store/useToastStore";
 import { Sparkles, ChevronRight, FileText, Upload, CheckCircle2, PhoneCall, ShieldCheck, Loader2 } from "lucide-react";
 import { createQuoteAction } from "@/app/actions/quote";
 
-export default function QuotePage() {
+function QuoteForm() {
+  const searchParams = useSearchParams();
+  const initialNotes = searchParams.get("notes") || "";
+  const initialScope = searchParams.get("scope") || "";
+
   const { addToast } = useToastStore();
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,10 +22,16 @@ export default function QuotePage() {
     companyName: "",
     email: "",
     phone: "",
-    partNumbers: "",
+    partNumbers: initialNotes,
     quantityRequired: "10-50 Units",
-    projectScope: "",
+    projectScope: initialScope,
   });
+
+  useEffect(() => {
+    if (initialNotes && !formData.partNumbers) {
+      setFormData(prev => ({ ...prev, partNumbers: initialNotes }));
+    }
+  }, [initialNotes]);
 
   const handleSubmitQuote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,5 +196,17 @@ export default function QuotePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function QuotePage() {
+  return (
+    <Suspense fallback={
+      <div className="bg-[#faf9f5] min-h-screen py-20 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+      </div>
+    }>
+      <QuoteForm />
+    </Suspense>
   );
 }

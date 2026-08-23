@@ -32,8 +32,8 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
   const progressPercent = useTransform(scrollProgress, [0, 0.65], [0, 100]);
   const hudOpacity = useTransform(scrollProgress, [0, 0.04, 0.10, 0.62, 0.68, 1.0], [0, 0, 1, 1, 0, 0]);
 
-  // 3. STEP 1: Center Machine Reveal (0.71 to 0.79) — Machine appears 100% CENTERED
-  // 4. STEP 2: Left Glide (0.80 to 0.88) — Machine slowly glides to LEFT SIDE
+  // 3. STEP 1: Center Machine Reveal (0.71 to 0.79) — Machine appears CENTERED
+  // 4. STEP 2: Reveal Split (0.80 to 0.88) — Desktop: Left Glide / Mobile: Upper Glide
   const finalImageOpacity = useTransform(scrollProgress, [0, 0.71, 0.79, 1.0], [0, 0, 1, 1]);
   const finalImageScale = useTransform(scrollProgress, [0, 0.71, 0.79, 1.0], [1.08, 1.08, 1.0, 1.0]);
   const finalImageX = useTransform(
@@ -43,8 +43,8 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
   );
   const finalImageY = useTransform(
     scrollProgress,
-    [0, 0.71, 0.80, 0.88, 1.0],
-    isMobile ? ["0%", "0%", "0%", "-15%", "-15%"] : ["0%", "0%", "0%", "0%", "0%"]
+    [0, 0.71, 0.79, 0.80, 0.88, 1.0],
+    isMobile ? ["65px", "65px", "65px", "65px", "0px", "0px"] : ["0px", "0px", "0px", "0px", "0px", "0px"]
   );
 
   const finalImageBlur = useTransform(
@@ -53,7 +53,7 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
     ["blur(10px)", "blur(10px)", "blur(0px)", "blur(0px)"]
   );
 
-  // 5. STEP 2: Right Text & CTA Overlay — STRICTLY 0 UNTIL 0.80, then slides into RIGHT SIDE (0.80 -> 0.88)
+  // 5. STEP 2: Specs & CTA Overlay — STRICTLY 0 UNTIL 0.80, then slides into position
   const finalTextOpacity = useTransform(scrollProgress, [0, 0.80, 0.88, 1.0], [0, 0, 1, 1]);
   const finalTextX = useTransform(
     scrollProgress,
@@ -63,7 +63,7 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
   const finalTextY = useTransform(
     scrollProgress,
     [0, 0.80, 0.88, 1.0],
-    isMobile ? [40, 40, 20, 20] : [0, 0, 0, 0]
+    isMobile ? [50, 50, 0, 0] : [0, 0, 0, 0]
   );
 
   return (
@@ -98,7 +98,7 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
       <motion.div
         initial={{ opacity: 1 }}
         style={{ opacity: introOpacity, y: introY }}
-        className="absolute z-40 text-center max-w-2xl px-6 pointer-events-none flex flex-col items-center space-y-4"
+        className="absolute z-40 text-center max-w-2xl px-6 pointer-events-none flex flex-col items-center space-y-4 pt-16 sm:pt-0"
       >
         <span className="font-mono text-xs font-bold uppercase tracking-widest text-amber-600 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
           PRECISION ENGINEERED
@@ -167,10 +167,11 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
       {/* ===================================================
           STAGE 3 & 4: TWO-STEP FINAL HERO REVEAL
           Step 1 (0.71-0.79): Center Machine Reveal (100% centered)
-          Step 2 (0.80-0.88): Machine glides to LEFT, Right Card slides into RIGHT
+          Step 2 (0.80-0.88): Machine glides to LEFT (Desktop) / glides UP (Mobile)
+                             Right Card slides into RIGHT (Desktop) / slides UP (Mobile)
          =================================================== */}
-      <div className="absolute inset-0 z-30 flex flex-col lg:flex-row items-center justify-center p-6 sm:p-12 max-w-7xl mx-auto pointer-events-none">
-        {/* Machine Photo: Centers first (0.71-0.79), then moves Left (0.80-0.88) */}
+      <div className="absolute inset-0 z-30 flex flex-col lg:flex-row items-center justify-center pt-24 sm:pt-28 lg:pt-0 px-4 sm:px-8 lg:px-12 max-w-7xl mx-auto pointer-events-none">
+        {/* Machine Photo */}
         <motion.div
           initial={{ opacity: 0 }}
           style={{
@@ -180,7 +181,7 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
             y: finalImageY,
             filter: finalImageBlur,
           }}
-          className="relative w-full lg:w-1/2 h-[45vh] sm:h-[55vh] lg:h-[72vh] flex items-center justify-center shrink-0 pointer-events-none"
+          className="relative w-full max-w-[340px] sm:max-w-[440px] lg:max-w-none lg:w-1/2 h-[26vh] min-h-[180px] sm:h-[34vh] lg:h-[72vh] flex items-center justify-center shrink-0 pointer-events-none"
         >
           <Image
             src="/images/product-assembly/final-machine.jpg"
@@ -192,7 +193,7 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
           />
         </motion.div>
 
-        {/* Technical Specs & CTA Card: STRICTLY 0 UNTIL 0.80, then slides into RIGHT SIDE */}
+        {/* Technical Specs & CTA Card: STRICTLY 0 UNTIL 0.80, then slides into RIGHT SIDE / DOWN SIDE */}
         <motion.div
           initial={{ opacity: 0 }}
           style={{
@@ -200,43 +201,43 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
             x: finalTextX,
             y: finalTextY,
           }}
-          className="w-full lg:w-[480px] xl:w-[520px] pointer-events-auto shrink-0 z-50 mt-4 lg:mt-0"
+          className="w-full max-w-[360px] sm:max-w-[440px] lg:w-[480px] xl:w-[520px] pointer-events-auto shrink-0 z-50 mt-2 sm:mt-4 lg:mt-0"
         >
-          <div className="bg-white/95 backdrop-blur-2xl border border-slate-300/90 p-6 sm:p-8 rounded-3xl shadow-2xl space-y-5 text-left">
+          <div className="bg-white/95 backdrop-blur-2xl border border-slate-300/90 p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl shadow-2xl space-y-2.5 sm:space-y-4 lg:space-y-5 text-left">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-mono text-xs font-bold uppercase tracking-widest text-amber-600 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+              <span className="font-mono text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-600 bg-amber-500/10 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-amber-500/20">
                 ENGINEERED FOR PRECISION
               </span>
             </div>
 
-            <h3 className="type-section-title text-slate-900 font-extrabold tracking-tight leading-tight">
+            <h3 className="text-base sm:text-lg lg:text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">
               Designed for accuracy, repeatability & reliable performance.
             </h3>
 
-            <p className="type-body-small text-slate-600 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-2 sm:line-clamp-none">
               Our multi-axis CNC machining centers and power drive assemblies deliver sub-micron positioning accuracy under demanding factory operations.
             </p>
 
             {/* Engineering Highlights */}
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200/80">
-              <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-200/80 space-y-0.5">
-                <span className="block font-mono text-[10px] text-slate-400 font-bold uppercase">Spindle Speed</span>
-                <span className="font-mono text-sm font-extrabold text-slate-900">24,000 RPM</span>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-1.5 sm:pt-2 border-t border-slate-200/80">
+              <div className="bg-slate-50/80 p-2 sm:p-3 rounded-xl border border-slate-200/80 space-y-0.5">
+                <span className="block font-mono text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase">Spindle Speed</span>
+                <span className="font-mono text-xs sm:text-sm font-extrabold text-slate-900">24,000 RPM</span>
               </div>
-              <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-200/80 space-y-0.5">
-                <span className="block font-mono text-[10px] text-slate-400 font-bold uppercase">Repeatability</span>
-                <span className="font-mono text-sm font-extrabold text-amber-600">±0.002 mm</span>
+              <div className="bg-slate-50/80 p-2 sm:p-3 rounded-xl border border-slate-200/80 space-y-0.5">
+                <span className="block font-mono text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase">Repeatability</span>
+                <span className="font-mono text-xs sm:text-sm font-extrabold text-amber-600">±0.002 mm</span>
               </div>
             </div>
 
-            <div className="pt-2 flex items-center gap-4">
+            <div className="pt-1 sm:pt-2 flex items-center gap-4">
               <Link
                 href="/products"
-                className="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-amber-600 transition-colors shadow-xl hover:shadow-amber-600/20 w-full sm:w-auto text-center"
+                className="inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-xl bg-slate-900 text-white font-bold text-xs sm:text-sm hover:bg-amber-600 transition-colors shadow-xl hover:shadow-amber-600/20 w-full sm:w-auto text-center"
               >
                 <span>EXPLORE MACHINE</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Link>
             </div>
           </div>

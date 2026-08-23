@@ -28,6 +28,17 @@ export function CartDrawer() {
     syncLivePrices();
   }, []);
 
+  // Lock body scroll on mobile when cart drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState("");
 
@@ -59,7 +70,7 @@ export function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeCart}
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[9999]"
           />
 
           {/* Cart Panel */}
@@ -68,7 +79,7 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 250 }}
-            className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white text-slate-900 z-50 flex flex-col justify-between shadow-2xl overflow-hidden"
+            className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white text-slate-900 z-[10000] flex flex-col justify-between shadow-2xl overflow-hidden"
           >
             {/* Drawer Header */}
             <div>
@@ -80,11 +91,16 @@ export function CartDrawer() {
                   </h3>
                 </div>
                 <button
-                  onClick={closeCart}
-                  className="p-2 rounded-full hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeCart();
+                  }}
+                  className="p-2 rounded-full hover:bg-slate-200 active:bg-slate-300 text-slate-500 hover:text-slate-900 transition-colors touch-manipulation cursor-pointer"
                   aria-label="Close cart drawer"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5 pointer-events-none" />
                 </button>
               </div>
 

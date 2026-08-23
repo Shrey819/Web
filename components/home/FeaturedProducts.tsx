@@ -44,7 +44,9 @@ export function FeaturedProducts({ initialProducts }: FeaturedProductsProps) {
           {/* Filter Tabs */}
           <div className="flex items-center gap-2 p-1.5 rounded-full bg-slate-100 border border-slate-200 overflow-x-auto">
             <button
+              type="button"
               onClick={() => setActiveTab("all")}
+              suppressHydrationWarning
               className={`px-4 py-2 rounded-full type-button transition-all whitespace-nowrap ${
                 activeTab === "all"
                   ? "bg-slate-900 text-white shadow-sm"
@@ -54,7 +56,9 @@ export function FeaturedProducts({ initialProducts }: FeaturedProductsProps) {
               All Top Components
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab("sensors")}
+              suppressHydrationWarning
               className={`px-4 py-2 rounded-full type-button transition-all whitespace-nowrap ${
                 activeTab === "sensors" || activeTab === "cat_sensors"
                   ? "bg-sky-600 text-white shadow-sm"
@@ -64,7 +68,9 @@ export function FeaturedProducts({ initialProducts }: FeaturedProductsProps) {
               Sensors
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab("plcs")}
+              suppressHydrationWarning
               className={`px-4 py-2 rounded-full type-button transition-all whitespace-nowrap ${
                 activeTab === "plcs" || activeTab === "cat_plcs"
                   ? "bg-sky-600 text-white shadow-sm"
@@ -74,7 +80,9 @@ export function FeaturedProducts({ initialProducts }: FeaturedProductsProps) {
               PLCs
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab("motors")}
+              suppressHydrationWarning
               className={`px-4 py-2 rounded-full type-button transition-all whitespace-nowrap ${
                 activeTab === "motors" || activeTab === "cat_motors"
                   ? "bg-sky-600 text-white shadow-sm"

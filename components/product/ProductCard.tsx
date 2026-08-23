@@ -149,15 +149,18 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
 
           <div className="flex items-center gap-2 w-full">
             <button
+              type="button"
               onClick={handleQuickView}
               className="p-2.5 rounded-full border border-slate-200 hover:bg-slate-100 text-slate-600"
               title="Quick View"
               aria-label="Quick View"
+              suppressHydrationWarning
             >
               <Eye className="w-4 h-4" />
             </button>
 
             <button
+              type="button"
               onClick={handleToggleWishlist}
               className={`p-2.5 rounded-full border transition-colors ${
                 isWishlisted
@@ -166,13 +169,16 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
               }`}
               title="Wishlist"
               aria-label="Wishlist"
+              suppressHydrationWarning
             >
               <Heart className={`w-4 h-4 ${isWishlisted ? "fill-rose-500" : ""}`} />
             </button>
 
             <button
+              type="button"
               onClick={handleAddToCart}
               className="flex-1 py-2.5 px-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md"
+              suppressHydrationWarning
             >
               {product.hasVariants ? (
                 <>
@@ -217,6 +223,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
           {/* Action Buttons Overlay */}
           <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 translate-x-0 sm:translate-x-2 sm:group-hover:translate-x-0 z-10">
             <button
+              type="button"
               onClick={handleToggleWishlist}
               className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md backdrop-blur-md transition-colors ${
                 isWishlisted
@@ -225,11 +232,13 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
               }`}
               title="Save to wishlist"
               aria-label="Save to wishlist"
+              suppressHydrationWarning
             >
               <Heart className={`w-4 h-4 ${isWishlisted ? "fill-white" : ""}`} />
             </button>
 
             <button
+              type="button"
               onClick={handleToggleCompare}
               className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md backdrop-blur-md transition-colors ${
                 isCompared
@@ -238,15 +247,18 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
               }`}
               title="Add to compare matrix"
               aria-label="Add to compare matrix"
+              suppressHydrationWarning
             >
               <ArrowUpDown className="w-4 h-4" />
             </button>
 
             <button
+              type="button"
               onClick={handleQuickView}
               className="w-8 h-8 rounded-full bg-slate-900/80 hover:bg-slate-900 text-slate-200 flex items-center justify-center shadow-md backdrop-blur-md transition-colors"
               title="Quick View"
               aria-label="Quick View"
+              suppressHydrationWarning
             >
               <Eye className="w-4 h-4" />
             </button>
@@ -302,9 +314,11 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
           </div>
 
           <button
+            type="button"
             onClick={handleAddToCart}
             className="py-2 px-3.5 rounded-full bg-slate-900 hover:bg-sky-600 text-white font-medium text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-95"
             aria-label="Add product to cart"
+            suppressHydrationWarning
           >
             {product.hasVariants ? (
               <>

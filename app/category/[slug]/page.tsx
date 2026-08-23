@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getActiveProducts, getStorefrontCategoryBySlug } from "@/lib/storefront";
 import { PRODUCTS } from "@/data/products";
+import { CATEGORIES } from "@/data/categories";
 import { CategoryProductGridWithFilters } from "@/components/catalog/CategoryProductGridWithFilters";
 import { ChevronRight, Layers, ShieldCheck, Truck } from "lucide-react";
 
@@ -15,7 +16,23 @@ interface CategoryPageProps {
  */
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = await getStorefrontCategoryBySlug(slug);
+  let category = await getStorefrontCategoryBySlug(slug);
+
+  if (!category) {
+    const staticCat = CATEGORIES.find(c => c.slug === slug || c.id === slug);
+    if (staticCat) {
+      category = {
+        id: staticCat.id,
+        name: staticCat.name,
+        slug: staticCat.slug,
+        description: staticCat.description,
+        badge: staticCat.badge || "Industrial Grade",
+        subcategories: staticCat.subcategories || [],
+        seoTitle: `Buy ${staticCat.name} Online - Industrial Automation | OM AUTOMATION`,
+        seoDesc: staticCat.description,
+      };
+    }
+  }
 
   if (!category) {
     return {
@@ -63,7 +80,23 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const category = await getStorefrontCategoryBySlug(slug);
+  let category = await getStorefrontCategoryBySlug(slug);
+
+  if (!category) {
+    const staticCat = CATEGORIES.find(c => c.slug === slug || c.id === slug);
+    if (staticCat) {
+      category = {
+        id: staticCat.id,
+        name: staticCat.name,
+        slug: staticCat.slug,
+        description: staticCat.description,
+        badge: staticCat.badge || "Industrial Grade",
+        subcategories: staticCat.subcategories || [],
+        seoTitle: `Buy ${staticCat.name} Online`,
+        seoDesc: staticCat.description,
+      };
+    }
+  }
 
   if (!category) {
     return notFound();
