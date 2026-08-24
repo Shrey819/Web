@@ -25,6 +25,10 @@ import {
   FileText,
   Sliders,
   FolderTree,
+  Upload,
+  Download,
+  Filter,
+  X,
 } from "lucide-react";
 import { toggleProductVisibility, duplicateProduct, deleteProduct } from "@/app/actions/product";
 import { useToastStore } from "@/store/useToastStore";
@@ -36,6 +40,12 @@ import { SelectInfoSectionsModal } from "./modals/SelectInfoSectionsModal";
 import { EditInfoSectionModal } from "./modals/EditInfoSectionModal";
 import { ManageGlobalOptionsModal } from "./modals/ManageGlobalOptionsModal";
 import { ApplyOptionPresetModal } from "./modals/ApplyOptionPresetModal";
+import { ExportProductsModal } from "./modals/ExportProductsModal";
+import {
+  FilterProductsDrawer,
+  ProductFilters,
+  DEFAULT_PRODUCT_FILTERS,
+} from "./modals/FilterProductsDrawer";
 
 interface ProductRow {
   id: string;
@@ -51,6 +61,8 @@ interface ProductRow {
   ribbon: string;
   brand: string;
   tags: string[];
+  categories?: string[];
+  categoryIds?: string[];
   visible: boolean;
 }
 
@@ -90,7 +102,19 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
   const [infoSectionsList, setInfoSectionsList] = useState<any[]>([]);
   const [isManageOptionsOpen, setIsManageOptionsOpen] = useState(false);
   const [isApplyPresetOpen, setIsApplyPresetOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [filters, setFilters] = useState<ProductFilters>(DEFAULT_PRODUCT_FILTERS);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const moreActionsRef = useRef<HTMLDivElement>(null);
+
+  // Active filters count
+  let activeFilterCount = 0;
+  if (filters.categories.length > 0) activeFilterCount += filters.categories.length;
+  if (filters.productType !== "all") activeFilterCount += 1;
+  if (filters.inventory !== "all") activeFilterCount += 1;
+  if (filters.visibility !== "all") activeFilterCount += 1;
+  if (filters.preOrderEnabled) activeFilterCount += 1;
+  if (filters.tags.length > 0) activeFilterCount += filters.tags.length;
 
   // Column visibility configuration matching Wix with localStorage persistence
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_PRODUCT_COLUMNS);
@@ -142,14 +166,50 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
   };
 
   const filtered = products.filter((p) => {
+    // 1. Search Query
     const query = search.toLowerCase().trim();
-    if (!query) return true;
-    return (
-      p.name.toLowerCase().includes(query) ||
-      p.sku.toLowerCase().includes(query) ||
-      p.brand.toLowerCase().includes(query) ||
-      p.tags.some((t) => t.toLowerCase().includes(query))
-    );
+    if (query) {
+      const matchesSearch =
+        p.name.toLowerCase().includes(query) ||
+        p.sku.toLowerCase().includes(query) ||
+        p.brand.toLowerCase().includes(query) ||
+        p.tags.some((t) => t.toLowerCase().includes(query)) ||
+        (p.categories && p.categories.some((c) => c.toLowerCase().includes(query)));
+      if (!matchesSearch) return false;
+    }
+
+    // 2. Categories Filter
+    if (filters.categories.length > 0) {
+      const prodCats = p.categories || [];
+      const hasMatchingCat = filters.categories.some((fc) =>
+        prodCats.some((pc) => pc.toLowerCase() === fc.toLowerCase())
+      );
+      if (!hasMatchingCat) return false;
+    }
+
+    // 3. Visibility Filter
+    if (filters.visibility === "shown" && !p.visible) return false;
+    if (filters.visibility === "hidden" && p.visible) return false;
+
+    // 4. Product Type Filter
+    if (filters.productType === "physical" && p.type.toLowerCase() !== "physical") return false;
+    if (filters.productType === "digital" && p.type.toLowerCase() !== "digital") return false;
+
+    // 5. Inventory Filter
+    if (filters.inventory === "in_stock" && p.inventoryStatus !== "In stock") return false;
+    if (filters.inventory === "out_of_stock" && p.inventoryStatus !== "Out of stock") return false;
+    if (filters.inventory === "partial" && p.inventoryStatus !== "Partially out of stock") return false;
+
+    // 6. Tags Filter
+    if (filters.tags.length > 0) {
+      const prodTags = p.tags || [];
+      const hasMatchingTag = filters.tags.some((ft) =>
+        prodTags.some((pt) => pt.toLowerCase() === ft.toLowerCase())
+      );
+      if (!hasMatchingTag) return false;
+    }
+
+    return true;
   });
 
   const isAllSelected = filtered.length > 0 && selectedIds.length === filtered.length;
@@ -205,7 +265,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            Products <span className="text-slate-400 font-normal text-lg">{products.length}</span>
+            Products <span className="text-slate-400 font-normal text-lg">{filtered.length}</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             To see how your products perform, go to Store Analytics.
@@ -232,91 +292,128 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             {/* Dropdown Menu */}
             {isMoreActionsOpen && (
               <div className="absolute right-0 top-full mt-1.5 z-50 w-64 bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Global Catalog Tables
+                {/* 1. Export and Import on Top */}
+                <div className="py-1 space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMoreActionsOpen(false);
+                      setIsExportModalOpen(true);
+                    }}
+                    className="w-full flex items-start gap-2.5 px-2.5 py-2 text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg transition-colors cursor-pointer text-left"
+                  >
+                    <Upload className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Export</div>
+                      <div className="text-[11px] text-slate-400 font-normal leading-tight">
+                        Export your physical products to a CSV file.
+                      </div>
+                    </div>
+                  </button>
+
+                  <Link
+                    href="/admin/products/import"
+                    onClick={() => setIsMoreActionsOpen(false)}
+                    className="w-full flex items-start gap-2.5 px-2.5 py-2 text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg transition-colors cursor-pointer text-left"
+                  >
+                    <Download className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Import</div>
+                      <div className="text-[11px] text-slate-400 font-normal leading-tight">
+                        Import multiple products to your store.
+                      </div>
+                    </div>
+                  </Link>
                 </div>
 
-                <div className="py-1 space-y-0.5">
-                  <Link
-                    href="/admin/categories"
-                    onClick={() => setIsMoreActionsOpen(false)}
-                    className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <FolderTree className="w-4 h-4 text-slate-400" />
-                      <span>Manage Categories</span>
-                    </div>
-                    <ExternalLink className="w-3 h-3 text-slate-400" />
-                  </Link>
+                {/* 2. Global Catalog Tables */}
+                <div>
+                  <div className="px-2.5 pt-2 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Global Catalog Tables
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMoreActionsOpen(false);
-                      setIsManageBrandsOpen(true);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
-                  >
-                    <Building2 className="w-4 h-4 text-slate-400" />
-                    <span>Manage Brands</span>
-                  </button>
+                  <div className="py-1 space-y-0.5">
+                    <Link
+                      href="/admin/categories"
+                      onClick={() => setIsMoreActionsOpen(false)}
+                      className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <FolderTree className="w-4 h-4 text-slate-400" />
+                        <span>Manage Categories</span>
+                      </div>
+                      <ExternalLink className="w-3 h-3 text-slate-400" />
+                    </Link>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMoreActionsOpen(false);
-                      setIsManageRibbonsOpen(true);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
-                  >
-                    <Bookmark className="w-4 h-4 text-slate-400" />
-                    <span>Manage Ribbons</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMoreActionsOpen(false);
+                        setIsManageBrandsOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                    >
+                      <Building2 className="w-4 h-4 text-slate-400" />
+                      <span>Manage Brands</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMoreActionsOpen(false);
-                      setIsManageTagsOpen(true);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
-                  >
-                    <Tag className="w-4 h-4 text-slate-400" />
-                    <span>Manage Tags</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMoreActionsOpen(false);
+                        setIsManageRibbonsOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                    >
+                      <Bookmark className="w-4 h-4 text-slate-400" />
+                      <span>Manage Ribbons</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setIsMoreActionsOpen(false);
-                      const res = await (await import("@/app/actions/productManagement")).getGlobalInfoSections();
-                      if (res.success) {
-                        setInfoSectionsList(res.sections || []);
-                      }
-                      setIsManageSectionsOpen(true);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
-                  >
-                    <FileText className="w-4 h-4 text-slate-400" />
-                    <span>Manage Info Sections</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMoreActionsOpen(false);
+                        setIsManageTagsOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                    >
+                      <Tag className="w-4 h-4 text-slate-400" />
+                      <span>Manage Tags</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMoreActionsOpen(false);
-                      setIsApplyPresetOpen(true);
-                    }}
-                    className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Sliders className="w-4 h-4 text-slate-400" />
-                      <span>Apply Option Setting</span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">
-                      Presets
-                    </span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsMoreActionsOpen(false);
+                        const res = await (await import("@/app/actions/productManagement")).getGlobalInfoSections();
+                        if (res.success) {
+                          setInfoSectionsList(res.sections || []);
+                        }
+                        setIsManageSectionsOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                    >
+                      <FileText className="w-4 h-4 text-slate-400" />
+                      <span>Manage Info Sections</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMoreActionsOpen(false);
+                        setIsApplyPresetOpen(true);
+                      }}
+                      className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Sliders className="w-4 h-4 text-slate-400" />
+                        <span>Apply Option Setting</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">
+                        Presets
+                      </span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -335,15 +432,17 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
       <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
         <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700">
-              <span>All products ({products.length})</span>
+            <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-xs font-semibold text-slate-700 shadow-2xs">
+              <Info className="w-3.5 h-3.5 text-slate-400" />
+              <span>All products</span>
+              <span className="text-slate-400 font-normal">({filtered.length})</span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </div>
 
             <button
               type="button"
               onClick={() => setIsCustomizeColumnsOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <span>Manage View</span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -351,6 +450,48 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Filter Button with active count badge */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsFilterDrawerOpen(true)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer shadow-2xs ${
+                  activeFilterCount > 0
+                    ? "bg-blue-50 text-blue-600 border-blue-300 ring-2 ring-blue-100"
+                    : "bg-white text-blue-600 border-blue-200 hover:bg-blue-50/60"
+                }`}
+              >
+                <Filter className="w-3.5 h-3.5" />
+                <span>Filter</span>
+              </button>
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center shadow-xs pointer-events-none">
+                  {activeFilterCount}
+                </span>
+              )}
+            </div>
+
+            {/* Quick Export Button */}
+            <button
+              type="button"
+              onClick={() => setIsExportModalOpen(true)}
+              className="p-1.5 border border-slate-200 rounded-full hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+              title="Export products"
+            >
+              <Upload className="w-4 h-4" />
+            </button>
+
+            {/* Customize Columns Button */}
+            <button
+              type="button"
+              onClick={() => setIsCustomizeColumnsOpen(true)}
+              className="p-1.5 border border-slate-200 rounded-full hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+              title="Customize columns"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+            </button>
+
+            {/* Search Bar */}
             <div className="relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -358,19 +499,135 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                 placeholder="Search..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-48 sm:w-64 pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800 transition-all"
+                className="w-44 sm:w-56 pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-full focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-800 transition-all font-medium"
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setIsCustomizeColumnsOpen(true)}
-              className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600"
-              title="Customize columns"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-            </button>
           </div>
         </div>
+
+        {/* Active Filter Chips Bar */}
+        {activeFilterCount > 0 && (
+          <div className="px-4 py-2.5 bg-slate-50/60 border-b border-slate-100 flex items-center gap-2 flex-wrap text-xs animate-in fade-in duration-150">
+            {filters.categories.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+                <span>
+                  Categories: <strong>{filters.categories.join(", ")}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ ...filters, categories: [] })}
+                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  title="Remove category filter"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
+            {filters.visibility !== "all" && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+                <span>
+                  Visibility:{" "}
+                  <strong>
+                    {filters.visibility === "shown"
+                      ? "Shown in online store"
+                      : "Hidden from online store"}
+                  </strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ ...filters, visibility: "all" })}
+                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  title="Remove visibility filter"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
+            {filters.productType !== "all" && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+                <span>
+                  Product type:{" "}
+                  <strong>
+                    {filters.productType === "physical" ? "Physical" : "Digital"}
+                  </strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ ...filters, productType: "all" })}
+                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  title="Remove product type filter"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
+            {filters.inventory !== "all" && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+                <span>
+                  Inventory:{" "}
+                  <strong>
+                    {filters.inventory === "in_stock"
+                      ? "In stock"
+                      : filters.inventory === "out_of_stock"
+                      ? "Out of stock"
+                      : "Partially out of stock"}
+                  </strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ ...filters, inventory: "all" })}
+                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  title="Remove inventory filter"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
+            {filters.preOrderEnabled && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+                <span>
+                  Pre-order: <strong>Enabled</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ ...filters, preOrderEnabled: false })}
+                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  title="Remove pre-order filter"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
+            {filters.tags.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+                <span>
+                  Tags: <strong>{filters.tags.join(", ")}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFilters({ ...filters, tags: [] })}
+                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  title="Remove tag filter"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setFilters(DEFAULT_PRODUCT_FILTERS)}
+              className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline cursor-pointer ml-1"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
 
         {/* Products Table */}
         <div className="overflow-x-auto">
@@ -690,6 +947,23 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             "To apply this preset to a product, open the product editor and click 'Option Presets'."
           );
         }}
+      />
+
+      <ExportProductsModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        totalProductsCount={products.length}
+        filteredCount={filtered.length}
+        selectedIds={selectedIds}
+        filteredIds={filtered.map((p) => p.id)}
+        currentSearch={search}
+      />
+
+      <FilterProductsDrawer
+        isOpen={isFilterDrawerOpen}
+        onClose={() => setIsFilterDrawerOpen(false)}
+        filters={filters}
+        onFiltersChange={setFilters}
       />
     </div>
   );

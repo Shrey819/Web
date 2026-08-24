@@ -211,6 +211,14 @@ export function ProductEditorForm({
   const [isApplyPresetOpen, setIsApplyPresetOpen] = useState(false);
   const [isEditVariantsModalOpen, setIsEditVariantsModalOpen] = useState(false);
 
+  // Drag and Drop state for Options
+  const [draggedOptionIdx, setDraggedOptionIdx] = useState<number | null>(null);
+  const [dragOverOptionIdx, setDragOverOptionIdx] = useState<number | null>(null);
+
+  // Drag and Drop state for Info Sections
+  const [draggedSectionIdx, setDraggedSectionIdx] = useState<number | null>(null);
+  const [dragOverSectionIdx, setDragOverSectionIdx] = useState<number | null>(null);
+
   // Pricing & Unit pricing
   const [showPricePerUnit, setShowPricePerUnit] = useState<boolean>(
     Boolean(initialData?.showPricePerUnit ?? false)
@@ -683,6 +691,88 @@ export function ProductEditorForm({
     addToast("info", "Option Removed", "Option removed.");
   };
 
+  // Option Drag and Drop Handlers
+  const handleOptionDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedOptionIdx(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index.toString());
+  };
+
+  const handleOptionDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverOptionIdx !== index) {
+      setDragOverOptionIdx(index);
+    }
+  };
+
+  const handleOptionDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedOptionIdx === null || draggedOptionIdx === targetIndex) {
+      setDraggedOptionIdx(null);
+      setDragOverOptionIdx(null);
+      return;
+    }
+
+    setOptions((prev) => {
+      const updated = [...prev];
+      const [draggedItem] = updated.splice(draggedOptionIdx, 1);
+      updated.splice(targetIndex, 0, draggedItem);
+      const reordered = updated.map((opt, idx) => ({ ...opt, sortOrder: idx }));
+      setValue("options", reordered, { shouldDirty: true });
+      return reordered;
+    });
+
+    setDraggedOptionIdx(null);
+    setDragOverOptionIdx(null);
+    addToast("info", "Reordered", "Product option order updated.");
+  };
+
+  const handleOptionDragEnd = () => {
+    setDraggedOptionIdx(null);
+    setDragOverOptionIdx(null);
+  };
+
+  // Section Drag and Drop Handlers
+  const handleSectionDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedSectionIdx(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index.toString());
+  };
+
+  const handleSectionDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverSectionIdx !== index) {
+      setDragOverSectionIdx(index);
+    }
+  };
+
+  const handleSectionDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedSectionIdx === null || draggedSectionIdx === targetIndex) {
+      setDraggedSectionIdx(null);
+      setDragOverSectionIdx(null);
+      return;
+    }
+
+    setSelectedSectionIds((prev) => {
+      const updated = [...prev];
+      const [draggedItem] = updated.splice(draggedSectionIdx, 1);
+      updated.splice(targetIndex, 0, draggedItem);
+      return updated;
+    });
+
+    setDraggedSectionIdx(null);
+    setDragOverSectionIdx(null);
+    addToast("info", "Reordered", "Info section order updated.");
+  };
+
+  const handleSectionDragEnd = () => {
+    setDraggedSectionIdx(null);
+    setDragOverSectionIdx(null);
+  };
+
   const handleApplyOptionPreset = (
     presetOptions: any[],
     presetVariants?: any[],
@@ -1076,6 +1166,8 @@ export function ProductEditorForm({
                           <option value="m">m</option>
                           <option value="cm">cm</option>
                           <option value="piece">piece</option>
+                          <option value="unit">unit</option>
+                          <option value="item">item</option>
                           <option value="pack">pack</option>
                           <option value="box">box</option>
                           <option value="set">set</option>
@@ -1192,68 +1284,89 @@ export function ProductEditorForm({
 
               {/* Options Rows */}
               <div className="space-y-3 pt-2">
-                {options.map((opt, idx) => (
-                  <div
-                    key={opt.id || idx}
-                    className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="text-slate-400 cursor-grab">
-                        <GripVertical className="w-4 h-4" />
+                {options.map((opt, idx) => {
+                  const isDraggingThis = draggedOptionIdx === idx;
+                  const isDragOverThis = dragOverOptionIdx === idx && draggedOptionIdx !== idx;
+
+                  return (
+                    <div
+                      key={opt.id || idx}
+                      draggable
+                      onDragStart={(e) => handleOptionDragStart(e, idx)}
+                      onDragOver={(e) => handleOptionDragOver(e, idx)}
+                      onDrop={(e) => handleOptionDrop(e, idx)}
+                      onDragEnd={handleOptionDragEnd}
+                      className={`p-3.5 rounded-xl border transition-all duration-150 flex items-center justify-between gap-4 select-none ${
+                        isDraggingThis
+                          ? "opacity-40 border-dashed border-blue-500 bg-blue-50/50 scale-[0.99]"
+                          : isDragOverThis
+                          ? "border-blue-500 bg-blue-50/40 ring-2 ring-blue-400 ring-offset-1 scale-[1.01]"
+                          : "border-slate-200 bg-slate-50/60 hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="text-slate-400 hover:text-slate-700 cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-slate-200/60 transition-colors"
+                          title="Drag to reorder option"
+                        >
+                          <GripVertical className="w-4 h-4" />
+                        </div>
+                        <span className="text-sm font-bold text-slate-900 w-24 truncate">
+                          {opt.name}
+                        </span>
                       </div>
-                      <span className="text-sm font-bold text-slate-900 w-20 truncate">{opt.name}</span>
-                    </div>
 
-                    {/* Choices preview */}
-                    <div className="flex items-center gap-2 flex-1 flex-wrap">
-                      {opt.fieldType === "SWATCH_CHOICES" ? (
-                        opt.choices?.map((ch: any, cIdx: number) => (
-                          <div
-                            key={cIdx}
-                            className="flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-full border border-slate-200 shadow-2xs text-xs font-medium text-slate-700"
-                          >
+                      {/* Choices preview */}
+                      <div className="flex items-center gap-2 flex-1 flex-wrap">
+                        {opt.fieldType === "SWATCH_CHOICES" ? (
+                          opt.choices?.map((ch: any, cIdx: number) => (
+                            <div
+                              key={cIdx}
+                              className="flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-full border border-slate-200 shadow-2xs text-xs font-medium text-slate-700"
+                            >
+                              <span
+                                className="w-3.5 h-3.5 rounded-full border border-slate-300"
+                                style={{ backgroundColor: ch.colorHex || "#3b82f6" }}
+                              />
+                              <span>{ch.name}</span>
+                            </div>
+                          ))
+                        ) : (
+                          opt.choices?.map((ch: any, cIdx: number) => (
                             <span
-                              className="w-3.5 h-3.5 rounded-full border border-slate-300"
-                              style={{ backgroundColor: ch.colorHex || "#3b82f6" }}
-                            />
-                            <span>{ch.name}</span>
-                          </div>
-                        ))
-                      ) : (
-                        opt.choices?.map((ch: any, cIdx: number) => (
-                          <span
-                            key={cIdx}
-                            className="px-2.5 py-1 bg-white rounded-md border border-slate-200 shadow-2xs text-xs font-semibold text-slate-800"
-                          >
-                            {ch.name}
-                          </span>
-                        ))
-                      )}
-                    </div>
+                              key={cIdx}
+                              className="px-2.5 py-1 bg-white rounded-md border border-slate-200 shadow-2xs text-xs font-semibold text-slate-800"
+                            >
+                              {ch.name}
+                            </span>
+                          ))
+                        )}
+                      </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingOption(opt);
-                          setEditingOptionIndex(idx);
-                          setIsAddOptionOpen(true);
-                        }}
-                        className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 shadow-2xs cursor-pointer"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteOption(idx)}
-                        className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* Actions */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingOption(opt);
+                            setEditingOptionIndex(idx);
+                            setIsAddOptionOpen(true);
+                          }}
+                          className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 shadow-2xs cursor-pointer transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteOption(idx)}
+                          className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 cursor-pointer transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {options.length < 6 ? (
                   <button
@@ -1501,13 +1614,30 @@ export function ProductEditorForm({
                       internalName: "Section " + (sIdx + 1),
                       content: "Information content...",
                     };
+                    const isDraggingSec = draggedSectionIdx === sIdx;
+                    const isDragOverSec = dragOverSectionIdx === sIdx && draggedSectionIdx !== sIdx;
+
                     return (
                       <div
                         key={secId}
-                        className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between gap-4"
+                        draggable
+                        onDragStart={(e) => handleSectionDragStart(e, sIdx)}
+                        onDragOver={(e) => handleSectionDragOver(e, sIdx)}
+                        onDrop={(e) => handleSectionDrop(e, sIdx)}
+                        onDragEnd={handleSectionDragEnd}
+                        className={`p-3.5 rounded-xl border transition-all duration-150 flex items-center justify-between gap-4 select-none ${
+                          isDraggingSec
+                            ? "opacity-40 border-dashed border-blue-500 bg-blue-50/50 scale-[0.99]"
+                            : isDragOverSec
+                            ? "border-blue-500 bg-blue-50/40 ring-2 ring-blue-400 ring-offset-1 scale-[1.01]"
+                            : "border-slate-200 bg-slate-50/60 hover:border-slate-300 hover:bg-slate-50"
+                        }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="text-slate-400 cursor-grab shrink-0">
+                          <div
+                            className="text-slate-400 hover:text-slate-700 cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-slate-200/60 transition-colors shrink-0"
+                            title="Drag to reorder section"
+                          >
                             <GripVertical className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
@@ -1532,7 +1662,7 @@ export function ProductEditorForm({
                               setEditingSection(section);
                               setIsEditInfoSectionOpen(true);
                             }}
-                            className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 shadow-2xs cursor-pointer"
+                            className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 shadow-2xs cursor-pointer transition-colors"
                           >
                             Edit
                           </button>
@@ -1541,7 +1671,7 @@ export function ProductEditorForm({
                             onClick={() =>
                               setSelectedSectionIds((prev) => prev.filter((id) => id !== secId))
                             }
-                            className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 cursor-pointer"
+                            className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 cursor-pointer transition-colors"
                             title="Remove from product"
                           >
                             <Trash2 className="w-4 h-4" />

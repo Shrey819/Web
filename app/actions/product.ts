@@ -564,7 +564,9 @@ export async function getAdminProductsList(params?: { search?: string; category?
         (SELECT COUNT(*)::int FROM "ProductVariant" WHERE "productId" = p."id") as "variantCount",
         (SELECT MIN("price") FROM "ProductVariant" WHERE "productId" = p."id") as "minVariantPrice",
         (SELECT MAX("price") FROM "ProductVariant" WHERE "productId" = p."id") as "maxVariantPrice",
-        (SELECT string_agg(t."name", ', ') FROM "ProductTagAssignment" pta JOIN "ProductTag" t ON pta."tagId" = t."id" WHERE pta."productId" = p."id") as "tags"
+        (SELECT string_agg(t."name", ', ') FROM "ProductTagAssignment" pta JOIN "ProductTag" t ON pta."tagId" = t."id" WHERE pta."productId" = p."id") as "tags",
+        (SELECT string_agg(c."name", ', ') FROM "ProductCategory" pc JOIN "Category" c ON pc."categoryId" = c."id" WHERE pc."productId" = p."id") as "categories",
+        (SELECT string_agg(pc."categoryId", ',') FROM "ProductCategory" pc WHERE pc."productId" = p."id") as "categoryIds"
       FROM "Product" p
       ${whereClause}
       ORDER BY p."createdAt" DESC
@@ -598,6 +600,8 @@ export async function getAdminProductsList(params?: { search?: string; category?
         ribbon: row.primaryRibbon || "",
         brand: row.brand || "",
         tags: row.tags ? row.tags.split(", ") : [],
+        categories: row.categories ? row.categories.split(", ") : [],
+        categoryIds: row.categoryIds ? row.categoryIds.split(",") : [],
         visible: Boolean(row.visible ?? (row.status !== "DRAFT"))
       };
     });

@@ -40,7 +40,11 @@ export const productOptionSchema = z.object({
   id: z.string().nullish(),
   globalOptionId: z.string().nullish(),
   name: z.string().min(1, "Option name is required"),
-  fieldType: z.enum(["TEXT_CHOICES", "SWATCH_CHOICES"]).nullish().default("TEXT_CHOICES"),
+  fieldType: z.preprocess((v) => {
+    if (!v || v === "DROPDOWN" || v === "RADIO" || v === "TEXT") return "TEXT_CHOICES";
+    if (v === "COLOR" || v === "SWATCH") return "SWATCH_CHOICES";
+    return v;
+  }, z.enum(["TEXT_CHOICES", "SWATCH_CHOICES"]).nullish().default("TEXT_CHOICES")),
   sortOrder: z.number().int().nullish().default(0),
   choices: z.array(productOptionChoiceSchema).nullish().default([]),
 });

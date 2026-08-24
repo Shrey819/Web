@@ -43,6 +43,24 @@ export interface CategoryItem {
   productCount?: number;
 }
 
+export async function getGlobalCategories(): Promise<{ success: boolean; categories: CategoryItem[]; error?: string }> {
+  try {
+    const res = await query(`
+      SELECT 
+        c."id", 
+        c."name", 
+        c."slug",
+        (SELECT COUNT(DISTINCT "productId") FROM "ProductCategory" WHERE "categoryId" = c."id")::int as "productCount"
+      FROM "Category" c
+      ORDER BY c."name" ASC
+    `);
+    return { success: true, categories: res.rows as CategoryItem[] };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to load categories";
+    return { success: false, error: message, categories: [] };
+  }
+}
+
 /**
  * =========================================================================
  * 1. GLOBAL RIBBONS MANAGEMENT
