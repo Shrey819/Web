@@ -1,3 +1,4 @@
+import { MainframeHero } from "@/components/home/MainframeHero";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { HomepageCategoryShowcase } from "@/components/home/HomepageCategoryShowcase";
 import { BrandMarquee } from "@/components/home/BrandMarquee";
@@ -67,6 +68,9 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Mainframe Hero Section */}
+      <MainframeHero />
+
       {/* 2. Full-Width Premium Hero Image Slider (3 slides, responsive desktop/mobile images) */}
       <HeroSlider slides={homepageData.heroSlides} />
 
