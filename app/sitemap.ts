@@ -3,7 +3,7 @@ import { PRODUCTS } from "@/data/products";
 import { CATEGORIES } from "@/data/categories";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://propelauto-industrial.com";
+  const baseUrl = "https://omautomation.com";
 
   const staticPages = [
     "",

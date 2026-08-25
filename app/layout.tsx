@@ -22,10 +22,10 @@ const jakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Propel Auto | Premium Industrial Automation Parts & Systems",
+  title: "OM AUTOMATION | Premium Industrial Automation Parts & Systems",
   description: "B2B e-commerce platform for high-precision sensors, PLCs, industrial controllers, variable frequency drives, and servo motors. Same-day dispatch.",
   openGraph: {
-    title: "Propel Auto | Industrial Automation E-Commerce",
+    title: "OM AUTOMATION | Industrial Automation E-Commerce",
     description: "Factory direct sensors, PLCs, VFDs, and motion hardware with 24-hour dispatch.",
     type: "website",
   },
@@ -42,6 +42,29 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${jakartaSans.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var observer = new MutationObserver(function(mutations) {
+                    for (var i = 0; i < mutations.length; i++) {
+                      var m = mutations[i];
+                      if (m.type === 'attributes' && m.target && m.target.hasAttribute && m.target.hasAttribute('fdprocessedid')) {
+                        m.target.removeAttribute('fdprocessedid');
+                      }
+                    }
+                  });
+                  if (document.documentElement) {
+                    observer.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ['fdprocessedid'] });
+                  }
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col font-sans bg-[#faf9f5] text-slate-900 selection:bg-sky-500 selection:text-white" suppressHydrationWarning>
         <UserTracker />
         <HeaderFooterWrapper>

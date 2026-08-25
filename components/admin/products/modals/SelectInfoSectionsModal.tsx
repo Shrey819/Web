@@ -147,20 +147,20 @@ export function SelectInfoSectionsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150 text-slate-800">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150 text-slate-800 dark:text-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/50">
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 Additional Info Sections Library
               </h2>
-              <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">
+              <span className="px-2.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 rounded-full text-xs font-bold">
                 {tempSelectedIds.length} / 10 Selected
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Select predefined sections to display on this product, or create a new reusable section below.
             </p>
           </div>
@@ -168,14 +168,14 @@ export function SelectInfoSectionsModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200 transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Search & Quick Controls Bar */}
-        <div className="px-6 py-3 border-b border-slate-100 bg-white flex items-center justify-between gap-3">
+        <div className="px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-3">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -183,7 +183,7 @@ export function SelectInfoSectionsModal({
               placeholder="Search info sections..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900 dark:text-white placeholder-slate-400"
             />
           </div>
 
@@ -191,14 +191,14 @@ export function SelectInfoSectionsModal({
             <button
               type="button"
               onClick={handleSelectAll}
-              className="px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              className="px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
             >
               Select All
             </button>
             <button
               type="button"
               onClick={handleDeselectAll}
-              className="px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              className="px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
             >
               Deselect All
             </button>
@@ -213,10 +213,10 @@ export function SelectInfoSectionsModal({
               <span className="text-xs">Loading info sections...</span>
             </div>
           ) : filteredSections.length === 0 ? (
-            <div className="py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl space-y-2">
+            <div className="py-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl space-y-2">
               <FileText className="w-8 h-8 text-slate-400 mx-auto" />
-              <h3 className="text-xs font-bold text-slate-700">No Info Sections Found</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300">No Info Sections Found</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {search ? "No sections match your search query." : "You haven't created any info sections yet."}
               </p>
             </div>
@@ -231,8 +231,8 @@ export function SelectInfoSectionsModal({
                   onClick={() => handleToggle(sec.id)}
                   className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
                     isChecked
-                      ? "border-blue-500 bg-blue-50/40 shadow-xs"
-                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                      ? "border-blue-500 bg-blue-50/40 dark:bg-blue-900/30 shadow-xs"
+                      : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
                   }`}
                 >
                   <div className="flex items-start gap-3.5 flex-1 min-w-0">
@@ -242,7 +242,7 @@ export function SelectInfoSectionsModal({
                         className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
                           isChecked
                             ? "bg-blue-600 border-blue-600 text-white"
-                            : "border-slate-300 bg-white"
+                            : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
                         }`}
                       >
                         {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -251,22 +251,22 @@ export function SelectInfoSectionsModal({
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-900 truncate">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
                           {sec.title}
                         </span>
                         {sec.internalName && sec.internalName !== sec.title && (
-                          <span className="text-[11px] text-slate-400 font-medium truncate">
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium truncate">
                             / {sec.internalName}
                           </span>
                         )}
                         {sec.productCount != null && sec.productCount > 0 && (
-                          <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+                          <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full whitespace-nowrap">
                             Used in {sec.productCount} {sec.productCount === 1 ? "product" : "products"}
                           </span>
                         )}
                       </div>
 
-                      <p className="text-xs text-slate-500 truncate max-w-lg mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-lg mt-0.5">
                         {cleanSnippet}
                       </p>
                     </div>
@@ -277,7 +277,7 @@ export function SelectInfoSectionsModal({
                     <button
                       type="button"
                       onClick={() => onOpenEditSection(sec)}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-white transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       title="Edit global section"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -286,7 +286,7 @@ export function SelectInfoSectionsModal({
                       type="button"
                       disabled={isDeletingId === sec.id}
                       onClick={(e) => handleDeleteSection(e, sec.id, sec.title)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-white transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       title="Delete from library"
                     >
                       {isDeletingId === sec.id ? (
@@ -306,7 +306,7 @@ export function SelectInfoSectionsModal({
             <button
               type="button"
               onClick={onOpenCreateSection}
-              className="w-full py-3 px-4 rounded-xl border-2 border-dashed border-blue-200 hover:border-blue-400 bg-blue-50/50 hover:bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
+              className="w-full py-3 px-4 rounded-xl border-2 border-dashed border-blue-200 dark:border-blue-900/60 hover:border-blue-400 dark:hover:border-blue-700 bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
             >
               <Plus className="w-4 h-4" />
               Add Another Info Section
@@ -315,8 +315,8 @@ export function SelectInfoSectionsModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
-          <span className="text-xs text-slate-500 font-medium">
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex items-center justify-between">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
             {tempSelectedIds.length} of 10 maximum sections selected
           </span>
 
@@ -324,7 +324,7 @@ export function SelectInfoSectionsModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 rounded-xl border border-slate-200 hover:bg-white transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               Cancel
             </button>

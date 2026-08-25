@@ -84,54 +84,54 @@ export function DeleteCategoryReassignModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-900 dark:text-white animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Reassign Products Before Delete</h2>
-              <p className="text-xs text-slate-400">No products will be deleted</p>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Reassign Products Before Delete</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">No products will be deleted</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-5">
           {/* Warning Banner */}
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs leading-relaxed space-y-1">
-            <p className="font-bold flex items-center gap-1.5 text-amber-400">
+          <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs leading-relaxed space-y-1">
+            <p className="font-bold flex items-center gap-1.5 text-amber-900 dark:text-amber-300">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               Category contains {categoryToDelete.product_count} product(s)
             </p>
-            <p className="text-slate-300">
+            <p className="text-slate-700 dark:text-slate-300">
               To keep your product catalog intact, choose another category to move these{" "}
-              <strong className="text-white font-mono">{categoryToDelete.product_count}</strong> product(s) to before deleting{" "}
-              <strong className="text-amber-400 font-mono">"{categoryToDelete.name}"</strong>.
+              <strong className="text-slate-900 dark:text-white font-mono">{categoryToDelete.product_count}</strong> product(s) to before deleting{" "}
+              <strong className="text-amber-900 dark:text-amber-400 font-mono">"{categoryToDelete.name}"</strong>.
             </p>
           </div>
 
           {/* Inline Create New Category Option */}
           {showCreateNew ? (
-            <form onSubmit={handleCreateNewCategory} className="p-4 rounded-2xl bg-slate-950 border border-amber-500/30 space-y-3">
+            <form onSubmit={handleCreateNewCategory} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-blue-200 dark:border-blue-500/30 space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <FolderTree className="w-3.5 h-3.5 text-amber-400" /> Create & Select New Category
+                <label className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <FolderTree className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Create & Select New Category
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowCreateNew(false)}
-                  className="text-xs text-slate-400 hover:text-white"
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -143,13 +143,13 @@ export function DeleteCategoryReassignModal({
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
                   placeholder="e.g. Spare Parts & Accessories"
-                  className="flex-1 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  className="flex-1 px-3.5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500"
                   required
                 />
                 <button
                   type="submit"
                   disabled={isCreatingNew}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1 shrink-0 disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 shrink-0 disabled:opacity-50 cursor-pointer shadow-xs"
                 >
                   {isCreatingNew ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                   Create
@@ -159,27 +159,27 @@ export function DeleteCategoryReassignModal({
           ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-white">
+                <label className="block text-xs font-bold text-slate-900 dark:text-white">
                   Reassign {categoryToDelete.product_count} Product(s) To *
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowCreateNew(true)}
-                  className="text-xs font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" /> Create New Category
                 </button>
               </div>
 
               {availableCategories.length === 0 ? (
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400 text-center">
+                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 text-center">
                   No other categories exist yet. Please click "+ Create New Category" above first!
                 </div>
               ) : (
                 <select
                   value={selectedTargetId}
                   onChange={(e) => setSelectedTargetId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:border-amber-500 cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-medium focus:outline-none focus:border-blue-500 cursor-pointer"
                 >
                   {availableCategories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -193,20 +193,20 @@ export function DeleteCategoryReassignModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-end gap-2">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 flex items-center justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
+            className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleDeleteWithReassign}
             disabled={isSubmitting || availableCategories.length === 0}
-            className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-rose-600/20 disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-xs disabled:opacity-50 cursor-pointer"
           >
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-            Reassign Products & Delete Category
+            Reassign & Delete
           </button>
         </div>
       </div>

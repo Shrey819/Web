@@ -325,29 +325,29 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 overflow-y-auto">
+      <div className="relative w-full max-w-4xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-slate-900 dark:text-white animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 Bulk Excel Product Import
-                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30">
                   Cloudinary Auto-Sync
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">Upload products via Excel spreadsheet & local image folders</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Upload products via Excel spreadsheet & local image folders</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
             disabled={isUploading}
-            className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -357,14 +357,14 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Result Summary Notification */}
           {resultSummary && (
-            <div className={`p-4 rounded-xl border ${resultSummary.failedCount === 0 ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" : "bg-amber-500/10 border-amber-500/30 text-amber-300"}`}>
+            <div className={`p-4 rounded-xl border ${resultSummary.failedCount === 0 ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300"}`}>
               <div className="flex items-center gap-3 font-semibold text-sm">
-                {resultSummary.failedCount === 0 ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <AlertTriangle className="w-5 h-5 text-amber-400" />}
+                {resultSummary.failedCount === 0 ? <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> : <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
                 Import Completed: {resultSummary.createdCount} products created successfully!
                 {resultSummary.failedCount > 0 && ` (${resultSummary.failedCount} failed)`}
               </div>
               {resultSummary.errors.length > 0 && (
-                <ul className="mt-2 text-xs space-y-1 pl-8 list-disc text-amber-200/80 max-h-32 overflow-y-auto">
+                <ul className="mt-2 text-xs space-y-1 pl-8 list-disc text-amber-900/80 dark:text-amber-300/80 max-h-32 overflow-y-auto">
                   {resultSummary.errors.map((err, idx) => (
                     <li key={idx}>{err}</li>
                   ))}
@@ -374,17 +374,17 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
           )}
 
           {/* Action Step 1: Demo Download */}
-          <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
+              <Sparkles className="w-5 h-5 text-amber-500 shrink-0" />
               <div>
-                <h4 className="text-sm font-semibold text-white">1. Download Sample Excel Sheet</h4>
-                <p className="text-xs text-slate-400">Specify <code className="text-blue-400 font-mono">AUTO</code> or subfolder paths (e.g. <code className="text-blue-400 font-mono">folder_a/p0001</code>) in Col D.</p>
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">1. Download Sample Excel Sheet</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Specify <code className="text-blue-600 dark:text-blue-400 font-mono">AUTO</code> or subfolder paths (e.g. <code className="text-blue-600 dark:text-blue-400 font-mono">folder_a/p0001</code>) in Col D.</p>
               </div>
             </div>
             <button
               onClick={handleDownloadDemoTemplate}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg transition-colors shrink-0"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 rounded-lg transition-colors shrink-0 cursor-pointer"
             >
               <Download className="w-4 h-4" />
               Download Demo Template (.xlsx)
@@ -397,7 +397,7 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
             <div
               onClick={() => excelInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-all ${
-                excelFile ? "border-blue-500 bg-blue-500/5" : "border-slate-800 hover:border-slate-700 bg-slate-950/40"
+                excelFile ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20" : "border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 bg-slate-50/60 dark:bg-slate-950/60"
               }`}
             >
               <input
@@ -407,18 +407,18 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
                 onChange={handleExcelChange}
                 className="hidden"
               />
-              <FileSpreadsheet className={`w-7 h-7 mb-2 ${excelFile ? "text-blue-400" : "text-slate-500"}`} />
-              <span className="text-xs font-semibold text-slate-200 text-center">
+              <FileSpreadsheet className={`w-7 h-7 mb-2 ${excelFile ? "text-blue-600 dark:text-blue-400" : "text-slate-400"}`} />
+              <span className="text-xs font-semibold text-slate-900 dark:text-white text-center">
                 {excelFile ? excelFile.name : "Select Excel File"}
               </span>
-              <span className="text-[10px] text-slate-500 mt-1">.xlsx or .csv sheet</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">.xlsx or .csv sheet</span>
             </div>
 
             {/* Select Folder Picker (webkitdirectory) */}
             <div
               onClick={() => folderInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-all ${
-                imageFiles.length > 0 ? "border-purple-500 bg-purple-500/5" : "border-slate-800 hover:border-slate-700 bg-slate-950/40"
+                imageFiles.length > 0 ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20" : "border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 bg-slate-50/60 dark:bg-slate-950/60"
               }`}
             >
               <input
@@ -431,18 +431,18 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
                 onChange={handleImagesChange}
                 className="hidden"
               />
-              <FolderOpen className={`w-7 h-7 mb-2 ${imageFiles.length > 0 ? "text-purple-400" : "text-slate-500"}`} />
-              <span className="text-xs font-semibold text-slate-200 text-center">
+              <FolderOpen className={`w-7 h-7 mb-2 ${imageFiles.length > 0 ? "text-blue-600 dark:text-blue-400" : "text-slate-400"}`} />
+              <span className="text-xs font-semibold text-slate-900 dark:text-white text-center">
                 Select Local Folder
               </span>
-              <span className="text-[10px] text-slate-500 mt-1">Scans folder & all subfolders</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Scans folder & all subfolders</span>
             </div>
 
             {/* Select Individual Files */}
             <div
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-all ${
-                imageFiles.length > 0 ? "border-purple-500 bg-purple-500/5" : "border-slate-800 hover:border-slate-700 bg-slate-950/40"
+                imageFiles.length > 0 ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20" : "border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 bg-slate-50/60 dark:bg-slate-950/60"
               }`}
             >
               <input
@@ -453,11 +453,11 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
                 onChange={handleImagesChange}
                 className="hidden"
               />
-              <Images className={`w-7 h-7 mb-2 ${imageFiles.length > 0 ? "text-purple-400" : "text-slate-500"}`} />
-              <span className="text-xs font-semibold text-slate-200 text-center">
+              <Images className={`w-7 h-7 mb-2 ${imageFiles.length > 0 ? "text-blue-600 dark:text-blue-400" : "text-slate-400"}`} />
+              <span className="text-xs font-semibold text-slate-900 dark:text-white text-center">
                 {imageFiles.length > 0 ? `${imageFiles.length} Images Loaded` : "Select Files Directly"}
               </span>
-              <span className="text-[10px] text-slate-500 mt-1">Multi-select image files</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Multi-select image files</span>
             </div>
           </div>
 
@@ -465,21 +465,21 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
           {parsedRows.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <FileCheck className="w-4 h-4 text-emerald-400" />
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                  <FileCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   Parsed Catalog Preview ({parsedRows.length} Products Found)
                 </h4>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-500 dark:text-slate-400">
                   Total Images Matched:{" "}
-                  <strong className="text-purple-400">
+                  <strong className="text-blue-600 dark:text-blue-400">
                     {parsedRows.reduce((a, b) => a + b.matchedFiles.length, 0)}
                   </strong>
                 </span>
               </div>
 
-              <div className="border border-slate-800 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
+              <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+                <table className="w-full text-left text-xs text-slate-800 dark:text-slate-200">
+                  <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider sticky top-0 border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th className="p-3">Code</th>
                       <th className="p-3">Product Name</th>
@@ -489,22 +489,22 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
                       <th className="p-3 text-right">Matched Images</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60 bg-slate-900/40">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                     {parsedRows.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-800/30">
-                        <td className="p-3 font-mono font-medium text-blue-400">{row.productCode || `-`}</td>
-                        <td className="p-3 font-medium text-white max-w-[180px] truncate">{row.name}</td>
-                        <td className="p-3 font-mono text-[11px] text-amber-400/90">{row.imageRule}</td>
-                        <td className="p-3 text-slate-400">{row.categoryName}</td>
-                        <td className="p-3 font-mono text-emerald-400">₹{(row.currentPrice || row.originalPrice).toLocaleString()}</td>
+                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <td className="p-3 font-mono font-medium text-blue-600 dark:text-blue-400">{row.productCode || `-`}</td>
+                        <td className="p-3 font-medium text-slate-900 dark:text-white max-w-[180px] truncate">{row.name}</td>
+                        <td className="p-3 font-mono text-[11px] text-amber-700 dark:text-amber-400">{row.imageRule}</td>
+                        <td className="p-3 text-slate-500 dark:text-slate-400">{row.categoryName}</td>
+                        <td className="p-3 font-mono text-emerald-700 dark:text-emerald-400">₹{(row.currentPrice || row.originalPrice).toLocaleString()}</td>
                         <td className="p-3 text-right">
                           {row.matchedFiles.length > 0 ? (
-                            <span className="inline-flex items-center gap-1 text-purple-400 font-semibold bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+                            <span className="inline-flex items-center gap-1 text-blue-700 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/30">
                               <Images className="w-3 h-3" />
                               {row.matchedFiles.length} files
                             </span>
                           ) : (
-                            <span className="text-slate-500 text-[11px]">No images matched</span>
+                            <span className="text-slate-400 dark:text-slate-500 text-[11px]">No images matched</span>
                           )}
                         </td>
                       </tr>
@@ -517,17 +517,17 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
 
           {/* Upload Progress Bar */}
           {isUploading && (
-            <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2">
-              <div className="flex items-center justify-between text-xs font-semibold text-white">
+            <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-2">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-900 dark:text-white">
                 <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                  <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
                   {uploadStatusText}
                 </span>
-                <span className="font-mono text-blue-400">{uploadProgress}%</span>
+                <span className="font-mono text-blue-600 dark:text-blue-400">{uploadProgress}%</span>
               </div>
-              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
+                  className="h-full bg-blue-600 transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -536,11 +536,11 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
         </div>
 
         {/* Footer Controls */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-800 bg-slate-950/80">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
           <button
             onClick={onClose}
             disabled={isUploading}
-            className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+            className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -548,7 +548,7 @@ export function BulkUploadModal({ isOpen, onClose, onSuccess }: BulkUploadModalP
           <button
             onClick={handleStartImport}
             disabled={parsedRows.length === 0 || isUploading || isParsing}
-            className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-lg shadow-blue-500/20 transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-xs transition-all cursor-pointer"
           >
             {isUploading ? (
               <>

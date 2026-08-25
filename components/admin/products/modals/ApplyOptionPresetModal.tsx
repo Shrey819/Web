@@ -280,10 +280,10 @@ export function ApplyOptionPresetModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150 text-slate-800 dark:text-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {isCreatingPreset ? (
               <button
@@ -292,25 +292,25 @@ export function ApplyOptionPresetModal({
                   setIsCreatingPreset(false);
                   setEditingPresetId(null);
                 }}
-                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                 title="Back to presets"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
                 <Layers className="w-4 h-4" />
               </div>
             )}
             <div>
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 {editingPresetId
                   ? "Edit Option Preset"
                   : isCreatingPreset
                   ? "Add Option Preset"
                   : "Apply Option Setting"}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {editingPresetId
                   ? "Update option combinations and choices for this preset"
                   : isCreatingPreset
@@ -322,7 +322,7 @@ export function ApplyOptionPresetModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -333,7 +333,7 @@ export function ApplyOptionPresetModal({
           <form onSubmit={handleSaveNewPreset} className="flex-1 overflow-y-auto p-5 space-y-4">
             {/* Preset Name */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-800">
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
                 Preset Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -343,15 +343,15 @@ export function ApplyOptionPresetModal({
                 autoFocus
                 onChange={(e) => setNewPresetName(e.target.value)}
                 placeholder="e.g. Standard T-Shirt Sizes & Colors, Voltage & Specs"
-                className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-900 font-medium"
+                className="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-white font-medium placeholder-slate-400"
               />
             </div>
 
             {/* Options Builder List */}
             <div className="space-y-3 pt-2">
-              <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
                 <span>Product Options</span>
-                <span className="text-[11px] font-normal text-slate-400">
+                <span className="text-[11px] font-normal text-slate-400 dark:text-slate-500">
                   {newPresetOptions.length} / 6 options
                 </span>
               </label>
@@ -359,10 +359,10 @@ export function ApplyOptionPresetModal({
               {newPresetOptions.map((opt, oIdx) => (
                 <div
                   key={oIdx}
-                  className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3 relative group"
+                  className="p-4 bg-slate-50/70 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3 relative group text-slate-900 dark:text-white"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
+                    <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
                       Option {oIdx + 1}
                     </span>
                     {newPresetOptions.length > 1 && (
@@ -394,7 +394,7 @@ export function ApplyOptionPresetModal({
                             )
                           )
                         }
-                        className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-800"
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-800 dark:text-slate-200 placeholder-slate-400"
                       />
 
                       {/* Quick suggestions */}
@@ -420,7 +420,7 @@ export function ApplyOptionPresetModal({
                                   )
                                 )
                               }
-                              className="text-[10px] text-slate-500 hover:text-blue-600 bg-white border border-slate-200 px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                              className="text-[10px] text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded cursor-pointer transition-colors"
                             >
                               + {sug}
                             </button>
@@ -430,7 +430,7 @@ export function ApplyOptionPresetModal({
                     </div>
 
                     {/* Option Type Selector */}
-                    <div className="flex items-center gap-1 bg-white p-1 border border-slate-200 rounded-lg h-[34px]">
+                    <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 border border-slate-200 dark:border-slate-700 rounded-lg h-[34px]">
                       <button
                         type="button"
                         onClick={() =>
@@ -442,8 +442,8 @@ export function ApplyOptionPresetModal({
                         }
                         className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
                           opt.type === "TEXT_CHOICES"
-                            ? "bg-blue-50 text-blue-700"
-                            : "text-slate-500 hover:text-slate-800"
+                            ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                         }`}
                       >
                         <Type className="w-3 h-3" /> Text
@@ -468,8 +468,8 @@ export function ApplyOptionPresetModal({
                         }
                         className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
                           opt.type === "SWATCH_CHOICES"
-                            ? "bg-blue-50 text-blue-700"
-                            : "text-slate-500 hover:text-slate-800"
+                            ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                         }`}
                       >
                         <Palette className="w-3 h-3" /> Swatch
@@ -479,15 +479,15 @@ export function ApplyOptionPresetModal({
 
                   {/* Choice Chips Input */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5 flex-wrap min-h-[38px] p-2 bg-white border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-blue-500">
+                    <div className="flex items-center gap-1.5 flex-wrap min-h-[38px] p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus-within:ring-2 focus-within:ring-blue-500">
                       {opt.choices.map((c, cIdx) => (
                         <span
                           key={cIdx}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200"
                         >
                           {opt.type === "SWATCH_CHOICES" && (
                             <label
-                              className="w-4 h-4 rounded-full border border-slate-300 shadow-2xs flex items-center justify-center overflow-hidden cursor-pointer hover:scale-110 transition-transform relative shrink-0"
+                              className="w-4 h-4 rounded-full border border-slate-300 dark:border-slate-600 shadow-2xs flex items-center justify-center overflow-hidden cursor-pointer hover:scale-110 transition-transform relative shrink-0"
                               style={{ backgroundColor: c.colorCode || resolveColor(c.name) || "#ef4444" }}
                               title={`Click to pick color for "${c.name}"`}
                             >
@@ -547,11 +547,11 @@ export function ApplyOptionPresetModal({
                             handleAddChoice(oIdx);
                           }
                         }}
-                        className="flex-1 min-w-[120px] text-xs bg-transparent border-none outline-hidden font-medium text-slate-800 placeholder:text-slate-400"
+                        className="flex-1 min-w-[120px] text-xs bg-transparent border-none outline-hidden font-medium text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       />
                     </div>
-                    <p className="text-[10px] text-slate-400">
-                      Type choice name and hit <kbd className="px-1 py-0.2 bg-slate-200/80 rounded font-mono text-[9px]">Enter</kbd> or <kbd className="px-1 py-0.2 bg-slate-200/80 rounded font-mono text-[9px]">,</kbd> to add.
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                      Type choice name and hit <kbd className="px-1 py-0.2 bg-slate-200/80 dark:bg-slate-800 rounded font-mono text-[9px]">Enter</kbd> or <kbd className="px-1 py-0.2 bg-slate-200/80 dark:bg-slate-800 rounded font-mono text-[9px]">,</kbd> to add.
                     </p>
                   </div>
                 </div>
@@ -566,7 +566,7 @@ export function ApplyOptionPresetModal({
                       { name: "", type: "TEXT_CHOICES", choices: [], choiceInput: "" },
                     ])
                   }
-                  className="w-full py-2 border-2 border-dashed border-slate-200 hover:border-blue-300 rounded-xl text-xs font-bold text-slate-600 hover:text-blue-600 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="w-full py-2 border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Another Option
                 </button>
@@ -574,14 +574,14 @@ export function ApplyOptionPresetModal({
             </div>
 
             {/* Bottom Actions */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => {
                   setIsCreatingPreset(false);
                   setEditingPresetId(null);
                 }}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl border border-slate-200 hover:bg-white transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -603,7 +603,7 @@ export function ApplyOptionPresetModal({
           /* View 2: Preset List & Search */
           <>
             {/* Search & Add Preset Button */}
-            <div className="p-4 border-b border-slate-100 flex items-center gap-2.5">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2.5">
               <div className="relative flex-1">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
@@ -611,7 +611,7 @@ export function ApplyOptionPresetModal({
                   placeholder="Search saved option settings..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800 transition-all font-medium"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all font-medium"
                 />
               </div>
               <button
@@ -637,13 +637,13 @@ export function ApplyOptionPresetModal({
                   <span className="text-xs font-medium">Loading saved settings...</span>
                 </div>
               ) : filteredPresets.length === 0 ? (
-                <div className="py-14 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 rounded-2xl p-6 space-y-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                <div className="py-14 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-slate-800">No Saved Settings Found</h4>
-                    <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                    <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">No Saved Settings Found</h4>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 max-w-xs leading-relaxed">
                       You haven&apos;t created any option presets yet. Click below to add your first preset!
                     </p>
                   </div>
@@ -664,15 +664,15 @@ export function ApplyOptionPresetModal({
                   return (
                     <div
                       key={preset.id}
-                      className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-blue-300 hover:shadow-xs transition-all flex items-center justify-between gap-4 group"
+                      className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-xs transition-all flex items-center justify-between gap-4 group"
                     >
                       <div className="space-y-1.5 flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-bold text-sm text-slate-900 truncate">
+                          <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">
                             {preset.name}
                           </h4>
                           {preset.includeVariants && (
-                            <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded text-[10px] font-bold">
+                            <span className="px-2 py-0.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded text-[10px] font-bold">
                               + Custom Variants
                             </span>
                           )}
@@ -683,7 +683,7 @@ export function ApplyOptionPresetModal({
                           {opts.map((opt: any, oIdx: number) => (
                             <span
                               key={oIdx}
-                              className="px-2 py-0.5 bg-white border border-slate-200 rounded-md text-[11px] font-medium text-slate-700 shadow-2xs"
+                              className="px-2 py-0.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-[11px] font-medium text-slate-700 dark:text-slate-300 shadow-2xs"
                             >
                               <strong>{opt.name}:</strong>{" "}
                               {opt.choices?.map((c: any) => c.name).join(", ")}
@@ -707,7 +707,7 @@ export function ApplyOptionPresetModal({
                         <button
                           type="button"
                           onClick={(e) => handleStartEdit(e, preset)}
-                          className="p-2 text-slate-400 hover:text-blue-600 rounded-xl hover:bg-blue-50 transition-colors cursor-pointer"
+                          className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer"
                           title="Edit preset setting"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -716,7 +716,7 @@ export function ApplyOptionPresetModal({
                           type="button"
                           disabled={deletingId === preset.id}
                           onClick={(e) => handleDelete(e, preset.id, preset.name)}
-                          className="p-2 text-slate-400 hover:text-red-600 rounded-xl hover:bg-red-50 transition-colors cursor-pointer"
+                          className="p-2 text-slate-400 hover:text-red-600 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
                           title="Delete setting"
                         >
                           {deletingId === preset.id ? (
@@ -733,14 +733,14 @@ export function ApplyOptionPresetModal({
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <span className="text-xs text-slate-500 font-medium">
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/50">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Total: {presets.length} {presets.length === 1 ? "preset" : "presets"}
               </span>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-xl border border-slate-200 hover:bg-white transition-colors cursor-pointer"
+                className="px-5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Close
               </button>

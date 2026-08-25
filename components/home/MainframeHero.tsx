@@ -36,7 +36,9 @@ export function useTypewriter(
   return { displayed, done };
 }
 
-export function MainframeHero() {
+import { MainframeHeroConfig } from "@/lib/homepage";
+
+export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const isSeekingRef = useRef<boolean>(false);
@@ -49,6 +51,7 @@ export function MainframeHero() {
 
   // Industry-tailored headline typewriter copy
   const heroText =
+    config?.headline ||
     "Engineered for 99.9% industrial uptime. Factory-certified OEM components with same-day B2B dispatch. What system are we powering today?";
   const { displayed, done } = useTypewriter(heroText, 32, 500);
 
@@ -245,7 +248,7 @@ export function MainframeHero() {
             className="text-[21px] sm:text-[26px] tracking-tight text-slate-950 font-bold hover:opacity-80 transition-opacity flex items-center gap-2"
             style={{ fontFamily: "var(--font-heading)" }}
           >
-            <span>Propel Auto®</span>
+            <span>OM AUTOMATION®</span>
           </Link>
           <span
             className="text-[25px] sm:text-[30px] text-amber-500 select-none leading-none"
@@ -257,42 +260,31 @@ export function MainframeHero() {
 
         {/* Desktop Nav Links (center, hidden below md) */}
         <div className="hidden md:flex items-center text-[20px] lg:text-[22px] text-slate-800 font-medium">
-          <Link
-            href="/products"
-            className="hover:text-sky-600 transition-colors cursor-pointer"
-          >
-            Sensors
-          </Link>
-          <span>,&nbsp;</span>
-          <Link
-            href="/categories/plcs"
-            className="hover:text-sky-600 transition-colors cursor-pointer"
-          >
-            PLCs
-          </Link>
-          <span>,&nbsp;</span>
-          <Link
-            href="/categories/vfd-drives"
-            className="hover:text-sky-600 transition-colors cursor-pointer"
-          >
-            VFD Drives
-          </Link>
-          <span>,&nbsp;</span>
-          <Link
-            href="/quote"
-            className="hover:text-sky-600 transition-colors cursor-pointer"
-          >
-            RFQ Portal
-          </Link>
+          {(config?.navPills && config.navPills.length > 0 ? config.navPills : [
+            { label: "Sensors", url: "/products" },
+            { label: "PLCs", url: "/categories/plcs" },
+            { label: "VFD Drives", url: "/categories/vfd-drives" },
+            { label: "RFQ Portal", url: "/quote" },
+          ]).map((item, idx, arr) => (
+            <React.Fragment key={idx}>
+              <Link
+                href={item.url}
+                className="hover:text-sky-600 transition-colors cursor-pointer"
+              >
+                {item.label}
+              </Link>
+              {idx < arr.length - 1 && <span>,&nbsp;</span>}
+            </React.Fragment>
+          ))}
         </div>
 
         {/* Desktop CTA (right, hidden below md) */}
         <div className="hidden md:block">
           <Link
-            href="/quote"
+            href={config?.ctaUrl || "/quote"}
             className="text-[20px] lg:text-[22px] text-slate-950 font-semibold underline underline-offset-4 hover:text-sky-600 transition-colors cursor-pointer"
           >
-            Request Instant Quote
+            {config?.ctaText || "Request Instant Quote"}
           </Link>
         </div>
 
@@ -330,40 +322,27 @@ export function MainframeHero() {
         }`}
         style={{ zIndex: 9 }}
       >
+        {(config?.navPills && config.navPills.length > 0 ? config.navPills : [
+          { label: "Sensors", url: "/products" },
+          { label: "PLCs & Controllers", url: "/categories/plcs" },
+          { label: "VFD Drives", url: "/categories/vfd-drives" },
+          { label: "RFQ Portal", url: "/quote" },
+        ]).map((item, idx) => (
+          <Link
+            key={idx}
+            href={item.url}
+            onClick={() => setIsMenuOpen(false)}
+            className="text-[30px] font-semibold text-slate-900 hover:text-sky-600 transition-colors"
+          >
+            {item.label}
+          </Link>
+        ))}
         <Link
-          href="/products"
-          onClick={() => setIsMenuOpen(false)}
-          className="text-[30px] font-semibold text-slate-900 hover:text-sky-600 transition-colors"
-        >
-          Sensors
-        </Link>
-        <Link
-          href="/categories/plcs"
-          onClick={() => setIsMenuOpen(false)}
-          className="text-[30px] font-semibold text-slate-900 hover:text-sky-600 transition-colors"
-        >
-          PLCs & Controllers
-        </Link>
-        <Link
-          href="/categories/vfd-drives"
-          onClick={() => setIsMenuOpen(false)}
-          className="text-[30px] font-semibold text-slate-900 hover:text-sky-600 transition-colors"
-        >
-          VFD Drives
-        </Link>
-        <Link
-          href="/quote"
-          onClick={() => setIsMenuOpen(false)}
-          className="text-[30px] font-semibold text-slate-900 hover:text-sky-600 transition-colors"
-        >
-          RFQ Portal
-        </Link>
-        <Link
-          href="/quote"
+          href={config?.ctaUrl || "/quote"}
           onClick={() => setIsMenuOpen(false)}
           className="text-[30px] font-bold text-sky-600 underline underline-offset-4"
         >
-          Request Instant Quote
+          {config?.ctaText || "Request Instant Quote"}
         </Link>
       </div>
 
@@ -380,13 +359,13 @@ export function MainframeHero() {
             <div className="mb-4 sm:mb-5 select-none">
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-900 text-xs font-bold uppercase tracking-wider mb-2">
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                Industrial Motion & Automation
+                {config?.eyebrow || "Industrial Motion & Automation"}
               </span>
               <div
                 className="text-slate-700 font-medium text-[16px] sm:text-[18px] lg:text-[20px] leading-snug"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
-                High-Precision Sensors, PLCs & Factory Drives
+                {config?.subheading || "High-Precision Sensors, PLCs & Factory Drives"}
               </div>
             </div>
 
@@ -399,6 +378,29 @@ export function MainframeHero() {
                 <span className="inline-block w-[2px] h-[1.1em] bg-slate-900 align-middle ml-[2px] mainframe-cursor-blink" />
               )}
             </p>
+
+            {/* 3. Primary CTA Button */}
+            {config?.ctaText && (
+              <div className="mt-4 flex items-center justify-center lg:justify-start">
+                <Link
+                  href={config?.ctaUrl || "/quote"}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-slate-900 text-white hover:bg-sky-600 active:bg-sky-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group"
+                >
+                  <span>{config.ctaText}</span>
+                  <svg
+                    className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* MIDDLE: Centered Person Character Frame with Real-Time Gaze Tracking */}
@@ -409,7 +411,11 @@ export function MainframeHero() {
             >
               <video
                 ref={videoRef}
-                src="/videos/Character_horizontal_eye_scan.mp4"
+                src={
+                  config?.videoUrl && config.videoUrl !== "/videos/character-opt.mp4"
+                    ? config.videoUrl
+                    : "/videos/Character_horizontal_eye_scan.mp4"
+                }
                 muted
                 playsInline
                 preload="auto"
@@ -421,29 +427,34 @@ export function MainframeHero() {
               {/* Status Badge */}
               <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-slate-900/85 backdrop-blur-md px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-white text-[10px] sm:text-xs font-mono flex items-center gap-2 border border-white/15 shadow-md pointer-events-none select-none">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Propel AI Motion Tracking</span>
+                <span>OM Automation Industrial Motion</span>
               </div>
             </div>
           </div>
 
           {/* RIGHT: Industry Action Pill Buttons */}
-          <div className="lg:col-span-3 flex flex-col justify-center items-center lg:items-start order-3">
+          <div className="lg:col-span-3 flex flex-col justify-center items-center lg:items-start order-3 w-full">
             <div
-              className="flex flex-col sm:flex-row lg:flex-col flex-wrap gap-2.5 items-center lg:items-start w-full"
+              className="grid grid-cols-2 md:flex md:flex-row lg:flex-col md:flex-wrap gap-2.5 sm:gap-3 items-center lg:items-start w-full max-w-sm sm:max-w-md md:max-w-none mx-auto lg:mx-0"
               style={{
                 opacity: pillsVisible ? 1 : 0,
                 transform: pillsVisible ? "translateY(0)" : "translateY(8px)",
                 transition: "opacity 0.4s ease, transform 0.4s ease",
               }}
             >
-              {/* 4 Industry Pill Buttons */}
-              {industryPillActions.map((action) => (
+              {/* Industry Pill Buttons */}
+              {(config?.navPills && config.navPills.length > 0 ? config.navPills : [
+                { label: "Sensors", url: "/products" },
+                { label: "PLCs", url: "/categories/plcs" },
+                { label: "VFD Drives", url: "/categories/vfd-drives" },
+                { label: "RFQ Portal", url: "/quote" },
+              ]).map((pill, pIdx) => (
                 <Link
-                  key={action.label}
-                  href={action.href}
-                  className="w-auto inline-flex items-center justify-center bg-white text-slate-900 border border-slate-300/80 shadow-xs rounded-full text-[13px] sm:text-[14px] px-5 py-[0.55em] font-medium hover:bg-slate-950 hover:text-white hover:border-slate-950 transition-all duration-200 cursor-pointer"
+                  key={pIdx}
+                  href={pill.url}
+                  className="w-full md:w-auto inline-flex items-center justify-center text-center bg-white text-slate-900 border border-slate-300/80 shadow-xs rounded-full text-[13px] sm:text-[14px] px-3.5 sm:px-5 py-[0.55em] font-medium hover:bg-slate-950 hover:text-white hover:border-slate-950 transition-all duration-200 cursor-pointer last:odd:col-span-2 truncate"
                 >
-                  {action.label}
+                  {pill.label}
                 </Link>
               ))}
 
@@ -451,13 +462,13 @@ export function MainframeHero() {
               <button
                 type="button"
                 onClick={handleCopyEmail}
-                className="w-auto inline-flex items-center justify-center text-slate-900 bg-transparent border border-slate-900/40 rounded-full text-[13px] sm:text-[14px] px-5 py-[0.55em] gap-2.5 font-medium hover:bg-slate-950 hover:text-white hover:border-slate-950 transition-all duration-200 cursor-pointer group shadow-xs"
-                title="Copy omautomation2012@gmail.com"
+                className="w-full md:w-auto inline-flex items-center justify-center text-center text-slate-900 bg-transparent border border-slate-900/40 rounded-full text-[13px] sm:text-[14px] px-3.5 sm:px-5 py-[0.55em] gap-2 font-medium hover:bg-slate-950 hover:text-white hover:border-slate-950 transition-all duration-200 cursor-pointer group shadow-xs last:odd:col-span-2"
+                title={`Copy ${config?.salesEmail || "omautomation2012@gmail.com"}`}
               >
-                <span>
-                  Reach Sales:{" "}
+                <span className="truncate">
+                  {config?.salesEmailText || "Reach Sales:"}{" "}
                   <span className="underline underline-offset-2">
-                    omautomation2012@gmail.com
+                    {config?.salesEmail || "omautomation2012@gmail.com"}
                   </span>
                   {copied && (
                     <span className="ml-1 text-[11px] opacity-90 font-bold text-emerald-600 group-hover:text-emerald-300">

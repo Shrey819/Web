@@ -4,8 +4,10 @@ import Link from "next/link";
 import { PRODUCTS } from "@/data/products";
 import { ArrowRight, ArrowUpDown, Check } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { SpecCompareConfig, DEFAULT_SPEC_COMPARE } from "@/lib/homepage";
 
-export function SpecComparePreview() {
+export function SpecComparePreview({ config }: { config?: SpecCompareConfig }) {
+  const currentConfig = config || DEFAULT_SPEC_COMPARE;
   const compareItems = [PRODUCTS[0], PRODUCTS[6], PRODUCTS[12]]; // 1 Sensor, 1 PLC, 1 Drive
 
   return (
@@ -15,18 +17,18 @@ export function SpecComparePreview() {
           <div>
             <div className="inline-flex items-center gap-2 type-label text-sky-600 mb-2">
               <ArrowUpDown className="w-4 h-4" />
-              <span>Specification Benchmarking</span>
+              <span>{currentConfig.eyebrow || "Specification Benchmarking"}</span>
             </div>
             <h2 className="type-display-section text-slate-900">
-              Technical Specification Matrix Preview
+              {currentConfig.title || "Technical Specification Matrix Preview"}
             </h2>
           </div>
 
           <Link
-            href="/compare"
+            href={currentConfig.ctaUrl || "/compare"}
             className="inline-flex items-center gap-2 type-button text-sky-600 hover:text-sky-700 transition-colors"
           >
-            <span>Launch Full Side-by-Side Comparison Tool</span>
+            <span>{currentConfig.ctaText || "Launch Full Side-by-Side Comparison Tool"}</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

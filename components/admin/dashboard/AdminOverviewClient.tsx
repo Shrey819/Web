@@ -40,7 +40,7 @@ export function AdminOverviewClient({
     setMounted(true);
   }, []);
 
-  const isLight = mounted && theme === "light";
+  const isLight = !mounted || theme === "light";
 
   return (
     <div className="space-y-8">

@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { updateHomepageData, HomepageData } from "@/lib/homepage";
+import { updateHomepageData } from "@/lib/homepage-server";
+import { HomepageData } from "@/lib/homepage";
 
 export async function saveHomepageConfigAction(data: Partial<HomepageData>) {
   try {

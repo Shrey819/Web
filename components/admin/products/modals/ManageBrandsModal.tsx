@@ -110,30 +110,30 @@ export function ManageBrandsModal({
         className="absolute inset-0 bg-black/40 backdrop-blur-2xs transition-opacity"
       />
 
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200 text-slate-900 dark:text-white">
         {/* Header */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+            <div className="p-2 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Manage Global Brands</h2>
-              <p className="text-xs text-slate-500">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Manage Global Brands</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Add, rename, and delete manufacturer & brand names.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Search & Actions */}
-        <div className="p-4 border-b border-slate-100 flex items-center gap-3">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -141,7 +141,7 @@ export function ManageBrandsModal({
               placeholder="Search brands..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800"
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500"
             />
           </div>
 
@@ -156,7 +156,7 @@ export function ManageBrandsModal({
 
         {/* Create Brand Row */}
         {showCreateRow && (
-          <form onSubmit={handleCreate} className="p-4 bg-blue-50/50 border-b border-blue-100 flex items-center gap-2">
+          <form onSubmit={handleCreate} className="p-4 bg-blue-50/50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-900/40 flex items-center gap-2">
             <input
               type="text"
               placeholder="Enter new brand name..."
@@ -164,7 +164,7 @@ export function ManageBrandsModal({
               maxLength={50}
               autoFocus
               onChange={(e) => setNewBrandName(e.target.value)}
-              className="flex-1 px-3 py-1.5 text-xs bg-white border border-blue-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-800 font-medium"
+              className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200 font-medium"
             />
             <button
               type="submit"
@@ -180,7 +180,7 @@ export function ManageBrandsModal({
                 setShowCreateRow(false);
                 setNewBrandName("");
               }}
-              className="px-2.5 py-1.5 text-slate-600 hover:bg-slate-200 rounded-lg text-xs font-medium cursor-pointer"
+              className="px-2.5 py-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-xs font-medium cursor-pointer"
             >
               Cancel
             </button>
@@ -188,17 +188,17 @@ export function ManageBrandsModal({
         )}
 
         {/* Brands List */}
-        <div className="p-4 overflow-y-auto flex-1 divide-y divide-slate-100 space-y-1">
+        <div className="p-4 overflow-y-auto flex-1 divide-y divide-slate-100 dark:divide-slate-800 space-y-1">
           {isLoading ? (
-            <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            <div className="py-12 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
               <span className="text-xs">Loading brands...</span>
             </div>
           ) : filteredBrands.length > 0 ? (
             filteredBrands.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 transition-colors group"
+                className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group"
               >
                 {editingId === b.id ? (
                   <div className="flex items-center gap-2 flex-1 mr-2">
@@ -212,29 +212,29 @@ export function ManageBrandsModal({
                         if (e.key === "Enter") handleSaveEdit(b.id);
                         if (e.key === "Escape") setEditingId(null);
                       }}
-                      className="flex-1 px-2.5 py-1 text-xs bg-white border border-blue-400 rounded-md focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-medium text-slate-900"
+                      className="flex-1 px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-blue-400 dark:border-blue-500/40 rounded-md focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-medium text-slate-900 dark:text-white"
                     />
                     <button
                       type="button"
                       onClick={() => handleSaveEdit(b.id)}
                       disabled={isSubmitting}
-                      className="p-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      className="p-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer"
                     >
                       <Check className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditingId(null)}
-                      className="p-1.5 text-slate-400 hover:text-slate-600"
+                      className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2.5">
-                    <span className="text-xs font-semibold text-slate-800">{b.name}</span>
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{b.name}</span>
                     {b.productCount != null && b.productCount > 0 && (
-                      <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full font-normal">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full font-normal">
                         {b.productCount} {b.productCount === 1 ? "product" : "products"}
                       </span>
                     )}
@@ -246,7 +246,7 @@ export function ManageBrandsModal({
                     <button
                       type="button"
                       onClick={() => handleStartEdit(b)}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer"
                       title="Rename brand"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -254,7 +254,7 @@ export function ManageBrandsModal({
                     <button
                       type="button"
                       onClick={() => handleDelete(b)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors cursor-pointer"
                       title="Delete brand"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -264,15 +264,15 @@ export function ManageBrandsModal({
               </div>
             ))
           ) : (
-            <div className="py-12 text-center text-xs text-slate-400">
+            <div className="py-12 text-center text-xs text-slate-400 dark:text-slate-500">
               No brands found matching your search.
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <span className="text-xs text-slate-500 font-medium">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/50">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
             Total: {brands.length} {brands.length === 1 ? "brand" : "brands"}
           </span>
           <button

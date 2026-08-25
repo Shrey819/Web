@@ -1,25 +1,23 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Package, ShieldCheck, Clock, Award } from "lucide-react";
+import { Package, ShieldCheck, Clock, Award, CheckCircle2 } from "lucide-react";
+import { StatItem, DEFAULT_STATS } from "@/lib/homepage";
 
-export function StatsSection() {
-  const stats = [
-    { label: "Industrial Components", value: "2,000+", detail: "Sensors, PLCs, VFDs & Servos", icon: Package },
-    { label: "OEM Brand Partners", value: "50+", detail: "Siemens, Omron, ABB & Rockwell", icon: ShieldCheck },
-    { label: "Same-Day Dispatch", value: "99.8%", detail: "Orders before 4 PM EST", icon: Award },
-    { label: "B2B Quote Turnaround", value: "< 2 Hours", detail: "Formal pricing & BOM estimates", icon: Clock },
-  ];
+const ICONS = [Package, ShieldCheck, Award, Clock, CheckCircle2];
+
+export function StatsSection({ stats }: { stats?: StatItem[] }) {
+  const currentStats = stats && stats.length > 0 ? stats : DEFAULT_STATS;
 
   return (
     <section className="py-16 bg-slate-950 text-white border-b border-slate-800">
       <div className="content-shell">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((st, i) => {
-            const Icon = st.icon;
+          {currentStats.map((st, i) => {
+            const Icon = ICONS[i % ICONS.length];
             return (
               <motion.div
-                key={i}
+                key={st.id || i}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
@@ -44,3 +42,4 @@ export function StatsSection() {
     </section>
   );
 }
+

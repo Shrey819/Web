@@ -966,25 +966,25 @@ export function ProductEditorForm({
   };
 
   return (
-    <div className="bg-[#f7f9fa] min-h-screen pb-24 text-slate-800">
+    <div className="bg-[#f7f9fa] dark:bg-slate-950 min-h-screen pb-24 text-slate-800 dark:text-slate-100">
       {/* Top Fixed Header */}
-      <div className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between shadow-2xs">
+      <div className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-3.5 flex items-center justify-between shadow-2xs">
         <div className="flex items-center gap-3">
           <Link
             href="/admin/products"
-            className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
+            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-            <Link href="/admin/products" className="hover:text-slate-800">
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <Link href="/admin/products" className="hover:text-slate-800 dark:hover:text-slate-200">
               Products
             </Link>
             <span>›</span>
-            <span className="text-slate-900 font-bold truncate max-w-[220px]">
+            <span className="text-slate-900 dark:text-white font-bold truncate max-w-[220px]">
               {productName || "New Product"}
             </span>
-            <span className="ml-2 px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[11px] font-semibold uppercase tracking-wider">
+            <span className="ml-2 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-[11px] font-semibold uppercase tracking-wider">
               Physical Product
             </span>
           </div>
@@ -993,7 +993,7 @@ export function ProductEditorForm({
         <div className="flex items-center gap-3">
           <Link
             href="/admin/products"
-            className="px-4 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors"
+            className="px-4 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             Cancel
           </Link>
@@ -1015,32 +1015,32 @@ export function ProductEditorForm({
           {/* Left Column (8 cols): Main Cards */}
           <div className="col-span-12 lg:col-span-8 space-y-6">
             {/* 1. Basic Info Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-6 space-y-5">
-              <h2 className="text-base font-bold text-slate-900">Basic info</h2>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-5">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Basic info</h2>
 
               {/* Product Name */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
                   <span className="flex items-center gap-1">
-                    Name <span className="text-blue-600">*</span> <Info className="w-3.5 h-3.5 text-slate-400" />
+                    Name <span className="text-blue-600 dark:text-blue-400">*</span> <Info className="w-3.5 h-3.5 text-slate-400" />
                   </span>
-                  <span className="text-slate-400 font-normal">{productName.length} / 80</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-normal">{productName.length} / 80</span>
                 </div>
                 <input
                   type="text"
                   maxLength={80}
                   {...register("name")}
                   placeholder="e.g. Hello or Industrial Valve"
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900"
+                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
                 />
                 {errors.name && (
-                  <p className="text-xs text-red-600 font-medium">{errors.name.message}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400 font-medium">{errors.name.message}</p>
                 )}
               </div>
 
               {/* Description */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
                   <span className="flex items-center gap-1">
                     Description <Info className="w-3.5 h-3.5 text-slate-400" />
                   </span>
@@ -1048,7 +1048,7 @@ export function ProductEditorForm({
                     type="button"
                     onClick={handleGenerateAiDescription}
                     disabled={isGeneratingAi}
-                    className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     {isGeneratingAi ? "Generating..." : "Generate AI Text"}
@@ -1065,46 +1065,46 @@ export function ProductEditorForm({
             </div>
 
             {/* 2. Pricing Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-6 space-y-4">
-              <h2 className="text-base font-bold text-slate-900">Pricing</h2>
-              <p className="text-xs text-slate-500">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-4">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Pricing</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Set up the pricing details that are not managed per variant.
               </p>
 
               {/* Price & Strikethrough Inputs (Base) */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Price (₹)</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Price (₹)</label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     {...register("price", { valueAsNumber: true })}
                     onChange={(e) => handleDecimalInput(e, "price")}
-                    className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-semibold text-slate-900"
+                    className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-semibold text-slate-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700">Strikethrough Price (₹)</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Strikethrough Price (₹)</label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     {...register("strikethroughPrice", { valueAsNumber: true })}
                     onChange={(e) => handleDecimalInput(e, "strikethroughPrice")}
-                    className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-500"
+                    className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-500 dark:text-slate-400"
                   />
                 </div>
               </div>
 
               {/* Show price per unit toggle */}
-              <div className="pt-3 border-t border-slate-100 space-y-3">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setShowPricePerUnit(!showPricePerUnit)}
                     className={`w-10 h-5.5 rounded-full transition-colors relative cursor-pointer ${
-                      showPricePerUnit ? "bg-blue-600" : "bg-slate-300"
+                      showPricePerUnit ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-700"
                     }`}
                   >
                     <div
@@ -1113,14 +1113,14 @@ export function ProductEditorForm({
                       }`}
                     />
                   </button>
-                  <span className="text-xs font-semibold text-slate-800 flex items-center gap-1">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
                     Show price per unit <Info className="w-3.5 h-3.5 text-slate-400" />
                   </span>
                 </div>
 
                 {showPricePerUnit && (
                   <div className="pt-2 space-y-2">
-                    <label className="text-xs font-semibold text-slate-700">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       Price per unit
                     </label>
                     <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
@@ -1134,11 +1134,11 @@ export function ProductEditorForm({
                           placeholder={watch("price") ? String(watch("price")) : "200"}
                           {...register("totalUnits", { valueAsNumber: true })}
                           onChange={(e) => handleDecimalInput(e, "totalUnits")}
-                          className="w-full pl-7 pr-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium"
+                          className="w-full pl-7 pr-3 py-1.5 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900 dark:text-white"
                         />
                       </div>
 
-                      <span className="text-xs font-semibold text-slate-500 px-1">per</span>
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">per</span>
 
                       {/* Unit Quantity input */}
                       <div className="w-24">
@@ -1149,7 +1149,7 @@ export function ProductEditorForm({
                           placeholder="1"
                           {...register("baseUnit", { valueAsNumber: true })}
                           onChange={(e) => handleDecimalInput(e, "baseUnit")}
-                          className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-center"
+                          className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-center text-slate-900 dark:text-white"
                         />
                       </div>
 
@@ -1157,7 +1157,7 @@ export function ProductEditorForm({
                       <div className="w-32">
                         <select
                           {...register("baseUnitMeasurement")}
-                          className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-800"
+                          className="w-full px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-800 dark:text-slate-200"
                         >
                           <option value="kg">kg</option>
                           <option value="g">g</option>
@@ -1175,8 +1175,8 @@ export function ProductEditorForm({
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-slate-500">
-                      Preview on storefront: <span className="font-semibold text-slate-700">₹{Number(watch("totalUnits") || watch("price") || 200).toFixed(2)} per {watch("baseUnit") || 1} {watch("baseUnitMeasurement") || "kg"}</span>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Preview on storefront: <span className="font-semibold text-slate-700 dark:text-slate-300">₹{Number(watch("totalUnits") || watch("price") || 200).toFixed(2)} per {watch("baseUnit") || 1} {watch("baseUnitMeasurement") || "kg"}</span>
                     </p>
                   </div>
                 )}
@@ -1184,7 +1184,7 @@ export function ProductEditorForm({
 
               {/* Note linking to Variants */}
               {variants.length > 0 && (
-                <div className="p-3 bg-amber-50/70 border border-amber-200/60 rounded-lg flex items-center gap-2 text-xs text-amber-900">
+                <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 rounded-lg flex items-center gap-2 text-xs text-amber-900 dark:text-amber-300">
                   <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>Price, sale price, cost of goods and total units are managed separately for each variant.</span>
                 </div>
@@ -1192,13 +1192,13 @@ export function ProductEditorForm({
             </div>
 
             {/* 3. Images and Videos Card (Limit 10) */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-6 space-y-4">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    Images and videos <span className="text-xs text-slate-400 font-medium">({images.length} / 10)</span>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    Images and videos <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">({images.length} / 10)</span>
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Show customers what this product looks like.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Show customers what this product looks like.</p>
                 </div>
               </div>
 
@@ -1207,7 +1207,7 @@ export function ProductEditorForm({
                 {images.map((img, idx) => (
                   <div
                     key={img.id || idx}
-                    className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center shadow-2xs"
+                    className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-2xs"
                   >
                     <img src={img.url} alt={img.altText} className="w-full h-full object-cover" />
                     {img.isPrimary && (
@@ -1220,7 +1220,7 @@ export function ProductEditorForm({
                         <button
                           type="button"
                           onClick={() => handleSetPrimaryImage(idx)}
-                          className="px-2 py-1 bg-white text-slate-900 rounded text-[10px] font-bold shadow-xs hover:bg-slate-100"
+                          className="px-2 py-1 bg-white text-slate-900 rounded text-[10px] font-bold shadow-xs hover:bg-slate-100 cursor-pointer"
                         >
                           Set Main
                         </button>
@@ -1228,7 +1228,7 @@ export function ProductEditorForm({
                       <button
                         type="button"
                         onClick={() => handleRemoveImage(idx)}
-                        className="p-1.5 bg-red-600 text-white rounded-md shadow-xs hover:bg-red-700"
+                        className="p-1.5 bg-red-600 text-white rounded-md shadow-xs hover:bg-red-700 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1240,7 +1240,7 @@ export function ProductEditorForm({
                   <button
                     type="button"
                     onClick={() => setIsMediaModalOpen(true)}
-                    className="aspect-square rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/50 transition-all flex flex-col items-center justify-center gap-1.5 text-slate-500 hover:text-blue-600 cursor-pointer"
+                    className="aspect-square rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all flex flex-col items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
                   >
                     <Plus className="w-5 h-5" />
                     <span className="text-xs font-semibold">Add Media</span>
@@ -1250,13 +1250,13 @@ export function ProductEditorForm({
             </div>
 
             {/* 4. Product Options Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-6 space-y-4">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    Product options <span className="text-xs text-slate-400 font-medium">({options.length} / 6)</span>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    Product options <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">({options.length} / 6)</span>
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Add, remove or reorder options to create your product variants.
                   </p>
                 </div>
@@ -1265,7 +1265,7 @@ export function ProductEditorForm({
                     <button
                       type="button"
                       onClick={() => setIsSavePresetOpen(true)}
-                      className="px-3 py-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200 rounded-lg shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                      className="px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
                     >
                       <Bookmark className="w-3.5 h-3.5" />
                       Save changes
@@ -1274,9 +1274,9 @@ export function ProductEditorForm({
                   <button
                     type="button"
                     onClick={() => setIsApplyPresetOpen(true)}
-                    className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    <Layers className="w-3.5 h-3.5 text-slate-500" />
+                    <Layers className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                     Apply setting
                   </button>
                 </div>
@@ -1301,17 +1301,17 @@ export function ProductEditorForm({
                           ? "opacity-40 border-dashed border-blue-500 bg-blue-50/50 scale-[0.99]"
                           : isDragOverThis
                           ? "border-blue-500 bg-blue-50/40 ring-2 ring-blue-400 ring-offset-1 scale-[1.01]"
-                          : "border-slate-200 bg-slate-50/60 hover:border-slate-300 hover:bg-slate-50"
+                          : "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-950"
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          className="text-slate-400 hover:text-slate-700 cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-slate-200/60 transition-colors"
+                          className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
                           title="Drag to reorder option"
                         >
                           <GripVertical className="w-4 h-4" />
                         </div>
-                        <span className="text-sm font-bold text-slate-900 w-24 truncate">
+                        <span className="text-sm font-bold text-slate-900 dark:text-white w-24 truncate">
                           {opt.name}
                         </span>
                       </div>
@@ -1322,10 +1322,10 @@ export function ProductEditorForm({
                           opt.choices?.map((ch: any, cIdx: number) => (
                             <div
                               key={cIdx}
-                              className="flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-full border border-slate-200 shadow-2xs text-xs font-medium text-slate-700"
+                              className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-medium text-slate-700 dark:text-slate-300"
                             >
                               <span
-                                className="w-3.5 h-3.5 rounded-full border border-slate-300"
+                                className="w-3.5 h-3.5 rounded-full border border-slate-300 dark:border-slate-700"
                                 style={{ backgroundColor: ch.colorHex || "#3b82f6" }}
                               />
                               <span>{ch.name}</span>
@@ -1335,7 +1335,7 @@ export function ProductEditorForm({
                           opt.choices?.map((ch: any, cIdx: number) => (
                             <span
                               key={cIdx}
-                              className="px-2.5 py-1 bg-white rounded-md border border-slate-200 shadow-2xs text-xs font-semibold text-slate-800"
+                              className="px-2.5 py-1 bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-semibold text-slate-800 dark:text-slate-200"
                             >
                               {ch.name}
                             </span>
@@ -1352,14 +1352,14 @@ export function ProductEditorForm({
                             setEditingOptionIndex(idx);
                             setIsAddOptionOpen(true);
                           }}
-                          className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 shadow-2xs cursor-pointer transition-colors"
+                          className="px-3 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 shadow-2xs cursor-pointer transition-colors"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteOption(idx)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 cursor-pointer transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1376,26 +1376,24 @@ export function ProductEditorForm({
                       setEditingOptionIndex(null);
                       setIsAddOptionOpen(true);
                     }}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 pt-1 cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 pt-1 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" /> Add Another Option
                   </button>
                 ) : (
-                  <span className="text-xs text-slate-400 font-medium italic block pt-1">
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-medium italic block pt-1">
                     Maximum 6 product options reached
                   </span>
                 )}
               </div>
-            </div>
-
-            {/* 5. Custom Variant Pricing & Overrides Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-6 space-y-4">
+                      {/* 5. Custom Variant Pricing & Overrides Card */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-4 text-slate-900 dark:text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    Custom Variant Pricing <span className="text-xs text-slate-400 font-medium">({variants.length} custom overrides)</span>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    Custom Variant Pricing <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">({variants.length} custom overrides)</span>
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {options.some((o) => o.choices && o.choices.length > 0)
                       ? `All combinations dynamically use base price (₹${basePrice.toFixed(2)}) unless overridden here.`
                       : "Add options above to create customizable variant combinations."}
@@ -1415,12 +1413,12 @@ export function ProductEditorForm({
 
               {/* Overrides Table or Clean Empty State */}
               {variants.length === 0 ? (
-                <div className="p-6 bg-slate-50/70 border border-slate-200 rounded-xl flex items-center justify-between gap-4">
+                <div className="p-6 bg-slate-50/70 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between gap-4">
                   <div className="space-y-0.5">
-                    <span className="text-xs font-bold text-slate-800 block">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
                       Standard pricing applied to all combinations
                     </span>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Every customer choice combination will automatically sell for the base price of <strong>₹{basePrice.toFixed(2)}</strong>.
                     </p>
                   </div>
@@ -1428,16 +1426,16 @@ export function ProductEditorForm({
                     <button
                       type="button"
                       onClick={() => setIsEditVariantsModalOpen(true)}
-                      className="px-3.5 py-1.5 text-xs font-bold text-blue-600 bg-white border border-blue-200 hover:bg-blue-50/50 rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
+                      className="px-3.5 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-900/30 rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
                     >
                       + Add Custom Price / SKU
                     </button>
                   )}
                 </div>
               ) : (
-                <div className="border border-slate-200 rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-xs divide-y divide-slate-200">
-                    <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider">
+                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-xs divide-y divide-slate-200 dark:divide-slate-800">
+                    <thead className="bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">
                       <tr>
                         <th className="px-4 py-2.5">Custom Variant Override</th>
                         <th className="px-4 py-2.5">Custom Price (₹)</th>
@@ -1446,10 +1444,10 @@ export function ProductEditorForm({
                         <th className="px-4 py-2.5 text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white font-medium text-slate-800">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 font-medium text-slate-800 dark:text-slate-200">
                       {variants.slice(0, 8).map((v, i) => (
-                        <tr key={v.id || i} className="hover:bg-slate-50/70 transition-colors">
-                          <td className="px-4 py-2.5 font-bold text-slate-900 text-xs">
+                        <tr key={v.id || i} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                          <td className="px-4 py-2.5 font-bold text-slate-900 dark:text-white text-xs">
                             {v.displayName || Object.values(v.attributes || {}).join(" | ")}
                           </td>
                           <td className="px-4 py-2">
@@ -1467,7 +1465,7 @@ export function ProductEditorForm({
                                   setVariants(updated);
                                   setValue("variants", updated as any, { shouldDirty: true });
                                 }}
-                                className="w-full pl-6 pr-2 py-1 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-lg text-xs font-bold text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                                className="w-full pl-6 pr-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 rounded-lg text-xs font-bold text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                               />
                             </div>
                           </td>
@@ -1475,14 +1473,14 @@ export function ProductEditorForm({
                             <span
                               className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                 v.inventoryStatus === "OUT_OF_STOCK"
-                                  ? "bg-red-50 text-red-700 border border-red-200"
-                                  : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"
+                                  : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
                               }`}
                             >
                               {v.inventoryStatus === "OUT_OF_STOCK" ? "Out of stock" : "In stock"}
                             </span>
                           </td>
-                          <td className="px-4 py-2 font-mono text-slate-500 text-xs">
+                          <td className="px-4 py-2 font-mono text-slate-500 dark:text-slate-400 text-xs">
                             {v.sku || "--"}
                           </td>
                           <td className="px-4 py-2 text-right">
@@ -1493,7 +1491,7 @@ export function ProductEditorForm({
                                 setVariants(updated);
                                 setValue("variants", updated as any, { shouldDirty: true });
                               }}
-                              className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 cursor-pointer"
+                              className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
                               title="Delete override"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1504,7 +1502,7 @@ export function ProductEditorForm({
                     </tbody>
                   </table>
                   {variants.length > 8 && (
-                    <div className="p-2.5 bg-slate-50 text-center text-xs font-medium text-slate-500 border-t border-slate-200">
+                    <div className="p-2.5 bg-slate-50 dark:bg-slate-950 text-center text-xs font-medium text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800">
                       + {variants.length - 8} more custom overrides
                     </div>
                   )}
@@ -1513,18 +1511,18 @@ export function ProductEditorForm({
             </div>
 
             {/* 6. Additional Info Sections Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-6 space-y-4">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-4 text-slate-900 dark:text-white">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     Additional info sections{" "}
                     {isInfoSectionsEnabled && (
-                      <span className="text-xs text-slate-400 font-medium">
+                      <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                         ({selectedSectionIds.length} / 10)
                       </span>
                     )}
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Display more relevant info about the product, like a return policy or size chart.
                   </p>
                 </div>
@@ -1534,13 +1532,13 @@ export function ProductEditorForm({
                   <button
                     type="button"
                     onClick={() => setIsSelectInfoSectionsOpen(true)}
-                    className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-xl shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                    className="px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5 text-blue-600" />
+                    <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                     Add / Select
                   </button>
 
-                  <div className="h-4 w-px bg-slate-200" />
+                  <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
 
                   {/* On/Off Toggle Switch */}
                   <div className="flex items-center gap-2">
@@ -1550,7 +1548,7 @@ export function ProductEditorForm({
                       aria-checked={isInfoSectionsEnabled}
                       onClick={() => setIsInfoSectionsEnabled(!isInfoSectionsEnabled)}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                        isInfoSectionsEnabled ? "bg-blue-600" : "bg-slate-300"
+                        isInfoSectionsEnabled ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-700"
                       }`}
                       title={isInfoSectionsEnabled ? "Turn off info sections" : "Turn on info sections"}
                     >
@@ -1560,7 +1558,7 @@ export function ProductEditorForm({
                         }`}
                       />
                     </button>
-                    <span className="text-xs font-bold text-slate-700 min-w-7">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 min-w-7">
                       {isInfoSectionsEnabled ? "On" : "Off"}
                     </span>
                   </div>
@@ -1569,30 +1567,30 @@ export function ProductEditorForm({
 
               {/* Card Body */}
               {!isInfoSectionsEnabled ? (
-                <div className="p-5 bg-slate-50/70 border border-slate-200 rounded-xl flex items-center justify-between gap-4">
+                <div className="p-5 bg-slate-50/70 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between gap-4">
                   <div className="space-y-0.5">
-                    <span className="text-xs font-bold text-slate-800 block">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
                       Info sections are turned off
                     </span>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Sections will not appear on the product page until you turn the switch on.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsInfoSectionsEnabled(true)}
-                    className="px-3.5 py-1.5 text-xs font-bold text-blue-600 bg-white border border-blue-200 hover:bg-blue-50/50 rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
+                    className="px-3.5 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-900/30 rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
                   >
                     Turn On
                   </button>
                 </div>
               ) : selectedSectionIds.length === 0 ? (
-                <div className="p-6 bg-slate-50/70 border border-slate-200 rounded-xl flex items-center justify-between gap-4">
+                <div className="p-6 bg-slate-50/70 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between gap-4">
                   <div className="space-y-0.5">
-                    <span className="text-xs font-bold text-slate-800 block">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
                       No info sections assigned
                     </span>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Choose from your saved library of sections (e.g. Return Policy, Shipping Info).
                     </p>
                   </div>
@@ -1630,26 +1628,26 @@ export function ProductEditorForm({
                             ? "opacity-40 border-dashed border-blue-500 bg-blue-50/50 scale-[0.99]"
                             : isDragOverSec
                             ? "border-blue-500 bg-blue-50/40 ring-2 ring-blue-400 ring-offset-1 scale-[1.01]"
-                            : "border-slate-200 bg-slate-50/60 hover:border-slate-300 hover:bg-slate-50"
+                            : "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-950"
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div
-                            className="text-slate-400 hover:text-slate-700 cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-slate-200/60 transition-colors shrink-0"
+                            className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors shrink-0"
                             title="Drag to reorder section"
                           >
                             <GripVertical className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-slate-900 truncate">
+                            <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
                               {section.title}{" "}
                               {section.internalName && section.internalName !== section.title && (
-                                <span className="text-slate-400 font-normal">
+                                <span className="text-slate-400 dark:text-slate-500 font-normal">
                                   / {section.internalName}
                                 </span>
                               )}
                             </div>
-                            <div className="text-xs text-slate-500 truncate max-w-sm mt-0.5">
+                            <div className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-sm mt-0.5">
                               {section.content?.replace(/<[^>]*>?/gm, "") || "Content..."}
                             </div>
                           </div>
@@ -1662,7 +1660,7 @@ export function ProductEditorForm({
                               setEditingSection(section);
                               setIsEditInfoSectionOpen(true);
                             }}
-                            className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 shadow-2xs cursor-pointer transition-colors"
+                            className="px-3 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 shadow-2xs cursor-pointer transition-colors"
                           >
                             Edit
                           </button>
@@ -1671,7 +1669,7 @@ export function ProductEditorForm({
                             onClick={() =>
                               setSelectedSectionIds((prev) => prev.filter((id) => id !== secId))
                             }
-                            className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 cursor-pointer transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer transition-colors"
                             title="Remove from product"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1685,7 +1683,7 @@ export function ProductEditorForm({
                     <button
                       type="button"
                       onClick={() => setIsSelectInfoSectionsOpen(true)}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 pt-1 cursor-pointer"
+                      className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 pt-1 cursor-pointer"
                     >
                       <Plus className="w-4 h-4" /> Add Another Info Section
                     </button>
@@ -1698,16 +1696,16 @@ export function ProductEditorForm({
           {/* Right Column (4 cols): Visibility, Categories, Ribbons, Brand, Tags */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
             {/* 7. Visibility Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-4">
-              <h2 className="text-sm font-bold text-slate-900">Visibility</h2>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-4 text-slate-900 dark:text-white">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Visibility</h2>
 
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-800">Show in online store</span>
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Show in online store</span>
                 <button
                   type="button"
                   onClick={() => setValue("visible", !isVisible, { shouldDirty: true })}
                   className={`w-10 h-5.5 rounded-full transition-colors relative cursor-pointer ${
-                    isVisible ? "bg-blue-600" : "bg-slate-300"
+                    isVisible ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-700"
                   }`}
                 >
                   <div
@@ -1718,13 +1716,13 @@ export function ProductEditorForm({
                 </button>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                <span className="text-xs font-semibold text-slate-800">Show in Point of Sale</span>
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Show in Point of Sale</span>
                 <button
                   type="button"
                   onClick={() => setValue("showInPos", !isPosVisible, { shouldDirty: true })}
                   className={`w-10 h-5.5 rounded-full transition-colors relative cursor-pointer ${
-                    isPosVisible ? "bg-blue-600" : "bg-slate-300"
+                    isPosVisible ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-700"
                   }`}
                 >
                   <div
@@ -1737,13 +1735,13 @@ export function ProductEditorForm({
             </div>
 
             {/* 8. Categories Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-3">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-3 text-slate-900 dark:text-white">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900">Categories</h2>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Categories</h2>
                 <button
                   type="button"
                   onClick={() => setIsAssignCategoriesOpen(true)}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
                 >
                   + Assign
                 </button>
@@ -1756,23 +1754,23 @@ export function ProductEditorForm({
                   return (
                     <div
                       key={cId}
-                      className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs"
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-xs"
                     >
-                      <span className="font-semibold text-slate-800">{cat.name}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{cat.name}</span>
                       <div className="flex items-center gap-1.5">
                         {isPrimary ? (
                           <span
                             title="Primary Category"
-                            className="p-1 text-blue-600 bg-blue-100 rounded-md"
+                            className="p-1 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 rounded-md"
                           >
-                            <Flag className="w-3.5 h-3.5 fill-blue-600" />
+                            <Flag className="w-3.5 h-3.5 fill-blue-600 dark:fill-blue-400" />
                           </span>
                         ) : (
                           <button
                             type="button"
                             onClick={() => setPrimaryCatId(cId)}
                             title="Set as Primary"
-                            className="p-1 text-slate-400 hover:text-blue-600 rounded-md"
+                            className="p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-md cursor-pointer"
                           >
                             <Flag className="w-3.5 h-3.5" />
                           </button>
@@ -1794,7 +1792,7 @@ export function ProductEditorForm({
                               addToast("warning", "Required", "Product must belong to at least 1 category.");
                             }
                           }}
-                          className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                          className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
                           title="Remove category"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -1807,26 +1805,26 @@ export function ProductEditorForm({
             </div>
 
             {/* 9. Ribbons Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-3">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-3 text-slate-900 dark:text-white">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1">
                   Ribbons <Info className="w-3.5 h-3.5 text-slate-400" />
                 </h2>
                 <button
                   type="button"
                   onClick={() => setIsManageRibbonsOpen(true)}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
                 >
                   Manage All
                 </button>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700">Primary ribbon</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Primary ribbon</label>
                 <select
                   value={currentPrimaryRibbon || ""}
                   onChange={(e) => setValue("primaryRibbon", e.target.value, { shouldDirty: true })}
-                  className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-800"
+                  className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-800 dark:text-slate-200"
                 >
                   <option value="">No Ribbon</option>
                   {ribbonsList.map((r) => (
@@ -1839,12 +1837,12 @@ export function ProductEditorForm({
             </div>
 
             {/* 10. Brand Card */}
-            <div ref={brandRef} className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-2 relative">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+            <div ref={brandRef} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-2 relative text-slate-900 dark:text-white">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
                 <span className="flex items-center gap-1">
                   Brand <Info className="w-3.5 h-3.5 text-slate-400" />
                 </span>
-                <span className="text-slate-400 font-normal">{currentBrandValue.length} / 50</span>
+                <span className="text-slate-400 dark:text-slate-500 font-normal">{currentBrandValue.length} / 50</span>
               </div>
 
               <div className="relative">
@@ -1878,7 +1876,7 @@ export function ProductEditorForm({
                       }
                     }}
                     placeholder="Search or select a brand..."
-                    className="w-full pl-3.5 pr-8 py-2 text-xs bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900"
+                    className="w-full pl-3.5 pr-8 py-2 text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
                   />
 
                   <button
@@ -1889,7 +1887,7 @@ export function ProductEditorForm({
                       }
                       setIsBrandDropdownOpen(!isBrandDropdownOpen);
                     }}
-                    className="absolute right-2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                    className="absolute right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-pointer"
                   >
                     <ChevronDown className={`w-4 h-4 transition-transform duration-150 ${isBrandDropdownOpen ? "rotate-180" : ""}`} />
                   </button>
@@ -1897,14 +1895,14 @@ export function ProductEditorForm({
 
                 {/* Dropdown Menu */}
                 {isBrandDropdownOpen && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in zoom-in-95 duration-100">
                     {/* Add new option button if query doesn't match */}
                     {brandSearch.trim() && !hasExactBrandMatch && (
                       <button
                         type="button"
                         onClick={() => handleCreateNewBrand(brandSearch.trim())}
                         disabled={isCreatingBrand}
-                        className="w-full px-3.5 py-2 text-left text-xs text-blue-600 hover:bg-blue-50/80 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="w-full px-3.5 py-2 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-900/30 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         {isCreatingBrand ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                         <span>Add &quot;<strong>{brandSearch.trim()}</strong>&quot; as new brand</span>
@@ -1920,17 +1918,17 @@ export function ProductEditorForm({
                             key={b.id}
                             onClick={() => handleSelectBrand(b.name)}
                             className={`group px-3.5 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                              isSelected ? "bg-blue-50/90 text-blue-700 font-bold" : "text-slate-700 hover:bg-slate-50 font-medium"
+                              isSelected ? "bg-blue-50/90 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium"
                             }`}
                           >
                             <div className="flex items-center gap-2">
                               <span>{b.name}</span>
-                              {isSelected && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                              {isSelected && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
                             </div>
 
                             <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100">
                               {b.productCount != null && b.productCount > 0 && (
-                                <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md font-normal">
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md font-normal">
                                   {b.productCount} {b.productCount === 1 ? "product" : "products"}
                                 </span>
                               )}
@@ -1938,7 +1936,7 @@ export function ProductEditorForm({
                                 type="button"
                                 onClick={(e) => handleDeleteBrand(b, e)}
                                 title={`Delete "${b.name}"`}
-                                className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                                className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -1947,11 +1945,11 @@ export function ProductEditorForm({
                         );
                       })
                     ) : !brandSearch.trim() ? (
-                      <div className="p-3 text-center text-xs text-slate-400 italic">
+                      <div className="p-3 text-center text-xs text-slate-400 dark:text-slate-500 italic">
                         No brands in database. Type a name to add.
                       </div>
                     ) : hasExactBrandMatch ? null : (
-                      <div className="p-2.5 text-center text-xs text-slate-400 italic">
+                      <div className="p-2.5 text-center text-xs text-slate-400 dark:text-slate-500 italic">
                         No matching brands. Click above to add.
                       </div>
                     )}
@@ -1961,15 +1959,15 @@ export function ProductEditorForm({
             </div>
 
             {/* 11. Product Tags Card */}
-            <div ref={tagContainerRef} className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-3 relative">
+            <div ref={tagContainerRef} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-3 relative text-slate-900 dark:text-white">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                   Product tags <Info className="w-3.5 h-3.5 text-slate-400" />
                 </h2>
                 <button
                   type="button"
                   onClick={() => setIsManageTagsOpen(true)}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-800 cursor-pointer"
+                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
                 >
                   + Assign Tags
                 </button>
@@ -1978,14 +1976,14 @@ export function ProductEditorForm({
               {/* Tag Input Box with Badges */}
               <div
                 onClick={() => tagInputRef.current?.focus()}
-                className="w-full min-h-[42px] p-2 bg-white border border-slate-200 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 flex flex-wrap items-center gap-1.5 cursor-text transition-all"
+                className="w-full min-h-[42px] p-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 flex flex-wrap items-center gap-1.5 cursor-text transition-all"
               >
                 {selectedTagIds.map((tId) => {
                   const tag = tagsList.find((t) => t.id === tId) || { id: tId, name: tId };
                   return (
                     <span
                       key={tId}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-800 hover:bg-slate-200 rounded-md text-xs font-semibold group transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-xs font-semibold group transition-colors"
                     >
                       {tag.name}
                       <button
@@ -2017,26 +2015,26 @@ export function ProductEditorForm({
                   }}
                   onKeyDown={handleTagInputKeyDown}
                   placeholder={selectedTagIds.length === 0 ? "Type tag & press Enter..." : "Add more tags..."}
-                  className="flex-1 min-w-[140px] px-1 py-0.5 text-xs bg-transparent border-none outline-hidden focus:outline-hidden font-medium text-slate-900 placeholder:text-slate-400"
+                  className="flex-1 min-w-[140px] px-1 py-0.5 text-xs bg-transparent border-none outline-hidden focus:outline-hidden font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
               {/* Autocomplete Suggestions Popup */}
               {isTagSuggestOpen && tagInput.trim() && (
-                <div className="absolute left-5 right-5 top-[calc(100%-8px)] z-50 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-52 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute left-5 right-5 top-[calc(100%-8px)] z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in zoom-in-95 duration-100">
                   {/* Create New Tag Action */}
                   {!hasExactTagMatch && (
                     <button
                       type="button"
                       onClick={() => handleCreateAndAssignTag(tagInput)}
                       disabled={isCreatingTag}
-                      className="w-full px-3.5 py-2 text-left text-xs text-blue-600 hover:bg-blue-50 font-semibold flex items-center justify-between transition-colors cursor-pointer"
+                      className="w-full px-3.5 py-2 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 font-semibold flex items-center justify-between transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-1.5">
                         {isCreatingTag ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                         <span>Add &quot;<strong>{tagInput.trim()}</strong>&quot; as new tag</span>
                       </div>
-                      <span className="text-[10px] text-slate-400 uppercase font-mono">Press Enter</span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-mono">Press Enter</span>
                     </button>
                   )}
 
@@ -2048,30 +2046,30 @@ export function ProductEditorForm({
                         key={tag.id}
                         onClick={() => handleAssignTagById(tag.id)}
                         className={`px-3.5 py-2 text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                          isHighlighted ? "bg-blue-50 text-blue-700 font-semibold" : "text-slate-700 hover:bg-slate-50 font-medium"
+                          isHighlighted ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium"
                         }`}
                       >
                         <div className="flex items-center gap-2">
                           <TagIcon className="w-3.5 h-3.5 text-slate-400" />
                           <span>{tag.name}</span>
                         </div>
-                        <span className="text-[10px] text-slate-400 font-mono">Tab / Enter</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Tab / Enter</span>
                       </div>
                     );
                   })}
                 </div>
               )}
 
-              <p className="text-[11px] text-slate-400">
-                Type tag name and hit <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-600">Enter</kbd> or <kbd className="px-1 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-600">Tab</kbd> to add quickly.
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                Type tag name and hit <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-600 dark:text-slate-300">Enter</kbd> or <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-600 dark:text-slate-300">Tab</kbd> to add quickly.
               </p>
             </div>
 
             {/* 12. Product URL & SEO Card */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-3">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-3 text-slate-900 dark:text-white">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  <Globe className="w-4 h-4 text-blue-600" />
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   Product URL & SEO <Info className="w-3.5 h-3.5 text-slate-400" />
                 </h2>
                 <div className="flex items-center gap-2">
@@ -2079,7 +2077,7 @@ export function ProductEditorForm({
                     <button
                       type="button"
                       onClick={handleResetSlug}
-                      className="text-xs text-slate-500 hover:text-blue-600 flex items-center gap-1 cursor-pointer font-medium transition-colors"
+                      className="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 cursor-pointer font-medium transition-colors"
                       title="Regenerate unique URL from product name"
                     >
                       <RotateCcw className="w-3 h-3" />
@@ -2089,7 +2087,7 @@ export function ProductEditorForm({
                   <button
                     type="button"
                     onClick={() => setIsEditingSlug(!isEditingSlug)}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer transition-colors"
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     <Edit2 className="w-3 h-3" />
                     {isEditingSlug ? "Done" : "Edit URL"}
@@ -2098,14 +2096,14 @@ export function ProductEditorForm({
               </div>
 
               {/* URL Preview Box */}
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1.5">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg space-y-1.5">
+                <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   Storefront URL Preview
                 </div>
                 <div className="flex items-center justify-between gap-2 overflow-hidden">
-                  <span className="text-xs text-slate-700 font-mono truncate">
-                    <span className="text-slate-400 font-normal">/products/</span>
-                    <strong className="text-blue-600 font-semibold">{slugValue || "product-url-slug"}</strong>
+                  <span className="text-xs text-slate-700 dark:text-slate-300 font-mono truncate">
+                    <span className="text-slate-400 dark:text-slate-500 font-normal">/products/</span>
+                    <strong className="text-blue-600 dark:text-blue-400 font-semibold">{slugValue || "product-url-slug"}</strong>
                   </span>
                   <button
                     type="button"
@@ -2118,7 +2116,7 @@ export function ProductEditorForm({
                         addToast("success", "Copied", "Product URL copied to clipboard!");
                       }
                     }}
-                    className="p-1 text-slate-400 hover:text-slate-700 rounded-md hover:bg-slate-200/60 transition-colors shrink-0 cursor-pointer"
+                    className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
                     title="Copy full product URL"
                   >
                     {isCopiedSlug ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -2129,30 +2127,30 @@ export function ProductEditorForm({
               {/* Editable Slug Input */}
               {isEditingSlug && (
                 <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
                     <div className="flex items-center gap-1.5">
                       <span>Custom URL Handle</span>
                       {isCheckingSlug ? (
-                        <span className="text-[10px] text-slate-400 font-normal flex items-center gap-1">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal flex items-center gap-1">
                           <Loader2 className="w-2.5 h-2.5 animate-spin" /> Checking...
                         </span>
                       ) : slugAvailability.checked && slugValue.trim() ? (
                         slugAvailability.exists ? (
-                          <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-sm flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 px-1.5 py-0.5 rounded-sm flex items-center gap-1">
                             <AlertCircle className="w-2.5 h-2.5" /> Already Exists
                           </span>
                         ) : (
-                          <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-sm flex items-center gap-1">
+                          <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 rounded-sm flex items-center gap-1">
                             <Check className="w-2.5 h-2.5" /> Available
                           </span>
                         )
                       ) : null}
                     </div>
-                    <span className="text-slate-400 font-normal font-mono">{slugValue.length} / 80</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-normal font-mono">{slugValue.length} / 80</span>
                   </div>
 
                   <div className="relative flex items-center">
-                    <span className="absolute left-3 text-xs text-slate-400 font-mono select-none">
+                    <span className="absolute left-3 text-xs text-slate-400 dark:text-slate-500 font-mono select-none">
                       /products/
                     </span>
                     <input
@@ -2168,39 +2166,39 @@ export function ProductEditorForm({
                         setValue("slug", clean, { shouldDirty: true });
                       }}
                       placeholder="e.g. schneider-electric-relay"
-                      className={`w-full pl-20 pr-3.5 py-2 text-xs bg-white border rounded-lg focus:outline-hidden focus:ring-2 font-mono text-slate-900 font-medium transition-colors ${
+                      className={`w-full pl-20 pr-3.5 py-2 text-xs bg-white dark:bg-slate-950 border rounded-lg focus:outline-hidden focus:ring-2 font-mono text-slate-900 dark:text-white font-medium transition-colors ${
                         slugAvailability.exists
-                          ? "border-red-400 focus:ring-red-500 bg-red-50/20 text-red-900"
+                          ? "border-red-400 focus:ring-red-500 bg-red-50/20 text-red-900 dark:text-red-300"
                           : slugAvailability.checked && slugValue.trim()
                           ? "border-emerald-400 focus:ring-emerald-500"
-                          : "border-slate-200 focus:ring-blue-500"
+                          : "border-slate-200 dark:border-slate-800 focus:ring-blue-500"
                       }`}
                     />
                   </div>
 
                   {/* Warning message if slug already exists */}
                   {slugAvailability.exists && (
-                    <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg flex flex-col gap-1 text-xs text-red-700 animate-in fade-in duration-150">
+                    <div className="p-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg flex flex-col gap-1 text-xs text-red-700 dark:text-red-400 animate-in fade-in duration-150">
                       <div className="flex items-center gap-1.5 font-semibold">
-                        <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                        <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
                         <span>This URL is already taken!</span>
                       </div>
                       {slugAvailability.existingProductName && (
-                        <p className="text-[11px] text-red-600">
+                        <p className="text-[11px] text-red-600 dark:text-red-400">
                           Used by: <strong>&quot;{slugAvailability.existingProductName}&quot;</strong>
                         </p>
                       )}
                       {slugAvailability.suggestedSlug && (
-                        <div className="flex items-center justify-between pt-1 border-t border-red-200/60 mt-0.5">
-                          <span className="text-[11px] text-slate-600">
-                            Available: <strong className="font-mono text-blue-700 font-bold">{slugAvailability.suggestedSlug}</strong>
+                        <div className="flex items-center justify-between pt-1 border-t border-red-200/60 dark:border-red-800/60 mt-0.5">
+                          <span className="text-[11px] text-slate-600 dark:text-slate-300">
+                            Available: <strong className="font-mono text-blue-700 dark:text-blue-400 font-bold">{slugAvailability.suggestedSlug}</strong>
                           </span>
                           <button
                             type="button"
                             onClick={() => {
                               setValue("slug", slugAvailability.suggestedSlug!, { shouldDirty: true });
                             }}
-                            className="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline cursor-pointer"
+                            className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
                           >
                             Use Suggested
                           </button>
@@ -2211,12 +2209,13 @@ export function ProductEditorForm({
                 </div>
               )}
 
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">
                 SEO-friendly web address for Google and direct customer visits.
               </p>
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Global Modals */}

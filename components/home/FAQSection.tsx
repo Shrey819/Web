@@ -2,12 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FAQS } from "@/data/faqs";
 import { HelpCircle, ChevronDown, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FaqItem, DEFAULT_FAQS } from "@/lib/homepage";
 
-export function FAQSection() {
-  const [openFaqId, setOpenFaqId] = useState<string | null>(FAQS[0].id);
+interface FAQSectionProps {
+  faqs?: FaqItem[];
+  eyebrow?: string;
+  title?: string;
+}
+
+export function FAQSection({ faqs, eyebrow, title }: FAQSectionProps) {
+  const currentFaqs = faqs && faqs.length > 0 ? faqs : DEFAULT_FAQS;
+  const [openFaqId, setOpenFaqId] = useState<string | null>(currentFaqs[0]?.id || "faq-1");
 
   const toggleFaq = (id: string) => {
     setOpenFaqId(openFaqId === id ? null : id);
@@ -17,12 +24,12 @@ export function FAQSection() {
     <section className="py-20 bg-[#faf9f5] border-b border-slate-200">
       <div className="content-shell">
         <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
-          <span className="inline-flex items-center gap-2 type-label text-sky-600">
+          <span className="inline-flex items-center gap-2 type-label text-amber-600 font-mono font-bold tracking-widest uppercase">
             <HelpCircle className="w-4 h-4" />
-            <span>Support & Guidance</span>
+            <span>{eyebrow || "SUPPORT & HELP"}</span>
           </span>
           <h2 className="type-display-section text-slate-900">
-            Frequently Asked Questions
+            {title || "Frequently Asked Questions"}
           </h2>
           <p className="text-xs text-slate-600">
             Clear answers regarding technical support, dispatch cut-offs, B2B purchasing orders, and warranties.
@@ -30,18 +37,19 @@ export function FAQSection() {
         </div>
 
         <div className="space-y-4">
-          {FAQS.map((faq) => {
-            const isOpen = openFaqId === faq.id;
+          {currentFaqs.map((faq, idx) => {
+            const faqId = faq.id || `faq-${idx}`;
+            const isOpen = openFaqId === faqId;
 
             return (
               <div
-                key={faq.id}
+                key={faqId}
                 className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden transition-all"
               >
                 <button
                   type="button"
-                  onClick={() => toggleFaq(faq.id)}
-                  className="w-full p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-slate-900 hover:text-sky-600 transition-colors"
+                  onClick={() => toggleFaq(faqId)}
+                  className="w-full p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-slate-900 hover:text-sky-600 transition-colors cursor-pointer"
                   aria-expanded={isOpen}
                   suppressHydrationWarning
                 >
@@ -59,10 +67,9 @@ export function FAQSection() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
+                      transition={{ duration: 0.2 }}
                     >
-                      <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100">
+                      <div className="p-5 pt-0 text-xs sm:text-sm text-slate-600 border-t border-slate-100 leading-relaxed font-mono">
                         {faq.answer}
                       </div>
                     </motion.div>
@@ -73,12 +80,12 @@ export function FAQSection() {
           })}
         </div>
 
-        <div className="text-center mt-8">
+        <div className="mt-12 text-center">
           <Link
-            href="/faq"
-            className="inline-flex items-center gap-1.5 type-button text-sky-600 hover:text-sky-700 transition-colors"
+            href="/contact"
+            className="inline-flex items-center gap-2 type-button text-sky-600 hover:text-sky-700 transition-colors"
           >
-            <span>View Full Categorized Technical FAQ</span>
+            <span>Have specific questions? Reach our applications team</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

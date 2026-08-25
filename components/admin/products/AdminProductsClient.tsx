@@ -264,10 +264,10 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            Products <span className="text-slate-400 font-normal text-lg">{filtered.length}</span>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            Products <span className="text-slate-400 dark:text-slate-500 font-normal text-lg">{filtered.length}</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             To see how your products perform, go to Store Analytics.
           </p>
         </div>
@@ -278,9 +278,9 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             <button
               type="button"
               onClick={() => setIsMoreActionsOpen(!isMoreActionsOpen)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
               <span>More Actions</span>
               <ChevronDown
                 className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${
@@ -291,7 +291,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
 
             {/* Dropdown Menu */}
             {isMoreActionsOpen && (
-              <div className="absolute right-0 top-full mt-1.5 z-50 w-64 bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute right-0 top-full mt-1.5 z-50 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5 divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in zoom-in-95 duration-100">
                 {/* 1. Export and Import on Top */}
                 <div className="py-1 space-y-0.5">
                   <button
@@ -300,11 +300,11 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                       setIsMoreActionsOpen(false);
                       setIsExportModalOpen(true);
                     }}
-                    className="w-full flex items-start gap-2.5 px-2.5 py-2 text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg transition-colors cursor-pointer text-left"
+                    className="w-full flex items-start gap-2.5 px-2.5 py-2 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer text-left"
                   >
                     <Upload className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                     <div>
-                      <div className="text-xs font-bold text-slate-800">Export</div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-100">Export</div>
                       <div className="text-[11px] text-slate-400 font-normal leading-tight">
                         Export your physical products to a CSV file.
                       </div>
@@ -314,11 +314,11 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                   <Link
                     href="/admin/products/import"
                     onClick={() => setIsMoreActionsOpen(false)}
-                    className="w-full flex items-start gap-2.5 px-2.5 py-2 text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg transition-colors cursor-pointer text-left"
+                    className="w-full flex items-start gap-2.5 px-2.5 py-2 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer text-left"
                   >
                     <Download className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                     <div>
-                      <div className="text-xs font-bold text-slate-800">Import</div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-100">Import</div>
                       <div className="text-[11px] text-slate-400 font-normal leading-tight">
                         Import multiple products to your store.
                       </div>
@@ -336,7 +336,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                     <Link
                       href="/admin/categories"
                       onClick={() => setIsMoreActionsOpen(false)}
-                      className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer"
+                      className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-slate-800 rounded-lg font-medium transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-2.5">
                         <FolderTree className="w-4 h-4 text-slate-400" />
@@ -351,7 +351,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                         setIsMoreActionsOpen(false);
                         setIsManageBrandsOpen(true);
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-slate-800 rounded-lg font-medium transition-colors cursor-pointer text-left"
                     >
                       <Building2 className="w-4 h-4 text-slate-400" />
                       <span>Manage Brands</span>
@@ -363,7 +363,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                         setIsMoreActionsOpen(false);
                         setIsManageRibbonsOpen(true);
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-slate-800 rounded-lg font-medium transition-colors cursor-pointer text-left"
                     >
                       <Bookmark className="w-4 h-4 text-slate-400" />
                       <span>Manage Ribbons</span>
@@ -375,7 +375,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                         setIsMoreActionsOpen(false);
                         setIsManageTagsOpen(true);
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-slate-800 rounded-lg font-medium transition-colors cursor-pointer text-left"
                     >
                       <Tag className="w-4 h-4 text-slate-400" />
                       <span>Manage Tags</span>
@@ -391,7 +391,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                         }
                         setIsManageSectionsOpen(true);
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-slate-800 rounded-lg font-medium transition-colors cursor-pointer text-left"
                     >
                       <FileText className="w-4 h-4 text-slate-400" />
                       <span>Manage Info Sections</span>
@@ -403,13 +403,13 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                         setIsMoreActionsOpen(false);
                         setIsApplyPresetOpen(true);
                       }}
-                      className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                      className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/70 dark:hover:bg-slate-800 rounded-lg font-medium transition-colors cursor-pointer text-left"
                     >
                       <div className="flex items-center gap-2.5">
                         <Sliders className="w-4 h-4 text-slate-400" />
                         <span>Apply Option Setting</span>
                       </div>
-                      <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">
+                      <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono">
                         Presets
                       </span>
                     </button>
@@ -429,10 +429,10 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
       </div>
 
       {/* Toolbar & Filter Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden">
+        <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-xs font-semibold text-slate-700 shadow-2xs">
+            <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-2xs">
               <Info className="w-3.5 h-3.5 text-slate-400" />
               <span>All products</span>
               <span className="text-slate-400 font-normal">({filtered.length})</span>
@@ -442,7 +442,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             <button
               type="button"
               onClick={() => setIsCustomizeColumnsOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <span>Manage View</span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -457,8 +457,8 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                 onClick={() => setIsFilterDrawerOpen(true)}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer shadow-2xs ${
                   activeFilterCount > 0
-                    ? "bg-blue-50 text-blue-600 border-blue-300 ring-2 ring-blue-100"
-                    : "bg-white text-blue-600 border-blue-200 hover:bg-blue-50/60"
+                    ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-500/30 ring-2 ring-blue-100 dark:ring-blue-900/30"
+                    : "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 hover:bg-blue-50/60 dark:hover:bg-blue-500/10"
                 }`}
               >
                 <Filter className="w-3.5 h-3.5" />
@@ -475,7 +475,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             <button
               type="button"
               onClick={() => setIsExportModalOpen(true)}
-              className="p-1.5 border border-slate-200 rounded-full hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+              className="p-1.5 border border-slate-200 dark:border-slate-800 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
               title="Export products"
             >
               <Upload className="w-4 h-4" />
@@ -485,7 +485,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             <button
               type="button"
               onClick={() => setIsCustomizeColumnsOpen(true)}
-              className="p-1.5 border border-slate-200 rounded-full hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
+              className="p-1.5 border border-slate-200 dark:border-slate-800 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
               title="Customize columns"
             >
               <SlidersHorizontal className="w-4 h-4" />
@@ -499,7 +499,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                 placeholder="Search..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-44 sm:w-56 pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-full focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-800 transition-all font-medium"
+                className="w-44 sm:w-56 pl-9 pr-3 py-1.5 text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-full focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 transition-all font-medium"
               />
             </div>
           </div>
@@ -507,16 +507,16 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
 
         {/* Active Filter Chips Bar */}
         {activeFilterCount > 0 && (
-          <div className="px-4 py-2.5 bg-slate-50/60 border-b border-slate-100 flex items-center gap-2 flex-wrap text-xs animate-in fade-in duration-150">
+          <div className="px-4 py-2.5 bg-slate-50/60 dark:bg-slate-950/60 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2 flex-wrap text-xs animate-in fade-in duration-150">
             {filters.categories.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 text-blue-900 dark:text-blue-200 rounded-full text-xs font-medium">
                 <span>
                   Categories: <strong>{filters.categories.join(", ")}</strong>
                 </span>
                 <button
                   type="button"
                   onClick={() => setFilters({ ...filters, categories: [] })}
-                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  className="text-blue-500 hover:text-blue-800 dark:hover:text-blue-300 p-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-colors cursor-pointer"
                   title="Remove category filter"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -525,7 +525,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             )}
 
             {filters.visibility !== "all" && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 text-blue-900 dark:text-blue-200 rounded-full text-xs font-medium">
                 <span>
                   Visibility:{" "}
                   <strong>
@@ -537,7 +537,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                 <button
                   type="button"
                   onClick={() => setFilters({ ...filters, visibility: "all" })}
-                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  className="text-blue-500 hover:text-blue-800 dark:hover:text-blue-300 p-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-colors cursor-pointer"
                   title="Remove visibility filter"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -546,7 +546,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             )}
 
             {filters.productType !== "all" && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 text-blue-900 dark:text-blue-200 rounded-full text-xs font-medium">
                 <span>
                   Product type:{" "}
                   <strong>
@@ -556,7 +556,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                 <button
                   type="button"
                   onClick={() => setFilters({ ...filters, productType: "all" })}
-                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  className="text-blue-500 hover:text-blue-800 dark:hover:text-blue-300 p-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-colors cursor-pointer"
                   title="Remove product type filter"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -565,7 +565,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             )}
 
             {filters.inventory !== "all" && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 text-blue-900 dark:text-blue-200 rounded-full text-xs font-medium">
                 <span>
                   Inventory:{" "}
                   <strong>
@@ -579,7 +579,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                 <button
                   type="button"
                   onClick={() => setFilters({ ...filters, inventory: "all" })}
-                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  className="text-blue-500 hover:text-blue-800 dark:hover:text-blue-300 p-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-colors cursor-pointer"
                   title="Remove inventory filter"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -588,14 +588,14 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             )}
 
             {filters.preOrderEnabled && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 text-blue-900 dark:text-blue-200 rounded-full text-xs font-medium">
                 <span>
                   Pre-order: <strong>Enabled</strong>
                 </span>
                 <button
                   type="button"
                   onClick={() => setFilters({ ...filters, preOrderEnabled: false })}
-                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  className="text-blue-500 hover:text-blue-800 dark:hover:text-blue-300 p-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-colors cursor-pointer"
                   title="Remove pre-order filter"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -604,14 +604,14 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             )}
 
             {filters.tags.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 border border-blue-200 text-blue-900 rounded-full text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100/70 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 text-blue-900 dark:text-blue-200 rounded-full text-xs font-medium">
                 <span>
                   Tags: <strong>{filters.tags.join(", ")}</strong>
                 </span>
                 <button
                   type="button"
                   onClick={() => setFilters({ ...filters, tags: [] })}
-                  className="text-blue-500 hover:text-blue-800 p-0.5 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+                  className="text-blue-500 hover:text-blue-800 dark:hover:text-blue-300 p-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-colors cursor-pointer"
                   title="Remove tag filter"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -622,7 +622,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
             <button
               type="button"
               onClick={() => setFilters(DEFAULT_PRODUCT_FILTERS)}
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline cursor-pointer ml-1"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium hover:underline cursor-pointer ml-1"
             >
               Clear all
             </button>
@@ -631,15 +631,15 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
 
         {/* Products Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs divide-y divide-slate-100">
-            <thead className="bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider">
+          <table className="w-full text-left text-xs divide-y divide-slate-100 dark:divide-slate-800">
+            <thead className="bg-slate-50/70 dark:bg-slate-950/70 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
               <tr>
                 <th className="w-10 px-4 py-3">
                   <input
                     type="checkbox"
                     checked={isAllSelected}
                     onChange={handleToggleSelectAll}
-                    className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+                    className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-blue-500 cursor-pointer"
                   />
                 </th>
 
@@ -672,14 +672,14 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900">
               {filtered.map((prod) => {
                 const isSelected = selectedIds.includes(prod.id);
                 return (
                   <tr
                     key={prod.id}
-                    className={`hover:bg-slate-50/60 transition-colors ${
-                      isSelected ? "bg-blue-50/40" : ""
+                    className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors ${
+                      isSelected ? "bg-blue-50/40 dark:bg-blue-900/20" : ""
                     }`}
                   >
                     <td className="px-4 py-3.5">
@@ -687,7 +687,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleToggleSelectRow(prod.id)}
-                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+                        className="w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-blue-500 cursor-pointer"
                       />
                     </td>
 
@@ -695,7 +695,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                     {columns.find((c) => c.id === "name")?.visible && (
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                          <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
                             {prod.imageUrl ? (
                               <img src={prod.imageUrl} alt={prod.name} className="w-full h-full object-cover" />
                             ) : (
@@ -705,7 +705,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                           <div>
                             <Link
                               href={`/admin/products/${prod.id}/edit`}
-                              className="font-bold text-slate-900 hover:text-blue-600 transition-colors"
+                              className="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                             >
                               {prod.name}
                             </Link>
@@ -721,21 +721,21 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
 
                     {/* Type */}
                     {columns.find((c) => c.id === "type")?.visible && (
-                      <td className="px-4 py-3.5 font-medium text-slate-600">
+                      <td className="px-4 py-3.5 font-medium text-slate-600 dark:text-slate-400">
                         {prod.type}
                       </td>
                     )}
 
                     {/* SKU */}
                     {columns.find((c) => c.id === "sku")?.visible && (
-                      <td className="px-4 py-3.5 font-mono text-slate-500">
+                      <td className="px-4 py-3.5 font-mono text-slate-500 dark:text-slate-400">
                         {prod.sku || "--"}
                       </td>
                     )}
 
                     {/* Price */}
                     {columns.find((c) => c.id === "price")?.visible && (
-                      <td className="px-4 py-3.5 font-bold text-slate-900">
+                      <td className="px-4 py-3.5 font-bold text-slate-900 dark:text-white">
                         {prod.displayPrice}
                       </td>
                     )}
@@ -743,7 +743,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                     {/* Inventory */}
                     {columns.find((c) => c.id === "inventory")?.visible && (
                       <td className="px-4 py-3.5">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold text-emerald-700 bg-emerald-50">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10">
                           {prod.inventoryStatus}
                         </span>
                       </td>
@@ -753,18 +753,18 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                     {columns.find((c) => c.id === "ribbon")?.visible && (
                       <td className="px-4 py-3.5">
                         {prod.ribbon ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200/60">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200/60 dark:border-blue-500/30">
                             {prod.ribbon}
                           </span>
                         ) : (
-                          <span className="text-slate-300">--</span>
+                          <span className="text-slate-300 dark:text-slate-600">--</span>
                         )}
                       </td>
                     )}
 
                     {/* Brand */}
                     {columns.find((c) => c.id === "brand")?.visible && (
-                      <td className="px-4 py-3.5 text-slate-600 font-medium">
+                      <td className="px-4 py-3.5 text-slate-600 dark:text-slate-400 font-medium">
                         {prod.brand || "--"}
                       </td>
                     )}
@@ -775,12 +775,12 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                         <div className="flex flex-wrap gap-1">
                           {prod.tags && prod.tags.length > 0 ? (
                             prod.tags.map((t, i) => (
-                              <span key={i} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-medium">
+                              <span key={i} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] font-medium">
                                 {t}
                               </span>
                             ))
                           ) : (
-                            <span className="text-slate-300">--</span>
+                            <span className="text-slate-300 dark:text-slate-600">--</span>
                           )}
                         </div>
                       </td>
@@ -791,7 +791,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                       <div className="flex items-center justify-end gap-1">
                         <Link
                           href={`/admin/products/${prod.id}/edit`}
-                          className="p-1.5 text-slate-400 hover:text-slate-900 rounded-md hover:bg-slate-100"
+                          className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                           title="Edit Product"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -799,7 +799,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                         <button
                           type="button"
                           onClick={() => setActiveMenuId(activeMenuId === prod.id ? null : prod.id)}
-                          className="p-1.5 text-slate-400 hover:text-slate-900 rounded-md hover:bg-slate-100"
+                          className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                         >
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
@@ -807,18 +807,18 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
 
                       {/* Dropdown Menu */}
                       {activeMenuId === prod.id && (
-                        <div className="absolute right-4 top-10 z-20 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1 text-left animate-in fade-in-50 zoom-in-95">
+                        <div className="absolute right-4 top-10 z-20 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-1 text-left animate-in fade-in-50 zoom-in-95">
                           <Link
                             href={`/product/${prod.slug}`}
                             target="_blank"
-                            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
                           >
                             <ExternalLink className="w-3.5 h-3.5" /> View on Storefront
                           </Link>
                           {prod.variantCount > 0 && (
                             <Link
                               href={`/admin/products/${prod.id}/variants`}
-                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50"
+                              className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800"
                             >
                               <Layers className="w-3.5 h-3.5" /> Edit {prod.variantCount} Variants
                             </Link>
@@ -829,7 +829,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                               handleToggleVisibility(prod.id, prod.visible);
                               setActiveMenuId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             {prod.visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                             {prod.visible ? "Hide from Store" : "Show in Store"}
@@ -840,18 +840,18 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                               handleDuplicate(prod.id);
                               setActiveMenuId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             <Copy className="w-3.5 h-3.5" /> Duplicate
                           </button>
-                          <div className="my-1 border-t border-slate-100" />
+                          <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
                           <button
                             type="button"
                             onClick={() => {
                               handleDelete(prod.id);
                               setActiveMenuId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
+                            className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" /> Delete
                           </button>

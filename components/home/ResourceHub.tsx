@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { RESOURCES } from "@/data/resources";
 import { BookOpen, ArrowRight, Clock, User } from "lucide-react";
+import { ResourceHubConfig, DEFAULT_RESOURCE_HUB } from "@/lib/homepage";
 
-export function ResourceHub() {
+export function ResourceHub({ config }: { config?: ResourceHubConfig }) {
+  const currentConfig = config || DEFAULT_RESOURCE_HUB;
+  const articles = currentConfig.articles || DEFAULT_RESOURCE_HUB.articles;
+
   return (
     <section className="py-20 bg-white border-b border-slate-200">
       <div className="content-shell">
@@ -12,24 +16,24 @@ export function ResourceHub() {
           <div>
             <div className="inline-flex items-center gap-2 type-label text-sky-600 mb-2">
               <BookOpen className="w-4 h-4" />
-              <span>Engineering Knowledge Base</span>
+              <span>{currentConfig.eyebrow || "Engineering Knowledge Base"}</span>
             </div>
             <h2 className="type-display-section text-slate-900">
-              Latest Technical Resources & Selection Guides
+              {currentConfig.title || "Latest Technical Resources & Selection Guides"}
             </h2>
           </div>
 
           <Link
-            href="/resources"
+            href={currentConfig.ctaUrl || "/resources"}
             className="inline-flex items-center gap-2 type-button text-sky-600 hover:text-sky-700 transition-colors"
           >
-            <span>View All Engineering Articles</span>
+            <span>{currentConfig.ctaText || "View All Engineering Articles"}</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {RESOURCES.map((res) => (
+          {articles.map((res) => (
             <div
               key={res.id}
               className="group bg-slate-50 rounded-3xl p-6 border border-slate-200/80 hover:border-sky-500/40 hover:bg-white hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
@@ -60,12 +64,12 @@ export function ResourceHub() {
                   <User className="w-3.5 h-3.5 text-sky-600" />
                   <span>{res.author}</span>
                 </div>
-
                 <Link
                   href={`/resources/${res.slug}`}
-                  className="font-bold text-sky-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1"
+                  className="font-mono font-bold text-sky-600 hover:underline flex items-center gap-1"
                 >
-                  Read <ArrowRight className="w-3.5 h-3.5" />
+                  <span>Read Article</span>
+                  <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
             </div>

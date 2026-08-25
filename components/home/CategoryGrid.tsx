@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { CATEGORIES } from "@/data/categories";
 import { ArrowRight, Cpu, Radio, Zap, Layers } from "lucide-react";
 import { motion } from "framer-motion";
+import { CategoryGridConfig, DEFAULT_CATEGORY_GRID } from "@/lib/homepage";
 
-export function CategoryGrid() {
-  const categoryIcons = {
-    sensors: Radio,
-    plcs: Cpu,
-    drives: Zap,
-  };
+const CATEGORY_ICONS: Record<string, any> = {
+  sensors: Radio,
+  plcs: Cpu,
+  drives: Zap,
+};
+
+export function CategoryGrid({ config }: { config?: CategoryGridConfig }) {
+  const currentConfig = config || DEFAULT_CATEGORY_GRID;
+  const categories = currentConfig.categories || DEFAULT_CATEGORY_GRID.categories;
 
   return (
     <section className="py-20 bg-[#faf9f5] text-slate-900 border-b border-slate-200">
@@ -21,37 +23,40 @@ export function CategoryGrid() {
           <div>
             <div className="inline-flex items-center gap-2 type-label text-sky-600 mb-2">
               <Layers className="w-4 h-4" />
-              <span>Core Hardware Categories</span>
+              <span>{currentConfig.eyebrow || "Core Hardware Categories"}</span>
             </div>
             <h2 className="type-display-section text-slate-900">
-              Shop by Industrial Domain
+              {currentConfig.title || "Shop by Industrial Domain"}
             </h2>
           </div>
           <p className="text-sm text-slate-600 max-w-md">
-            Architect your control system with 1,500+ stocked components classified by sensing precision, PLC logic execution, and power drive specs.
+            {currentConfig.subtitle ||
+              "Architect your control system with 1,500+ stocked components classified by sensing precision, PLC logic execution, and power drive specs."}
           </p>
         </div>
 
         {/* 3 Main Category Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {CATEGORIES.map((cat, idx) => {
-            const Icon = categoryIcons[cat.id as keyof typeof categoryIcons] || Cpu;
+          {categories.map((cat, idx) => {
+            const Icon = CATEGORY_ICONS[cat.slug] || CATEGORY_ICONS[cat.id] || Cpu;
 
             return (
               <motion.div
-                key={cat.id}
+                key={cat.id || idx}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
               >
                 <Link
-                  href={`/category/${cat.slug}`}
+                  href={`/category/${cat.slug || cat.id}`}
                   className="group relative flex flex-col justify-between h-full bg-white rounded-3xl p-8 border border-slate-200/90 shadow-lg hover:shadow-2xl hover:border-sky-500/50 transition-all duration-300 overflow-hidden"
                 >
                   {/* Subtle Background Accent Gradient */}
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${cat.accentColor} opacity-50 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
+                    className={`absolute inset-0 bg-gradient-to-br ${
+                      cat.accentColor || "from-sky-500/10 to-transparent"
+                    } opacity-50 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
                   />
 
                   <div>
@@ -81,7 +86,7 @@ export function CategoryGrid() {
 
                     {/* Subcategories list */}
                     <div className="space-y-2 mb-8 relative z-10">
-                      {cat.subcategories.slice(0, 4).map((sub) => (
+                      {(cat.subcategories || []).slice(0, 4).map((sub) => (
                         <div
                           key={sub}
                           className="text-xs text-slate-700 font-medium flex items-center gap-2"

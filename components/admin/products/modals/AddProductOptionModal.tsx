@@ -327,21 +327,21 @@ export function AddProductOptionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150 text-slate-800 dark:text-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="p-5 border-b border-slate-100 relative">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 relative">
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1 absolute right-4 top-4 rounded-md transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 absolute right-4 top-4 rounded-md transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
-          <h2 className="text-base font-bold text-slate-900">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white">
             {initialOption?.id ? "Edit Product Option" : "Add Product Option"}
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Configure choice values for this product option.
           </p>
         </div>
@@ -350,9 +350,9 @@ export function AddProductOptionModal({
           {/* Option Name & Field Type Row */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
                 <span>Option name *</span>
-                <span className="text-slate-400 font-normal">{optionName.length}/50</span>
+                <span className="text-slate-400 dark:text-slate-500 font-normal">{optionName.length}/50</span>
               </div>
               <input
                 type="text"
@@ -361,18 +361,18 @@ export function AddProductOptionModal({
                 onChange={(e) => setOptionName(e.target.value)}
                 onKeyDown={handleOptionNameKeyDown}
                 maxLength={50}
-                className="w-full px-3 py-1.5 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-900 font-medium"
+                className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white font-medium placeholder-slate-400"
                 autoFocus
                 required
               />
             </div>
 
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-slate-700">Field type</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Field type</label>
               <select
                 value={fieldType}
                 onChange={(e) => handleFieldTypeChange(e.target.value as any)}
-                className="w-full px-3 py-1.5 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-800 font-medium cursor-pointer"
+                className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200 font-medium cursor-pointer"
               >
                 <option value="TEXT_CHOICES">Text choices</option>
                 <option value="SWATCH_CHOICES">Color swatches</option>
@@ -382,8 +382,8 @@ export function AddProductOptionModal({
 
           {/* Variant combination estimator / warning */}
           {isOverVariantLimit ? (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-start gap-2.5">
-              <AlertTriangle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
+            <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-700 dark:text-red-400 flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
               <div>
                 <span className="font-bold block">1,000 Variants Limit Exceeded</span>
                 <span>
@@ -393,23 +393,23 @@ export function AddProductOptionModal({
               </div>
             </div>
           ) : potentialVariantCount > 100 ? (
-            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 flex items-center justify-between">
+            <div className="p-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between">
               <span className="flex items-center gap-1.5 font-medium">
-                <Layers className="w-3.5 h-3.5 text-amber-600" />
+                <Layers className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 Will generate ~{potentialVariantCount} variants
               </span>
-              <span className="text-[11px] font-semibold text-amber-800">
+              <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-300">
                 Limit: 1,000
               </span>
             </div>
           ) : null}
 
           {/* Choices Section */}
-          <div className="space-y-2 pt-2 border-t border-slate-100">
+          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <label className="text-xs font-semibold text-slate-700">Choices *</label>
-                <span className="text-[11px] text-slate-400 font-normal">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Choices *</label>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
                   ({choices.length}/50)
                 </span>
               </div>
@@ -417,7 +417,7 @@ export function AddProductOptionModal({
                 <button
                   type="button"
                   onClick={handleRemoveAll}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium cursor-pointer"
                 >
                   Remove all
                 </button>
@@ -427,7 +427,7 @@ export function AddProductOptionModal({
             <div className="space-y-2">
               {choices.map((choice, idx) => (
                 <div key={idx} className="flex items-center gap-2">
-                  <div className="text-slate-300 cursor-grab">
+                  <div className="text-slate-300 dark:text-slate-600 cursor-grab">
                     <GripVertical className="w-4 h-4" />
                   </div>
 
@@ -442,13 +442,13 @@ export function AddProductOptionModal({
                       value={choice.name}
                       onChange={(e) => handleUpdateChoice(idx, e.target.value)}
                       onKeyDown={(e) => handleChoiceKeyDown(e, idx)}
-                      className="w-full pl-3 pr-10 py-1.5 text-sm bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-800 font-medium"
+                      className="w-full pl-3 pr-10 py-1.5 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200 font-medium placeholder-slate-400 dark:placeholder-slate-500"
                     />
 
                     {fieldType === "SWATCH_CHOICES" && (
                       <div className="absolute right-2 flex items-center">
                         <label
-                          className="w-6 h-6 rounded-md cursor-pointer border border-slate-300 shadow-xs flex items-center justify-center overflow-hidden transition-colors"
+                          className="w-6 h-6 rounded-md cursor-pointer border border-slate-300 dark:border-slate-700 shadow-xs flex items-center justify-center overflow-hidden transition-colors"
                           style={{ backgroundColor: choice.colorHex || "#3b82f6" }}
                           title="Pick swatch color"
                         >
@@ -478,18 +478,18 @@ export function AddProductOptionModal({
               type="button"
               disabled={choices.length >= 50 || isOverVariantLimit}
               onClick={handleAddChoice}
-              className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed pt-1 cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 disabled:opacity-40 disabled:cursor-not-allowed pt-1 cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Another Choice
             </button>
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-800 rounded-lg transition-colors cursor-pointer"
+              className="px-4 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg transition-colors cursor-pointer"
             >
               Cancel
             </button>

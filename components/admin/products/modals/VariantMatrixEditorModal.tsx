@@ -184,20 +184,20 @@ export function VariantMatrixEditorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150 text-slate-800">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150 text-slate-800 dark:text-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/50">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 Custom Variant Pricing & Overrides
               </h2>
-              <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">
+              <span className="px-2.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 rounded-full text-xs font-bold">
                 {overrides.length} Custom Overrides
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Only create records for variants that have different prices, SKUs, or stock from the base product (₹{basePrice.toFixed(2)}).
             </p>
           </div>
@@ -205,7 +205,7 @@ export function VariantMatrixEditorModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200 transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -213,13 +213,13 @@ export function VariantMatrixEditorModal({
 
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
           {/* 1. Add / Configure Variant Override Card */}
-          <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-4">
+          <div className="p-4 bg-slate-50/80 dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 text-slate-900 dark:text-white">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Plus className="w-4 h-4 text-blue-600" />
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Plus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 Add / Edit Custom Variant Override
               </h3>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 Total possible combinations: <strong>{totalPossible.toLocaleString()}</strong>
               </span>
             </div>
@@ -229,7 +229,7 @@ export function VariantMatrixEditorModal({
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
                 {activeOptions.map((opt) => (
                   <div key={opt.name} className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-700 block truncate" title={opt.name}>
+                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block truncate" title={opt.name}>
                       {opt.name}
                     </label>
                     <select
@@ -237,7 +237,7 @@ export function VariantMatrixEditorModal({
                       onChange={(e) =>
                         setDraftAttributes((prev) => ({ ...prev, [opt.name]: e.target.value }))
                       }
-                      className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-800 cursor-pointer"
+                      className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
                     >
                       {opt.choices.map((c, i) => (
                         <option key={i} value={c.name}>
@@ -250,9 +250,9 @@ export function VariantMatrixEditorModal({
               </div>
 
               {/* Pricing & Stock Overrides Row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-200/60">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-200/60 dark:border-slate-800">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-700">Custom Price (₹) *</label>
+                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Custom Price (₹) *</label>
                   <div className="relative">
                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">
                       ₹
@@ -263,14 +263,14 @@ export function VariantMatrixEditorModal({
                       placeholder={String(basePrice)}
                       value={draftPrice}
                       onChange={(e) => setDraftPrice(e.target.value)}
-                      className="w-full pl-6 pr-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-bold text-slate-900"
+                      className="w-full pl-6 pr-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 dark:text-white"
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-700">Strikethrough (₹)</label>
+                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Strikethrough (₹)</label>
                   <div className="relative">
                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">
                       ₹
@@ -281,28 +281,28 @@ export function VariantMatrixEditorModal({
                       placeholder="Optional"
                       value={draftStrikethrough}
                       onChange={(e) => setDraftStrikethrough(e.target.value)}
-                      className="w-full pl-6 pr-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900"
+                      className="w-full pl-6 pr-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900 dark:text-white"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-700">Custom SKU</label>
+                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Custom SKU</label>
                   <input
                     type="text"
                     placeholder="e.g. PROD-XL-RED"
                     value={draftSku}
                     onChange={(e) => setDraftSku(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-mono font-medium text-slate-900"
+                    className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-mono font-medium text-slate-900 dark:text-white"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-700">Inventory Status</label>
+                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Inventory Status</label>
                   <select
                     value={draftInventoryStatus}
                     onChange={(e) => setDraftInventoryStatus(e.target.value as any)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-bold text-slate-800 cursor-pointer"
+                    className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-bold text-slate-800 dark:text-slate-200 cursor-pointer"
                   >
                     <option value="IN_STOCK">In stock</option>
                     <option value="OUT_OF_STOCK">Out of stock</option>
@@ -325,7 +325,7 @@ export function VariantMatrixEditorModal({
           {/* 2. Active Custom Overrides Table */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+              <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
                 Configured Custom Overrides ({overrides.length})
               </h3>
               {overrides.length > 0 && (
@@ -336,27 +336,27 @@ export function VariantMatrixEditorModal({
                     placeholder="Search overrides..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-8 pr-2.5 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-medium"
+                    className="w-full pl-8 pr-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-medium text-slate-900 dark:text-white"
                   />
                 </div>
               )}
             </div>
 
             {overrides.length === 0 ? (
-              <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl space-y-2">
-                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+              <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl space-y-2">
+                <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
                   <Layers className="w-5 h-5" />
                 </div>
-                <h4 className="text-xs font-bold text-slate-700">No Custom Overrides Needed</h4>
-                <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">No Custom Overrides Needed</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
                   All {totalPossible.toLocaleString()} option combinations currently use the standard base price of{" "}
                   <strong>₹{basePrice.toFixed(2)}</strong> and default in-stock inventory. Add an override above only if specific combinations have different prices or SKUs.
                 </p>
               </div>
             ) : (
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs">
-                <table className="w-full text-left text-xs divide-y divide-slate-200">
-                  <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider">
+              <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
+                <table className="w-full text-left text-xs divide-y divide-slate-200 dark:divide-slate-800">
+                  <thead className="bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">
                     <tr>
                       <th className="px-4 py-2.5">Variant Override</th>
                       <th className="px-4 py-2.5">Custom Price (₹)</th>
@@ -365,12 +365,12 @@ export function VariantMatrixEditorModal({
                       <th className="px-4 py-2.5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-800 dark:text-slate-200">
                     {filteredOverrides.map((v, idx) => (
-                      <tr key={v.id || idx} className="hover:bg-slate-50/70 transition-colors">
+                      <tr key={v.id || idx} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
                         {/* Variant Name */}
                         <td className="px-4 py-2.5">
-                          <span className="font-bold text-slate-900 block text-xs">
+                          <span className="font-bold text-slate-900 dark:text-white block text-xs">
                             {v.displayName || Object.values(v.attributes || {}).join(" | ")}
                           </span>
                         </td>
@@ -390,11 +390,11 @@ export function VariantMatrixEditorModal({
                                   const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
                                   handleUpdateOverrideRow(v.id || idx, "price", val);
                                 }}
-                                className="w-full pl-6 pr-2 py-1 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-lg text-xs font-bold text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                                className="w-full pl-6 pr-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 rounded-lg text-xs font-bold text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                               />
                             </div>
                             <div className="relative w-24">
-                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-300 text-[10px]">
+                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 text-[10px]">
                                 ~₹
                               </span>
                               <input
@@ -406,7 +406,7 @@ export function VariantMatrixEditorModal({
                                   const val = e.target.value === "" ? null : parseFloat(e.target.value);
                                   handleUpdateOverrideRow(v.id || idx, "strikethroughPrice", val);
                                 }}
-                                className="w-full pl-5 pr-1.5 py-1 bg-slate-50 border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-lg text-xs text-slate-600 focus:outline-hidden focus:ring-1 focus:ring-blue-500 placeholder:text-slate-300"
+                                className="w-full pl-5 pr-1.5 py-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 rounded-lg text-xs text-slate-600 dark:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-blue-500 placeholder:text-slate-300"
                                 title="Strikethrough Price"
                               />
                             </div>
@@ -422,7 +422,7 @@ export function VariantMatrixEditorModal({
                               handleUpdateOverrideRow(v.id || idx, "sku", e.target.value)
                             }
                             placeholder="SKU"
-                            className="w-28 px-2 py-1 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-lg text-xs font-mono text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                            className="w-28 px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                           />
                         </td>
 
@@ -435,8 +435,8 @@ export function VariantMatrixEditorModal({
                             }
                             className={`px-2 py-1 rounded-lg text-[11px] font-bold border focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer ${
                               v.inventoryStatus === "OUT_OF_STOCK"
-                                ? "bg-red-50 text-red-700 border-red-200"
-                                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800"
+                                : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
                             }`}
                           >
                             <option value="IN_STOCK">In stock</option>
@@ -450,7 +450,7 @@ export function VariantMatrixEditorModal({
                             <button
                               type="button"
                               onClick={() => handleRemoveOverride(idx)}
-                              className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                              className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
                               title="Remove override"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -467,8 +467,8 @@ export function VariantMatrixEditorModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
-          <span className="text-xs text-slate-500">
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex items-center justify-between">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             Unconfigured combinations automatically use base price ₹{basePrice.toFixed(2)}.
           </span>
 
@@ -476,7 +476,7 @@ export function VariantMatrixEditorModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 rounded-xl border border-slate-200 hover:bg-white transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               Cancel
             </button>

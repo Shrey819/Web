@@ -6,12 +6,15 @@ import { PRODUCTS as MOCK_PRODUCTS } from "@/data/products";
 import { Product } from "@/types";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { FeaturedCatalogConfig, DEFAULT_FEATURED_CATALOG } from "@/lib/homepage";
 
 interface FeaturedProductsProps {
   initialProducts?: Product[];
+  config?: FeaturedCatalogConfig;
 }
 
-export function FeaturedProducts({ initialProducts }: FeaturedProductsProps) {
+export function FeaturedProducts({ initialProducts, config }: FeaturedProductsProps) {
+  const currentConfig = config || DEFAULT_FEATURED_CATALOG;
   const [activeTab, setActiveTab] = useState<string>("all");
   const [products, setProducts] = useState<Product[]>(initialProducts || MOCK_PRODUCTS);
 
@@ -34,10 +37,10 @@ export function FeaturedProducts({ initialProducts }: FeaturedProductsProps) {
           <div>
             <div className="inline-flex items-center gap-2 type-label text-sky-600 mb-2">
               <Sparkles className="w-4 h-4" />
-              <span>Live Database Catalog</span>
+              <span>{currentConfig.eyebrow || "Live Database Catalog"}</span>
             </div>
             <h2 className="type-section-title text-slate-900">
-              Featured Industrial Components
+              {currentConfig.title || "Featured Industrial Components"}
             </h2>
           </div>
 
@@ -53,7 +56,7 @@ export function FeaturedProducts({ initialProducts }: FeaturedProductsProps) {
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              All Top Components
+              {currentConfig.allTabLabel || "All Top Components"}
             </button>
             <button
               type="button"
@@ -65,7 +68,7 @@ export function FeaturedProducts({ initialProducts }: FeaturedProductsProps) {
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              Sensors
+              {currentConfig.sensorsTabLabel || "Sensors"}
             </button>
             <button
               type="button"
@@ -77,7 +80,7 @@ export function FeaturedProducts({ initialProducts }: FeaturedProductsProps) {
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              PLCs
+              {currentConfig.plcsTabLabel || "PLCs"}
             </button>
             <button
               type="button"
@@ -89,7 +92,7 @@ export function FeaturedProducts({ initialProducts }: FeaturedProductsProps) {
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              Motors & Drives
+              {currentConfig.motorsTabLabel || "Motors & Drives"}
             </button>
           </div>
         </div>

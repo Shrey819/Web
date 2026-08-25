@@ -268,6 +268,7 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
     <div
       role="button"
       tabIndex={0}
+      suppressHydrationWarning
       aria-label={`Draggable background product ${product.name}`}
       onPointerDown={handlePointerDown}
       className={`absolute w-32 sm:w-40 h-20 sm:h-26 rounded-2xl border transition-colors shadow-2xl hidden sm:flex items-center justify-center pointer-events-auto select-none group touch-none ${

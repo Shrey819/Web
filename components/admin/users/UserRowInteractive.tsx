@@ -38,50 +38,50 @@ export function UserRowInteractive({ user, isSelf, roleBadgeStyle }: UserRowInte
     <>
       <tr
         onClick={() => setShowModal(true)}
-        className="hover:bg-slate-800/40 transition-colors cursor-pointer group"
+        className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
       >
         {/* User / Account column with Google / Custom Profile Image */}
-        <td className="p-4 pl-6">
+        <td className="p-3.5 pl-6">
           <div className="flex items-center gap-3">
             {userAvatar ? (
               <img
                 src={userAvatar}
                 alt={displayName}
                 referrerPolicy="no-referrer"
-                className="w-10 h-10 rounded-2xl object-cover border border-slate-700 group-hover:border-sky-500/50 transition-colors shrink-0 shadow"
+                className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 group-hover:border-blue-500 transition-colors shrink-0 shadow-2xs"
               />
             ) : (
-              <div className="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 font-bold text-xs text-amber-400 flex items-center justify-center shrink-0 group-hover:border-sky-500/50 transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 font-bold text-xs text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:border-blue-500 transition-colors">
                 {initials}
               </div>
             )}
             <div>
-              <div className="font-bold text-white flex items-center gap-2 group-hover:text-sky-400 transition-colors">
+              <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 <span>{displayName}</span>
                 {isSelf && (
-                  <span className="bg-sky-500/20 text-sky-400 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded border border-sky-500/30">
+                  <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-500/30">
                     YOU
                   </span>
                 )}
               </div>
-              <span className="font-mono text-[10px] text-slate-500 uppercase">{user.id}</span>
+              <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500 uppercase">{user.id}</span>
             </div>
           </div>
         </td>
 
         {/* Email */}
-        <td className="p-4 font-mono text-xs text-slate-300">
+        <td className="p-3.5 font-mono text-xs text-slate-700 dark:text-slate-300">
           <div className="flex items-center gap-1.5">
-            <Mail className="w-3.5 h-3.5 text-slate-500" />
+            <Mail className="w-3.5 h-3.5 text-slate-400" />
             <span>{user.email}</span>
           </div>
         </td>
 
         {/* Auth Method Indicator */}
-        <td className="p-4">
+        <td className="p-3.5">
           <div className="flex items-center gap-1.5 flex-wrap">
             {user.google_sub ? (
-              <span className="inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full shadow-sm">
+              <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full shadow-2xs">
                 <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
@@ -105,40 +105,40 @@ export function UserRowInteractive({ user, isSelf, roleBadgeStyle }: UserRowInte
             ) : null}
 
             {user.hasPassword ? (
-              <span className="inline-flex items-center gap-1 bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-mono px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] font-mono px-2 py-0.5 rounded-full">
                 <Key className="w-2.5 h-2.5" />
                 <span>Password</span>
               </span>
             ) : null}
 
             {!user.google_sub && !user.hasPassword && (
-              <span className="text-[10px] font-mono text-slate-500">Unset</span>
+              <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">Unset</span>
             )}
           </div>
         </td>
 
         {/* Role Badge */}
-        <td className="p-4">
+        <td className="p-3.5">
           <span className={`font-mono text-[10px] font-bold px-2.5 py-1 rounded-full border ${roleBadgeStyle}`}>
             {user.role}
           </span>
         </td>
 
         {/* Registered Date */}
-        <td className="p-4 font-mono text-xs text-slate-400">
+        <td className="p-3.5 font-mono text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-slate-500" />
+            <Calendar className="w-3.5 h-3.5 text-slate-400" />
             <span>{new Date(user.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
           </div>
         </td>
 
         {/* Access Control */}
-        <td className="p-4 pr-6 text-right" onClick={(e) => e.stopPropagation()}>
+        <td className="p-3.5 pr-6 text-right" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => setShowModal(true)}
-              className="p-1.5 rounded-lg border border-slate-800 hover:border-sky-500/40 hover:bg-sky-500/10 text-slate-400 hover:text-sky-400 transition-colors"
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-blue-500/40 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
               title="View full user details & history"
             >
               <Eye className="w-4 h-4" />

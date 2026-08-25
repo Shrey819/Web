@@ -172,16 +172,16 @@ export const useCartStore = create<CartState>()(
 
       applyCoupon: (code: string) => {
         const cleanCode = code.trim().toUpperCase();
-        if (cleanCode === "INDUSTRIAL10" || cleanCode === "PROPEL10") {
+        if (cleanCode === "INDUSTRIAL10" || cleanCode === "OM10" || cleanCode === "PROPEL10") {
           trackUserAction("APPLY_COUPON", `Applied promo code "${cleanCode}" (10% OFF)`);
           set({ appliedCoupon: cleanCode, discountPercent: 10 });
           return { success: true, message: "10% Industrial Discount Applied!" };
-        } else if (cleanCode === "PROPEL15" || cleanCode === "AUTOMATION15") {
+        } else if (cleanCode === "OM15" || cleanCode === "AUTOMATION15" || cleanCode === "PROPEL15") {
           trackUserAction("APPLY_COUPON", `Applied promo code "${cleanCode}" (15% OFF)`);
           set({ appliedCoupon: cleanCode, discountPercent: 15 });
           return { success: true, message: "15% Enterprise Automation Discount Applied!" };
         }
-        return { success: false, message: "Invalid promo code. Try 'INDUSTRIAL10'" };
+        return { success: false, message: "Invalid promo code. Try 'OM10'" };
       },
 
       removeCoupon: () => {

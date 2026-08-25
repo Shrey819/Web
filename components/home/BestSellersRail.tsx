@@ -5,8 +5,10 @@ import Link from "next/link";
 import { PRODUCTS } from "@/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ChevronLeft, ChevronRight, Flame, ArrowRight } from "lucide-react";
+import { BestSellersConfig, DEFAULT_BEST_SELLERS } from "@/lib/homepage";
 
-export function BestSellersRail() {
+export function BestSellersRail({ config }: { config?: BestSellersConfig }) {
+  const currentConfig = config || DEFAULT_BEST_SELLERS;
   const scrollRef = useRef<HTMLDivElement>(null);
   const bestSellers = PRODUCTS.filter((p) => p.bestSeller || p.rating >= 4.9);
 
@@ -25,10 +27,10 @@ export function BestSellersRail() {
           <div>
             <div className="inline-flex items-center gap-2 type-label text-rose-600 mb-2">
               <Flame className="w-4 h-4 fill-rose-500" />
-              <span>Highest B2B Demand</span>
+              <span>{currentConfig.eyebrow || "Highest B2B Demand"}</span>
             </div>
             <h2 className="type-display-section text-slate-900">
-              Top Best Sellers & Fast Movers
+              {currentConfig.title || "Top Best Sellers & Fast Movers"}
             </h2>
           </div>
 
@@ -58,12 +60,11 @@ export function BestSellersRail() {
         <div
           ref={scrollRef}
           className="flex gap-6 overflow-x-auto pb-6 scrollbar-none snap-x snap-mandatory"
-          style={{ scrollbarWidth: "none" }}
         >
           {bestSellers.map((product) => (
             <div
               key={product.id}
-              className="min-w-[280px] sm:min-w-[320px] max-w-[340px] shrink-0 snap-start"
+              className="w-[280px] sm:w-[320px] shrink-0 snap-start"
             >
               <ProductCard product={product} />
             </div>

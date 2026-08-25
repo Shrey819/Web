@@ -147,29 +147,29 @@ export default function LiveTrackerPage() {
   return (
     <div className="space-y-3.5 pb-8">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 bg-white dark:bg-slate-900 rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="type-label text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full text-[10px] font-bold border border-sky-200">
+            <span className="type-label text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10 px-2 py-0.5 rounded-full text-[10px] font-bold border border-sky-200 dark:border-sky-500/30">
               Hybrid Telemetry Engine (1st IP, 2nd Timezone)
             </span>
-            <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+            <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/30">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
               Auto-Purge (30m)
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-mono font-extrabold text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-mono font-extrabold text-slate-900 dark:text-white">
             Active User & Action Tracker
           </h1>
-          <p className="text-xs text-slate-500 font-mono">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
             MapChart vector country map, hybrid IP/Timezone location, actions telemetry & 30-min auto-purge.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
-          <div className="text-right text-[11px] font-mono text-slate-500 hidden sm:block" suppressHydrationWarning>
+          <div className="text-right text-[11px] font-mono text-slate-500 dark:text-slate-400 hidden sm:block" suppressHydrationWarning>
             <div>Last Polled: {mounted && lastRefreshed ? lastRefreshed.toLocaleTimeString() : "--:--:--"}</div>
-            <div className="text-emerald-600 font-bold">5s Auto-Refresh</div>
+            <div className="text-emerald-600 dark:text-emerald-400 font-bold">5s Auto-Refresh</div>
           </div>
           <button
             onClick={fetchLiveMetrics}
@@ -178,7 +178,7 @@ export default function LiveTrackerPage() {
             className={`p-2 px-3 rounded-xl font-mono text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer ${
               loading
                 ? "bg-slate-700 text-slate-300 opacity-90"
-                : "bg-slate-900 hover:bg-slate-800 active:scale-95 text-white"
+                : "bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-white"
             }`}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-sky-400" : ""}`} />
@@ -189,60 +189,60 @@ export default function LiveTrackerPage() {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 font-mono">
-        <div className="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm space-y-1">
-          <div className="flex items-center justify-between text-slate-500 text-[11px]">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px]">
             <span>Online Now</span>
-            <Users className="w-3.5 h-3.5 text-emerald-600" />
+            <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div className="text-2xl font-black text-slate-900 flex items-center gap-1.5">
+          <div className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-1.5">
             {totalActive}
-            <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200">
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.2 rounded-full border border-emerald-200 dark:border-emerald-500/30">
               Live
             </span>
           </div>
-          <p className="text-[10px] text-slate-400">Active user sessions</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500">Active user sessions</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm space-y-1">
-          <div className="flex items-center justify-between text-slate-500 text-[11px]">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px]">
             <span>Device Split</span>
-            <Monitor className="w-3.5 h-3.5 text-sky-600" />
+            <Monitor className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
           </div>
           <div className="flex items-baseline justify-between pt-0.5">
-            <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
-              <Monitor className="w-3 h-3 text-sky-600" /> {desktopPercent}% Desk
+            <div className="flex items-center gap-1 text-xs font-bold text-slate-900 dark:text-white">
+              <Monitor className="w-3 h-3 text-sky-600 dark:text-sky-400" /> {desktopPercent}% Desk
             </div>
-            <div className="flex items-center gap-1 text-xs font-bold text-amber-600">
-              <Smartphone className="w-3 h-3 text-amber-500" /> {mobilePercent}% Mob
+            <div className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400">
+              <Smartphone className="w-3 h-3 text-amber-500 dark:text-amber-400" /> {mobilePercent}% Mob
             </div>
           </div>
-          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden flex">
+          <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden flex">
             <div style={{ width: `${desktopPercent}%` }} className="bg-sky-500 h-full" />
             <div style={{ width: `${mobilePercent}%` }} className="bg-amber-400 h-full" />
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm space-y-1">
-          <div className="flex items-center justify-between text-slate-500 text-[11px]">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px]">
             <span>Logged vs Guest</span>
-            <User className="w-3.5 h-3.5 text-indigo-600" />
+            <User className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
           </div>
-          <div className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-1 pt-0.5">
-            <span className="text-emerald-600 font-mono">{sessions.filter((s) => !!s.userName).length} Logged</span>
-            <span className="text-slate-400 font-mono">/ {sessions.filter((s) => !s.userName).length} Guest</span>
+          <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-1 pt-0.5">
+            <span className="text-emerald-600 dark:text-emerald-400 font-mono">{sessions.filter((s) => !!s.userName).length} Logged</span>
+            <span className="text-slate-400 dark:text-slate-500 font-mono">/ {sessions.filter((s) => !s.userName).length} Guest</span>
           </div>
-          <p className="text-[10px] text-slate-400">Identified accounts</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500">Identified accounts</p>
         </div>
 
-        <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-2xl p-3 border border-slate-800 shadow-sm space-y-1">
-          <div className="flex items-center justify-between text-slate-400 text-[11px]">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px]">
             <span>Resolution</span>
-            <Globe className="w-3.5 h-3.5 text-emerald-400" />
+            <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div className="text-xs sm:text-sm font-bold text-emerald-400 flex items-center gap-1 pt-0.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> 1st IP / 2nd TZ
+          <div className="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1 pt-0.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" /> 1st IP / 2nd TZ
           </div>
-          <p className="text-[10px] text-slate-400">
+          <p className="text-[10px] text-slate-400 dark:text-slate-500">
             Zero-permission geolocation
           </p>
         </div>
@@ -253,27 +253,27 @@ export default function LiveTrackerPage() {
 
       {/* Live Recent Actions Telemetry Stream */}
       {recentActions.length > 0 && (
-        <div className="bg-slate-900 text-white rounded-2xl p-3 sm:p-4 border border-slate-800 shadow-lg space-y-2.5 font-mono">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-            <h3 className="font-bold text-xs text-white flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-amber-400" /> Live Actions Telemetry Feed
+        <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-2.5 font-mono">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-500" /> Live Actions Telemetry Feed
             </h3>
-            <span className="text-[11px] text-slate-400">Last {recentActions.length} actions</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">Last {recentActions.length} actions</span>
           </div>
 
           <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
             {recentActions.slice(0, 8).map((act) => (
               <div
                 key={act.id}
-                className="bg-slate-950/80 rounded-xl p-2.5 border border-slate-800 shrink-0 w-64 space-y-1 shadow-sm"
+                className="bg-slate-50 dark:bg-slate-950 rounded-xl p-2.5 border border-slate-200 dark:border-slate-800 shrink-0 w-64 space-y-1 shadow-2xs"
               >
                 <div className="flex items-center justify-between">
                   {renderActionBadge(act.actionType)}
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
                     {new Date(act.createdAt).toLocaleTimeString()}
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-200 font-bold truncate">
+                <div className="text-[11px] text-slate-800 dark:text-slate-200 font-bold truncate">
                   {act.details}
                 </div>
               </div>
@@ -283,13 +283,13 @@ export default function LiveTrackerPage() {
       )}
 
       {/* Live Sessions Table */}
-      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2.5 border-b border-slate-100">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h3 className="font-mono font-bold text-base text-slate-900">
+            <h3 className="font-mono font-bold text-base text-slate-900 dark:text-white">
               Active Sessions ({filteredSessions.length})
             </h3>
-            <p className="text-[11px] text-slate-500 font-mono">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
               Click user row to inspect identity, logs & timeline.
             </p>
           </div>
@@ -302,31 +302,31 @@ export default function LiveTrackerPage() {
                 placeholder="Search User, IP, Page..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:border-sky-500"
+                className="w-full bg-slate-50 dark:bg-slate-950 pl-8 pr-3 py-1.5 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-sky-500 focus:bg-white dark:focus:bg-slate-900"
               />
             </div>
 
-            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl font-mono text-xs">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl font-mono text-xs">
               <button
                 onClick={() => setFilterDevice("ALL")}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-colors ${
-                  filterDevice === "ALL" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+                className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                  filterDevice === "ALL" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 All
               </button>
               <button
                 onClick={() => setFilterDevice("Desktop")}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-colors ${
-                  filterDevice === "Desktop" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+                className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                  filterDevice === "Desktop" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 Desktop
               </button>
               <button
                 onClick={() => setFilterDevice("Mobile")}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-colors ${
-                  filterDevice === "Mobile" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+                className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                  filterDevice === "Mobile" ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 Mobile
@@ -339,7 +339,7 @@ export default function LiveTrackerPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse font-mono text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                 <th className="py-3 px-4">User Identity</th>
                 <th className="py-3 px-4">1st IP / 2nd Timezone</th>
                 <th className="py-3 px-4">Device / OS</th>
@@ -349,10 +349,10 @@ export default function LiveTrackerPage() {
                 <th className="py-3 px-4 text-right">Inspect</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
               {filteredSessions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 font-mono">
+                  <td colSpan={7} className="py-12 text-center text-slate-400 dark:text-slate-500 font-mono">
                     No active user sessions found matching criteria.
                   </td>
                 </tr>
@@ -361,33 +361,33 @@ export default function LiveTrackerPage() {
                   <tr
                     key={session.sessionId}
                     onClick={() => setSelectedSession(session)}
-                    className="hover:bg-sky-50/50 cursor-pointer transition-colors"
+                    className="hover:bg-sky-50/50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
                   >
                     <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900 flex items-center gap-2">
+                      <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-emerald-500" />
                         {session.userName ? (
-                          <span className="text-sky-700 font-extrabold flex items-center gap-1">
+                          <span className="text-sky-700 dark:text-sky-400 font-extrabold flex items-center gap-1">
                             <User className="w-3.5 h-3.5" /> {session.userName}
                           </span>
                         ) : (
-                          <span className="text-slate-600 italic">Guest Visitor</span>
+                          <span className="text-slate-600 dark:text-slate-400 italic">Guest Visitor</span>
                         )}
                       </div>
-                      <div className="text-[10px] text-slate-400 pl-4 font-mono">
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 pl-4 font-mono">
                         IP: {session.ipAddress}
                       </div>
                     </td>
 
                     <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                         <span>{session.countryCode === "US" ? "🇺🇸" : session.countryCode === "GB" ? "🇬🇧" : session.countryCode === "DE" ? "🇩🇪" : session.countryCode === "JP" ? "🇯🇵" : "🌐"}</span>
                         {session.city}, {session.country}
                       </div>
-                      <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
                         <span>TZ: {session.clientTimezone || "Asia/Calcutta"}</span>
                         {session.isVpn && (
-                          <span className="text-amber-600 font-bold px-1 rounded bg-amber-50 border border-amber-200">
+                          <span className="text-amber-600 dark:text-amber-400 font-bold px-1 rounded bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
                             VPN Active
                           </span>
                         )}
@@ -398,10 +398,10 @@ export default function LiveTrackerPage() {
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
                           session.deviceType === "Mobile"
-                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                            ? "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30"
                             : session.deviceType === "Tablet"
-                            ? "bg-purple-50 text-purple-700 border-purple-200"
-                            : "bg-sky-50 text-sky-700 border-sky-200"
+                            ? "bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/30"
+                            : "bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-500/30"
                         }`}
                       >
                         {session.deviceType === "Mobile" ? (
@@ -415,21 +415,21 @@ export default function LiveTrackerPage() {
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4 font-bold text-sky-700">
+                    <td className="py-3.5 px-4 font-bold text-sky-700 dark:text-sky-400">
                       {session.currentPage}
                     </td>
 
-                    <td className="py-3.5 px-4 font-bold text-emerald-600 flex items-center gap-1">
+                    <td className="py-3.5 px-4 font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                       <Timer className="w-3.5 h-3.5" />
                       {session.secondsOnCurrentPage}s
                     </td>
 
-                    <td className="py-3.5 px-4 font-bold text-purple-700">
+                    <td className="py-3.5 px-4 font-bold text-purple-700 dark:text-purple-400">
                       {session.actionLogs?.length || 0} Actions
                     </td>
 
                     <td className="py-3.5 px-4 text-right">
-                      <button className="px-3 py-1 rounded-full bg-slate-900 text-white text-[11px] font-bold hover:bg-slate-800 transition-colors inline-flex items-center gap-1">
+                      <button className="px-3 py-1 rounded-full bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-[11px] font-bold transition-colors inline-flex items-center gap-1 cursor-pointer">
                         <span>Inspect Log</span>
                         <ChevronRight className="w-3 h-3" />
                       </button>
@@ -445,94 +445,94 @@ export default function LiveTrackerPage() {
       {/* Detailed Session Inspector Modal */}
       {selectedSession && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex justify-end animate-in fade-in duration-200">
-          <div className="w-full max-w-lg bg-white h-full shadow-2xl p-6 overflow-y-auto space-y-6 flex flex-col justify-between font-mono">
+          <div className="w-full max-w-lg bg-white dark:bg-slate-900 h-full shadow-2xl p-6 overflow-y-auto space-y-6 flex flex-col justify-between font-mono border-l border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
             <div className="space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div>
-                  <span className="type-label text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  <span className="type-label text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/30">
                     Live Session Inspection
                   </span>
-                  <h2 className="text-xl font-extrabold text-slate-900 mt-1">
+                  <h2 className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
                     User Telemetry Inspector
                   </h2>
                 </div>
                 <button
                   onClick={() => setSelectedSession(null)}
-                  className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold"
+                  className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
 
               {/* User Overview Box */}
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-xs space-y-2">
+              <div className="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 text-xs space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">User Identity:</span>
-                  <span className="font-bold text-sky-700">{selectedSession.userName || "Guest Visitor"} ({selectedSession.userEmail || "Anonymous"})</span>
+                  <span className="text-slate-500 dark:text-slate-400">User Identity:</span>
+                  <span className="font-bold text-sky-700 dark:text-sky-400">{selectedSession.userName || "Guest Visitor"} ({selectedSession.userEmail || "Anonymous"})</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">IP Address:</span>
-                  <span className="font-bold text-slate-900">{selectedSession.ipAddress}</span>
+                  <span className="text-slate-500 dark:text-slate-400">IP Address:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{selectedSession.ipAddress}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">1st Priority (IP Country):</span>
-                  <span className="font-bold text-slate-900">{selectedSession.city}, {selectedSession.country}</span>
+                  <span className="text-slate-500 dark:text-slate-400">1st Priority (IP Country):</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{selectedSession.city}, {selectedSession.country}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">2nd Priority (Timezone):</span>
-                  <span className="font-bold text-sky-700">{selectedSession.clientTimezone || "Asia/Calcutta"}</span>
+                  <span className="text-slate-500 dark:text-slate-400">2nd Priority (Timezone):</span>
+                  <span className="font-bold text-sky-700 dark:text-sky-400">{selectedSession.clientTimezone || "Asia/Calcutta"}</span>
                 </div>
 
                 {selectedSession.isVpn && (
-                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] flex items-center gap-2">
-                    <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 text-[11px] flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                     <span>VPN Proxy Detected! IP: {selectedSession.country} | Physical TZ: {selectedSession.secondaryCountry || "India"}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between pt-1 border-t border-slate-200">
-                  <span className="text-slate-500">Device Hardware:</span>
-                  <span className="font-bold text-slate-900">{selectedSession.deviceType} ({selectedSession.browser} / {selectedSession.os})</span>
+                <div className="flex justify-between pt-1 border-t border-slate-200 dark:border-slate-800">
+                  <span className="text-slate-500 dark:text-slate-400">Device Hardware:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{selectedSession.deviceType} ({selectedSession.browser} / {selectedSession.os})</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Total Session Time:</span>
-                  <span className="font-bold text-emerald-600">{Math.floor(selectedSession.totalSessionSeconds / 60)}m {selectedSession.totalSessionSeconds % 60}s</span>
+                  <span className="text-slate-500 dark:text-slate-400">Total Session Time:</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{Math.floor(selectedSession.totalSessionSeconds / 60)}m {selectedSession.totalSessionSeconds % 60}s</span>
                 </div>
               </div>
 
               {/* Currently Viewing */}
-              <div className="bg-sky-50 rounded-2xl p-4 border border-sky-200 text-xs space-y-1">
-                <div className="text-sky-800 font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <div className="bg-sky-50 dark:bg-sky-950/40 rounded-2xl p-4 border border-sky-200 dark:border-sky-800 text-xs space-y-1">
+                <div className="text-sky-800 dark:text-sky-300 font-bold uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-sky-500 animate-ping" />
                   Currently Viewing Right Now:
                 </div>
-                <div className="text-base font-extrabold text-slate-900 pt-1">
+                <div className="text-base font-extrabold text-slate-900 dark:text-white pt-1">
                   {selectedSession.currentPage}
                 </div>
-                <div className="text-emerald-700 font-bold">
+                <div className="text-emerald-700 dark:text-emerald-400 font-bold">
                   Time on this page: {selectedSession.secondsOnCurrentPage} seconds
                 </div>
               </div>
 
               {/* User Action Logs */}
               <div className="space-y-3 text-xs">
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                   <Zap className="w-4 h-4 text-amber-500" /> Actions Performed ({selectedSession.actionLogs?.length || 0})
                 </h4>
 
                 {(!selectedSession.actionLogs || selectedSession.actionLogs.length === 0) ? (
-                  <div className="p-3 rounded-2xl bg-slate-50 text-slate-400 text-center">
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-500 text-center">
                     No specific actions recorded yet during this session.
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {selectedSession.actionLogs.map((act) => (
-                      <div key={act.id} className="p-3 rounded-2xl bg-slate-900 text-white border border-slate-800 space-y-1">
+                      <div key={act.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 space-y-1">
                         <div className="flex items-center justify-between">
                           {renderActionBadge(act.actionType)}
-                          <span className="text-[10px] text-slate-400">{new Date(act.createdAt).toLocaleTimeString()}</span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400">{new Date(act.createdAt).toLocaleTimeString()}</span>
                         </div>
-                        <div className="text-slate-200 font-bold pt-1">{act.details}</div>
+                        <div className="text-slate-900 dark:text-white font-bold pt-1">{act.details}</div>
                       </div>
                     ))}
                   </div>
@@ -541,16 +541,16 @@ export default function LiveTrackerPage() {
 
               {/* Visited Pages Timeline */}
               <div className="space-y-3 text-xs">
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider">
+                <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                   Page Movement History ({selectedSession.visitHistory?.length || 0})
                 </h4>
 
                 {(!selectedSession.visitHistory || selectedSession.visitHistory.length === 0) ? (
-                  <div className="p-4 rounded-2xl bg-slate-50 text-slate-400 text-center">
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-500 text-center">
                     User is on their first page of this session.
                   </div>
                 ) : (
-                  <div className="relative border-l-2 border-slate-200 ml-3 space-y-4 pl-4 py-1">
+                  <div className="relative border-l-2 border-slate-200 dark:border-slate-800 ml-3 space-y-4 pl-4 py-1">
                     {selectedSession.visitHistory.map((visit, idx) => {
                       const formatDuration = (sec: number) => {
                         if (!sec || sec <= 0) return "0s spent";
@@ -562,15 +562,15 @@ export default function LiveTrackerPage() {
 
                       return (
                         <div key={visit.id || idx} className="relative group">
-                          <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-sky-500 border-2 border-white ring-2 ring-sky-200" />
-                          <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm space-y-1">
-                            <div className="font-bold text-slate-900 text-sm flex items-center justify-between">
+                          <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-sky-500 border-2 border-white dark:border-slate-900 ring-2 ring-sky-200 dark:ring-sky-900" />
+                          <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+                            <div className="font-bold text-slate-900 dark:text-white text-sm flex items-center justify-between">
                               <span>{visit.pagePath}</span>
-                              <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/30">
                                 {formatDuration(visit.durationSeconds)}
                               </span>
                             </div>
-                            <div className="text-[10px] text-slate-400">
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500">
                               Visited at: {new Date(visit.visitedAt).toLocaleTimeString()}
                             </div>
                           </div>
@@ -582,10 +582,10 @@ export default function LiveTrackerPage() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-100">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
               <button
                 onClick={() => setSelectedSession(null)}
-                className="w-full py-3 rounded-full bg-slate-900 text-white text-xs font-bold hover:bg-slate-800"
+                className="w-full py-3 rounded-full bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold cursor-pointer"
               >
                 Close Inspector
               </button>

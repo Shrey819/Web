@@ -41,12 +41,22 @@ export function AdminThemeProvider({
 
   const isLight = mounted && theme === "light";
 
+  useEffect(() => {
+    if (mounted) {
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  }, [mounted, theme]);
+
   return (
     <div
       className={`min-h-screen flex font-sans transition-colors duration-300 ${
         isLight
           ? "bg-slate-100 text-slate-900"
-          : "bg-slate-950 text-slate-300"
+          : "bg-slate-950 text-slate-300 dark"
       }`}
     >
       {/* Admin Sidebar */}

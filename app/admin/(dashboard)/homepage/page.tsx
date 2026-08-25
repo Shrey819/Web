@@ -1,26 +1,24 @@
-import { getHomepageData } from "@/lib/homepage";
-import { getStorefrontCategories } from "@/lib/storefront";
-import { HomepageManagementForm } from "@/components/admin/homepage/HomepageManagementForm";
+import { getHomepageData } from "@/lib/homepage-server";
+import { getStorefrontCategories, getActiveProducts } from "@/lib/storefront";
+import { HomepageVisualEditor } from "@/components/admin/homepage/HomepageVisualEditor";
 
 export const metadata = {
-  title: "Homepage Management | Admin",
+  title: "Homepage Visual Editor | Admin",
 };
 
 export default async function AdminHomepageManagementPage() {
-  const homepageData = await getHomepageData();
-  const dbCategories = await getStorefrontCategories();
-
-  const categories = dbCategories.map((c) => ({
-    id: c.id,
-    name: c.name,
-    slug: c.slug,
-  }));
+  const [homepageData, dbCategories, dbProducts] = await Promise.all([
+    getHomepageData(),
+    getStorefrontCategories(),
+    getActiveProducts(),
+  ]);
 
   return (
-    <div>
-      <HomepageManagementForm
+    <div className="-m-4 sm:-m-6 lg:-m-8">
+      <HomepageVisualEditor
         initialData={homepageData}
-        categories={categories}
+        categories={dbCategories}
+        products={dbProducts}
       />
     </div>
   );

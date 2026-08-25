@@ -381,14 +381,14 @@ export function WixRichTextEditor({
 
   return (
     <div
-      className={`border rounded-xl overflow-hidden transition-all bg-white flex flex-col ${
+      className={`border rounded-xl overflow-hidden transition-all bg-white dark:bg-slate-950 flex flex-col ${
         isFocused
           ? "border-blue-500 ring-2 ring-blue-500/20"
-          : "border-slate-200 hover:border-slate-300"
+          : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
       } ${className}`}
     >
       {/* Toolbar */}
-      <div className="flex items-center flex-wrap gap-1 p-2 bg-slate-50/90 border-b border-slate-200 select-none relative">
+      <div className="flex items-center flex-wrap gap-1 p-2 bg-slate-50/90 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 select-none relative">
         {/* Bold */}
         <button
           type="button"
@@ -399,7 +399,7 @@ export function WixRichTextEditor({
           className={`w-7 h-7 flex items-center justify-center rounded-md font-bold text-xs transition-colors cursor-pointer ${
             activeStates.bold
               ? "bg-blue-600 text-white shadow-2xs"
-              : "text-slate-700 hover:bg-slate-200"
+              : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
           }`}
           title="Bold (Ctrl+B)"
         >
@@ -416,7 +416,7 @@ export function WixRichTextEditor({
           className={`w-7 h-7 flex items-center justify-center rounded-md text-xs italic font-serif transition-colors cursor-pointer ${
             activeStates.italic
               ? "bg-blue-600 text-white shadow-2xs"
-              : "text-slate-700 hover:bg-slate-200"
+              : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
           }`}
           title="Italic (Ctrl+I)"
         >
@@ -433,7 +433,7 @@ export function WixRichTextEditor({
           className={`w-7 h-7 flex items-center justify-center rounded-md text-xs transition-colors cursor-pointer ${
             activeStates.underline
               ? "bg-blue-600 text-white shadow-2xs"
-              : "text-slate-700 hover:bg-slate-200"
+              : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
           }`}
           title="Underline (Ctrl+U)"
         >
@@ -450,7 +450,7 @@ export function WixRichTextEditor({
               setShowColorPicker(!showColorPicker);
               setShowBgColorPicker(false);
             }}
-            className="w-7 h-7 flex flex-col items-center justify-center rounded-md text-slate-700 hover:bg-slate-200 text-xs font-semibold cursor-pointer"
+            className="w-7 h-7 flex flex-col items-center justify-center rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer"
             title="Text color"
           >
             <span className="text-sm font-bold leading-none">A</span>
@@ -463,9 +463,9 @@ export function WixRichTextEditor({
           {showColorPicker && (
             <div
               onMouseDown={(e) => e.preventDefault()}
-              className="absolute left-0 top-9 z-30 p-2.5 bg-white rounded-xl shadow-2xl border border-slate-200 w-44 space-y-2 animate-in fade-in zoom-in-95 duration-100"
+              className="absolute left-0 top-9 z-30 p-2.5 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 w-44 space-y-2 animate-in fade-in zoom-in-95 duration-100 text-slate-900 dark:text-white"
             >
-              <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Text Color</div>
+              <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Text Color</div>
               <div className="grid grid-cols-4 gap-2">
                 {textColors.map((col) => (
                   <button
@@ -476,7 +476,7 @@ export function WixRichTextEditor({
                       e.preventDefault();
                       handleApplyColor(col.hex);
                     }}
-                    className="w-7 h-7 rounded-lg border border-slate-200 shadow-2xs hover:scale-110 transition-transform cursor-pointer flex items-center justify-center"
+                    className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs hover:scale-110 transition-transform cursor-pointer flex items-center justify-center"
                     style={{ backgroundColor: col.hex }}
                   >
                     {currentTextColor.toLowerCase() === col.hex.toLowerCase() && (
@@ -499,10 +499,10 @@ export function WixRichTextEditor({
               setShowBgColorPicker(!showBgColorPicker);
               setShowColorPicker(false);
             }}
-            className="w-7 h-7 flex flex-col items-center justify-center rounded-md text-slate-700 hover:bg-slate-200 text-xs cursor-pointer"
+            className="w-7 h-7 flex flex-col items-center justify-center rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs cursor-pointer"
             title="Highlight color"
           >
-            <Highlighter className="w-3.5 h-3.5 text-slate-700" />
+            <Highlighter className="w-3.5 h-3.5 text-slate-700 dark:text-slate-300" />
             <div
               className="w-4 h-1 mt-0.5 rounded-xs shadow-2xs"
               style={{ backgroundColor: currentBgColor === "transparent" ? "#fef08a" : currentBgColor }}
@@ -512,9 +512,9 @@ export function WixRichTextEditor({
           {showBgColorPicker && (
             <div
               onMouseDown={(e) => e.preventDefault()}
-              className="absolute left-0 top-9 z-30 p-2.5 bg-white rounded-xl shadow-2xl border border-slate-200 w-44 space-y-2 animate-in fade-in zoom-in-95 duration-100"
+              className="absolute left-0 top-9 z-30 p-2.5 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 w-44 space-y-2 animate-in fade-in zoom-in-95 duration-100 text-slate-900 dark:text-white"
             >
-              <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Highlight Color</div>
+              <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Highlight Color</div>
               <div className="grid grid-cols-4 gap-2">
                 {bgColors.map((col) => (
                   <button
@@ -525,7 +525,7 @@ export function WixRichTextEditor({
                       e.preventDefault();
                       handleApplyBgColor(col.hex);
                     }}
-                    className="w-7 h-7 rounded-lg border border-slate-200 shadow-2xs hover:scale-110 transition-transform cursor-pointer flex items-center justify-center text-xs text-slate-600 font-bold"
+                    className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs hover:scale-110 transition-transform cursor-pointer flex items-center justify-center text-xs text-slate-600 dark:text-slate-300 font-bold"
                     style={{ backgroundColor: col.hex }}
                   >
                     {col.hex === "transparent" ? "✕" : (currentBgColor.toLowerCase() === col.hex.toLowerCase() ? "✓" : "")}
@@ -543,13 +543,13 @@ export function WixRichTextEditor({
             e.preventDefault();
             handleLink();
           }}
-          className="w-7 h-7 flex items-center justify-center rounded-md text-slate-700 hover:bg-slate-200 cursor-pointer"
+          className="w-7 h-7 flex items-center justify-center rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer"
           title="Insert Link"
         >
           <LinkIcon className="w-3.5 h-3.5" />
         </button>
 
-        <div className="h-4 w-px bg-slate-300 mx-1" />
+        <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 mx-1" />
 
         {/* Numbered List */}
         <button
@@ -561,7 +561,7 @@ export function WixRichTextEditor({
           className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors cursor-pointer ${
             activeStates.orderedList
               ? "bg-blue-600 text-white shadow-2xs"
-              : "text-slate-700 hover:bg-slate-200"
+              : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
           }`}
           title="Numbered List"
         >
@@ -578,7 +578,7 @@ export function WixRichTextEditor({
           className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors cursor-pointer ${
             activeStates.unorderedList
               ? "bg-blue-600 text-white shadow-2xs"
-              : "text-slate-700 hover:bg-slate-200"
+              : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800"
           }`}
           title="Bullet List"
         >
@@ -591,10 +591,10 @@ export function WixRichTextEditor({
             <span
               className={`text-[11px] font-semibold select-none px-2 py-0.5 rounded-md ${
                 currentLength > maxLength
-                  ? "bg-red-50 text-red-600 font-bold border border-red-200"
+                  ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-bold border border-red-200 dark:border-red-800"
                   : currentLength >= maxLength * 0.9
-                  ? "bg-amber-50 text-amber-700"
-                  : "text-slate-400"
+                  ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300"
+                  : "text-slate-400 dark:text-slate-500"
               }`}
             >
               {currentLength} / {maxLength}
@@ -627,7 +627,7 @@ export function WixRichTextEditor({
           saveSelection();
           updateToolbarStates();
         }}
-        className="wix-rich-editor w-full min-h-[140px] max-h-[360px] overflow-y-auto p-4 text-sm text-slate-900 focus:outline-hidden leading-relaxed"
+        className="wix-rich-editor w-full min-h-[140px] max-h-[360px] overflow-y-auto p-4 text-sm text-slate-900 dark:text-white focus:outline-hidden leading-relaxed"
         data-placeholder={placeholder}
         style={{
           outline: "none",

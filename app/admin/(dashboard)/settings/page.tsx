@@ -35,21 +35,21 @@ export default async function AdminSettingsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="border-b border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="border-b border-slate-200 dark:border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-            <Settings className="w-6 h-6 text-sky-400" />
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+            <Settings className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             <span>System & Platform Settings</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Configure global e-commerce parameters, main/sub contact phones, emails, taxes, and database telemetry.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-xs text-slate-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">
-          <Server className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="flex items-center gap-2 font-mono text-xs text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+          <Server className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           <span>STATUS: ONLINE</span>
         </div>
       </div>

@@ -10,8 +10,15 @@ declare global {
 }
 
 const getPool = () => {
+  if (typeof window !== 'undefined') {
+    return null as unknown as Pool;
+  }
+
   if (!process.env.DATABASE_URL) {
-    console.error("DATABASE_URL is not set.");
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("[DB] DATABASE_URL is not set on the server.");
+    }
+    return null as unknown as Pool;
   }
   
   if (process.env.NODE_ENV === 'development') {

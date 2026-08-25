@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Radio, Cpu, Zap, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { Radio, Cpu, Zap, CheckCircle2, ArrowRight } from "lucide-react";
 import { generateProductSvg } from "@/lib/svgPlaceholders";
+import { StickyShowcaseConfig, DEFAULT_STICKY_SHOWCASE } from "@/lib/homepage";
 
-export function StickyShowcase() {
+export function StickyShowcase({ config }: { config?: StickyShowcaseConfig }) {
+  const currentConfig = config || DEFAULT_STICKY_SHOWCASE;
   const [activeStep, setActiveStep] = useState(0);
 
   const steps = [
@@ -15,12 +18,15 @@ export function StickyShowcase() {
       icon: Radio,
       title: "Precision Sensing & Real-Time Telemetry",
       subtitle: "IP69K Sub-Millimeter Detection",
-      description: "Smart optical lasers and inductive transducers detect component positions and surface flaws, feeding high-frequency I/O telemetry straight into IO-Link masters.",
-      highlights: [
-        "Class 1 laser beams detect sub-0.1mm height variance",
-        "Continuous 150°C heat-resistant housing options",
-        "IO-Link v1.1 dynamic thresholding"
-      ],
+      description:
+        "Smart optical lasers and inductive transducers detect component positions and surface flaws, feeding high-frequency I/O telemetry straight into IO-Link masters.",
+      highlights: currentConfig.bullets?.length
+        ? currentConfig.bullets.slice(0, 3)
+        : [
+            "Class 1 laser beams detect sub-0.1mm height variance",
+            "Continuous 150°C heat-resistant housing options",
+            "IO-Link v1.1 dynamic thresholding",
+          ],
       productSvg: generateProductSvg("sensors", "KEYENCE LR-TB5000 TOF Laser", "LR-TB5000", 1),
     },
     {
@@ -29,11 +35,12 @@ export function StickyShowcase() {
       icon: Cpu,
       title: "Deterministic CPU Execution & Motion Planning",
       subtitle: "0.08ms Execution Speed",
-      description: "Modular PLCs process incoming sensor inputs through TIA Portal and Studio 5000 ladder logic, executing motion profile calculations in microseconds.",
+      description:
+        "Modular PLCs process incoming sensor inputs through TIA Portal and Studio 5000 ladder logic, executing motion profile calculations in microseconds.",
       highlights: [
         "PROFINET IRT and EtherCAT real-time master ports",
         "Up to 32 axis synchronized motion curves",
-        "Integrated dual WebVisu diagnostic web server"
+        "Integrated dual WebVisu diagnostic web server",
       ],
       productSvg: generateProductSvg("plcs", "SIEMENS SIMATIC S7-1200 CPU", "6ES7214-1AG40-0XB0", 1),
     },
@@ -43,11 +50,12 @@ export function StickyShowcase() {
       icon: Zap,
       title: "High-Torque Motor Control & Safe Motion",
       subtitle: "SIL3 Safe Torque Off (STO)",
-      description: "Variable frequency drives and AC servo amplifiers convert low-voltage PLC commands into precise AC power to modulate motor torque and prevent overshoot.",
+      description:
+        "Variable frequency drives and AC servo amplifiers convert low-voltage PLC commands into precise AC power to modulate motor torque and prevent overshoot.",
       highlights: [
         "Heavy duty 150% overload for 60 seconds",
         "Built-in EMC filter Class A & braking resistor",
-        "Safe Torque Off (STO) hardware interlock"
+        "Safe Torque Off (STO) hardware interlock",
       ],
       productSvg: generateProductSvg("drives", "ABB ACS380 Machinery VFD", "ACS380-0401-017A-4", 1),
     },
@@ -58,11 +66,16 @@ export function StickyShowcase() {
       <div className="content-shell w-full">
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
           <span className="type-label text-sky-400">
-            System Architecture Story
+            {currentConfig.eyebrow || "System Architecture Story"}
           </span>
           <h2 className="section-title font-mono text-white">
-            How Integrated Hardware Powers Factory Automation
+            {currentConfig.title || "How Integrated Hardware Powers Factory Automation"}
           </h2>
+          {currentConfig.description && (
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto">
+              {currentConfig.description}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
@@ -127,13 +140,21 @@ export function StickyShowcase() {
               </div>
 
               <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 mb-6 shadow-inner">
-                <Image
-                  src={steps[activeStep].productSvg}
-                  alt={steps[activeStep].title}
-                  fill
-                  className="object-cover transition-all duration-500"
-                  unoptimized
-                />
+                {currentConfig.image && activeStep === 0 ? (
+                  <img
+                    src={currentConfig.image}
+                    alt={steps[activeStep].title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={steps[activeStep].productSvg}
+                    alt={steps[activeStep].title}
+                    fill
+                    className="object-cover transition-all duration-500"
+                    unoptimized
+                  />
+                )}
               </div>
 
               <div className="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 space-y-2">
@@ -143,6 +164,18 @@ export function StickyShowcase() {
                 <p className="text-xs text-slate-300 leading-relaxed">
                   {steps[activeStep].description}
                 </p>
+
+                {currentConfig.ctaText && (
+                  <div className="pt-2">
+                    <Link
+                      href={currentConfig.ctaUrl || "/products"}
+                      className="inline-flex items-center gap-2 text-xs font-mono font-bold text-amber-400 hover:text-amber-300 transition-colors"
+                    >
+                      <span>{currentConfig.ctaText}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>
