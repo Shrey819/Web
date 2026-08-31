@@ -15,6 +15,7 @@ import {
   FooterConfig,
   OrbitStageConfig,
   CategoryGridConfig,
+  TopFundamentalsConfig,
   FeaturedCatalogConfig,
   SolutionsShowcaseConfig,
   AssemblySequenceConfig,
@@ -36,6 +37,7 @@ import {
   DEFAULT_FOOTER_CONFIG,
   DEFAULT_ORBIT_STAGE,
   DEFAULT_CATEGORY_GRID,
+  DEFAULT_TOP_FUNDAMENTALS,
   DEFAULT_FEATURED_CATALOG,
   DEFAULT_SOLUTIONS_SHOWCASE,
   DEFAULT_ASSEMBLY_SEQUENCE,
@@ -83,6 +85,7 @@ export async function getHomepageData(): Promise<HomepageData> {
         'homepage_footer_config',
         'homepage_orbit_stage',
         'homepage_category_grid',
+        'homepage_top_fundamentals',
         'homepage_featured_catalog',
         'homepage_solutions_showcase',
         'homepage_assembly_sequence',
@@ -197,6 +200,11 @@ export async function getHomepageData(): Promise<HomepageData> {
       DEFAULT_CATEGORY_GRID
     );
 
+    const topFundamentals = safeParse<TopFundamentalsConfig>(
+      map.homepage_top_fundamentals,
+      DEFAULT_TOP_FUNDAMENTALS
+    );
+
     const featuredCatalog = safeParse<FeaturedCatalogConfig>(
       map.homepage_featured_catalog,
       DEFAULT_FEATURED_CATALOG
@@ -227,10 +235,21 @@ export async function getHomepageData(): Promise<HomepageData> {
       DEFAULT_RESOURCE_HUB
     );
 
-    const sectionOrder = safeParse<string[]>(
+    const rawSectionOrder = safeParse<string[]>(
       map.homepage_section_order,
       DEFAULT_SECTION_ORDER
     );
+
+    // Auto-insert sec-top-fundamentals after sec-categories-grid if missing
+    let sectionOrder = [...rawSectionOrder];
+    if (!sectionOrder.includes("sec-top-fundamentals")) {
+      const catGridIndex = sectionOrder.indexOf("sec-categories-grid");
+      if (catGridIndex !== -1) {
+        sectionOrder.splice(catGridIndex + 1, 0, "sec-top-fundamentals");
+      } else {
+        sectionOrder.push("sec-top-fundamentals");
+      }
+    }
 
     const hiddenSectionIds = safeParse<string[]>(
       map.homepage_hidden_sections,
@@ -267,6 +286,7 @@ export async function getHomepageData(): Promise<HomepageData> {
       footerConfig,
       orbitStage,
       categoryGrid,
+      topFundamentals,
       featuredCatalog,
       solutionsShowcase,
       assemblySequence,
@@ -304,6 +324,7 @@ export async function getHomepageData(): Promise<HomepageData> {
       footerConfig: DEFAULT_FOOTER_CONFIG,
       orbitStage: DEFAULT_ORBIT_STAGE,
       categoryGrid: DEFAULT_CATEGORY_GRID,
+      topFundamentals: DEFAULT_TOP_FUNDAMENTALS,
       featuredCatalog: DEFAULT_FEATURED_CATALOG,
       solutionsShowcase: DEFAULT_SOLUTIONS_SHOWCASE,
       assemblySequence: DEFAULT_ASSEMBLY_SEQUENCE,
@@ -397,6 +418,9 @@ export async function updateHomepageData(
     }
     if (data.categoryGrid !== undefined) {
       await upsert("homepage_category_grid", JSON.stringify(data.categoryGrid));
+    }
+    if (data.topFundamentals !== undefined) {
+      await upsert("homepage_top_fundamentals", JSON.stringify(data.topFundamentals));
     }
     if (data.featuredCatalog !== undefined) {
       await upsert("homepage_featured_catalog", JSON.stringify(data.featuredCatalog));

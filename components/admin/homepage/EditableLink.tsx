@@ -99,6 +99,7 @@ export const SECTION_ANCHOR_PRESETS = [
   { label: "6. OEM Brand Partners", anchor: "#sec-brand-marquee" },
   { label: "7. 3D Product Orbit", anchor: "#sec-cinematic" },
   { label: "8. Categories Grid", anchor: "#sec-categories-grid" },
+  { label: "8.5. Top 10 Fundamentals", anchor: "#sec-top-fundamentals" },
   { label: "9. Featured Catalog", anchor: "#sec-featured-catalog" },
   { label: "10. Solutions BOM", anchor: "#sec-solutions" },
   { label: "11. Product Assembly", anchor: "#sec-assembly" },

@@ -20,6 +20,7 @@ import {
   FooterConfig,
   OrbitStageConfig,
   CategoryGridConfig,
+  TopFundamentalsConfig,
   FeaturedCatalogConfig,
   SolutionsShowcaseConfig,
   AssemblySequenceConfig,
@@ -40,6 +41,7 @@ import {
   DEFAULT_FOOTER_CONFIG,
   DEFAULT_ORBIT_STAGE,
   DEFAULT_CATEGORY_GRID,
+  DEFAULT_TOP_FUNDAMENTALS,
   DEFAULT_FEATURED_CATALOG,
   DEFAULT_SOLUTIONS_SHOWCASE,
   DEFAULT_ASSEMBLY_SEQUENCE,
@@ -66,6 +68,7 @@ import { CategoryProductCarousel } from "@/components/home/CategoryProductCarous
 import { CINEMATIC_PRODUCTS, CinematicProduct } from "@/components/cinematic/cinematicProducts";
 import { CinematicProductStage } from "@/components/cinematic/CinematicProductStage";
 import { AssemblyScenePreview } from "./AssemblyScenePreview";
+import { TopFundamentals } from "@/components/home/TopFundamentals";
 import {
   Save,
   RotateCcw,
@@ -366,6 +369,7 @@ export function HomepageVisualEditor({
     { id: "sec-brand-marquee", label: "6. OEM Brand Partners", icon: ShieldCheck, tag: "Brands" },
     { id: "sec-cinematic", label: "7. 3D Product Orbit Stage", icon: Compass, tag: "3D Stage" },
     { id: "sec-categories-grid", label: "8. Hardware Categories Grid", icon: Layers, tag: "Grid" },
+    { id: "sec-top-fundamentals", label: "8.5. Top 10 Fundamentals", icon: Sparkles, tag: "Deck" },
     { id: "sec-featured-catalog", label: "9. Featured Components Catalog", icon: Sparkles, tag: "Catalog" },
     { id: "sec-solutions", label: "10. Industrial Solutions (BOM)", icon: SlidersHorizontal, tag: "BOM" },
     { id: "sec-assembly", label: "11. Product Assembly Sequence", icon: Sliders, tag: "3D Stages" },
@@ -566,6 +570,9 @@ export function HomepageVisualEditor({
             break;
           case "sec-categories-grid":
             next.categoryGrid = updated;
+            break;
+          case "sec-top-fundamentals":
+            next.topFundamentals = updated;
             break;
           case "sec-featured-catalog":
             next.featuredCatalog = updated;
@@ -3178,6 +3185,16 @@ export function HomepageVisualEditor({
                                 </div>
                               </div>
                             </section>
+                          );
+                        }
+
+                        case "sec-top-fundamentals": {
+                          const fundamentalsData = (instanceData || homepageState.topFundamentals || DEFAULT_TOP_FUNDAMENTALS) as TopFundamentalsConfig;
+
+                          return (
+                            <div key={secId} id={secId} className="relative group">
+                              <TopFundamentals config={fundamentalsData} />
+                            </div>
                           );
                         }
 

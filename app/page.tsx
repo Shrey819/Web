@@ -3,6 +3,7 @@ import { HeroSlider } from "@/components/home/HeroSlider";
 import { HomepageCategoryShowcase } from "@/components/home/HomepageCategoryShowcase";
 import { BrandMarquee } from "@/components/home/BrandMarquee";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
+import { TopFundamentals } from "@/components/home/TopFundamentals";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { SolutionsShowcase } from "@/components/home/SolutionsShowcase";
 import { WhyBuyFromUs } from "@/components/home/WhyBuyFromUs";
@@ -67,7 +68,17 @@ export default async function HomePage() {
       };
     });
 
-  const sectionOrder = homepageData.sectionOrder || DEFAULT_SECTION_ORDER;
+  const rawSectionOrder = homepageData.sectionOrder || DEFAULT_SECTION_ORDER;
+  let sectionOrder = [...rawSectionOrder];
+  if (!sectionOrder.includes("sec-top-fundamentals")) {
+    const catGridIndex = sectionOrder.indexOf("sec-categories-grid");
+    if (catGridIndex !== -1) {
+      sectionOrder.splice(catGridIndex + 1, 0, "sec-top-fundamentals");
+    } else {
+      sectionOrder.push("sec-top-fundamentals");
+    }
+  }
+
   const hiddenIds = new Set(homepageData.hiddenSectionIds || []);
 
   const renderSection = (id: string) => {
@@ -139,6 +150,9 @@ export default async function HomePage() {
 
       case "sec-categories-grid":
         return <CategoryGrid key={id} config={instanceData} />;
+
+      case "sec-top-fundamentals":
+        return <TopFundamentals key={id} config={instanceData} />;
 
       case "sec-featured-catalog":
         return <FeaturedProducts key={id} initialProducts={dbProducts} config={instanceData} />;

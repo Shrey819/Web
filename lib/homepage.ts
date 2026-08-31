@@ -248,6 +248,22 @@ export interface ResourceHubConfig {
   articles: ResourceArticleConfig[];
 }
 
+export interface TopFundamentalItem {
+  id: string;
+  tag: string;
+  title: string;
+  description: string;
+  colorTheme: "blue" | "slate" | "white" | "carbon";
+  number?: string;
+}
+
+export interface TopFundamentalsConfig {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  items: TopFundamentalItem[];
+}
+
 export interface HomepageData {
   promoTicker: string;
   promoTickerUrl?: string;
@@ -273,6 +289,7 @@ export interface HomepageData {
   footerConfig: FooterConfig;
   orbitStage?: OrbitStageConfig;
   categoryGrid?: CategoryGridConfig;
+  topFundamentals?: TopFundamentalsConfig;
   featuredCatalog?: FeaturedCatalogConfig;
   solutionsShowcase?: SolutionsShowcaseConfig;
   assemblySequence?: AssemblySequenceConfig;
@@ -293,6 +310,7 @@ export const DEFAULT_SECTION_ORDER: string[] = [
   "sec-brand-marquee",
   "sec-cinematic",
   "sec-categories-grid",
+  "sec-top-fundamentals",
   "sec-featured-catalog",
   "sec-solutions",
   "sec-assembly",
@@ -913,6 +931,105 @@ export const DEFAULT_RESOURCE_HUB: ResourceHubConfig = {
   ],
 };
 
+export const DEFAULT_TOP_FUNDAMENTALS: TopFundamentalsConfig = {
+  eyebrow: "ENGINEERING PRINCIPLES",
+  title: "TOP 10 FUNDAMENTALS",
+  subtitle:
+    "Core engineering laws governing deterministic control, high-speed motion, signal isolation, and industrial reliability.",
+  items: [
+    {
+      id: "fund-1",
+      tag: "CONTROL DETERMINISM",
+      title: "Why does sub-millisecond determinism matter in multi-axis synchronization?",
+      description:
+        "Jitter exceeding 50μs disrupts electronic gearing, causing cumulative mechanical backlash and kinematic trajectory errors in high-speed packaging & CNC lines.",
+      colorTheme: "blue",
+      number: "01",
+    },
+    {
+      id: "fund-2",
+      tag: "SIGNAL INTEGRITY",
+      title: "How does galvanic & optical isolation prevent catastrophic PLC failure?",
+      description:
+        "High-voltage inductive switching and ground potential loops on industrial floors instantly destroy unisolated ADC/DAC channels without optical barrier protection.",
+      colorTheme: "slate",
+      number: "02",
+    },
+    {
+      id: "fund-3",
+      tag: "INDUSTRIAL NETWORKING",
+      title: "Why has 'processing-on-the-fly' replaced traditional polling fieldbuses?",
+      description:
+        "Extracting and inserting frame telegrams in dedicated slave silicon within nanoseconds allows thousands of distributed I/O nodes in under 100μs cycle times.",
+      colorTheme: "white",
+      number: "03",
+    },
+    {
+      id: "fund-4",
+      tag: "MACHINE SAFETY",
+      title: "What makes dual-channel cross-monitoring essential for SIL3 / PLe certification?",
+      description:
+        "A single hardware short-circuit must never lead to loss of the safety function; redundant voting channels trigger immediate safe-torque-off (STO) within milliseconds.",
+      colorTheme: "carbon",
+      number: "04",
+    },
+    {
+      id: "fund-5",
+      tag: "MOTION & DRIVES",
+      title: "Why do multi-turn optical absolute encoders eliminate homing routines?",
+      description:
+        "16+ million counts per revolution provide instant true rotor position on power-up, preventing collision risks and hunting oscillation at zero-speed lock.",
+      colorTheme: "blue",
+      number: "05",
+    },
+    {
+      id: "fund-6",
+      tag: "POWER QUALITY",
+      title: "Why do long motor cables require dv/dt chokes and insulated bearings?",
+      description:
+        "High-frequency IGBT pulse switching creates reflected voltage wave spikes up to 2x DC bus voltage, breaking motor insulation and creating bearing EDM pitting.",
+      colorTheme: "slate",
+      number: "06",
+    },
+    {
+      id: "fund-7",
+      tag: "OPTICS & INSPECTION",
+      title: "Why are telecentric lenses mandatory for sub-pixel dimensional metrology?",
+      description:
+        "Standard optical lenses introduce perspective distortion with part distance variation; telecentric optics maintain constant magnification across the entire depth of field.",
+      colorTheme: "white",
+      number: "07",
+    },
+    {
+      id: "fund-8",
+      tag: "PROCESS CONTROL",
+      title: "Why is high-frequency low-pass filtering mandatory before derivative action?",
+      description:
+        "Unfiltered sensor quantization noise amplified by the D-term causes severe servo actuator chatter, valve oscillation, and accelerated mechanical fatigue.",
+      colorTheme: "carbon",
+      number: "08",
+    },
+    {
+      id: "fund-9",
+      tag: "EDGE INTELLIGENCE",
+      title: "Why run real-time anomaly inference at the machine edge rather than the cloud?",
+      description:
+        "50kHz vibration accelerometer FFT generates gigabytes/minute; on-prem edge microcontrollers detect bearing spalling with zero WAN dependency or latency.",
+      colorTheme: "blue",
+      number: "09",
+    },
+    {
+      id: "fund-10",
+      tag: "CABINET ENGINEERING",
+      title: "How does every 10°C cabinet temperature drop double component lifespan?",
+      description:
+        "Arrhenius chemical reaction kinetics dictate that electrolytic capacitor drying and semiconductor gate degradation halve MTBF for every 10°C thermal increase.",
+      colorTheme: "slate",
+      number: "10",
+    },
+  ],
+};
+
 export const BASE_SECTION_TEMPLATES: Record<
   string,
   { name: string; description: string; category: string; defaultData: any }
@@ -968,6 +1085,12 @@ export const BASE_SECTION_TEMPLATES: Record<
     description: "3-column domain grid for Sensors, PLCs, and VFD Drives with live item counts and subcategories",
     category: "Navigation",
     defaultData: DEFAULT_CATEGORY_GRID,
+  },
+  "sec-top-fundamentals": {
+    name: "Top 10 Fundamentals",
+    description: "Interactive radial rosette card deck showcasing core industrial engineering laws with gesture physics",
+    category: "Interactive 3D",
+    defaultData: DEFAULT_TOP_FUNDAMENTALS,
   },
   "sec-featured-catalog": {
     name: "Featured Catalog",
@@ -1130,6 +1253,8 @@ export function getBaseSectionData(baseId: string, state: HomepageData): any {
       return state.orbitStage || DEFAULT_ORBIT_STAGE;
     case "sec-categories-grid":
       return state.categoryGrid || DEFAULT_CATEGORY_GRID;
+    case "sec-top-fundamentals":
+      return state.topFundamentals || DEFAULT_TOP_FUNDAMENTALS;
     case "sec-featured-catalog":
       return state.featuredCatalog || DEFAULT_FEATURED_CATALOG;
     case "sec-solutions":
