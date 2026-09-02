@@ -5,15 +5,48 @@ import Link from "next/link";
 import { useCartStore } from "@/store/useCartStore";
 import { useToastStore } from "@/store/useToastStore";
 import { useUserStore } from "@/store/useUserStore";
-import { ChevronRight, ShieldCheck, CheckCircle2, CreditCard, Building2, Loader2, DollarSign, FileText, AlertTriangle, Lock, Phone, AlertCircle } from "lucide-react";
+import { 
+  ChevronRight, 
+  ShieldCheck, 
+  CheckCircle2, 
+  CreditCard, 
+  Building2, 
+  Loader2, 
+  DollarSign, 
+  FileText, 
+  AlertTriangle, 
+  Lock, 
+  Phone, 
+  AlertCircle, 
+  Truck, 
+  Zap, 
+  MapPin, 
+  Home, 
+  Briefcase, 
+  Plus, 
+  Check, 
+  Star 
+} from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { createOrderAction } from "@/app/actions/order";
+import { checkPincodeServiceabilityAction } from "@/app/actions/shiprocket";
+import { getUserAddressesAction, AddressItem } from "@/app/actions/address";
 import { SystemSettings } from "@/lib/settings";
 import { PhoneInput } from "@/components/ui/PhoneInput";
+import { AddressLocationSelector } from "@/components/ui/AddressLocationSelector";
+import { validatePincodeWithState } from "@/lib/indiaLocations";
+import { DeliveryRangeResult } from "@/lib/shiprocket";
 
 interface CheckoutClientProps {
   settings: SystemSettings;
 }
+
+const ADDRESS_TYPES = [
+  { id: "Home", label: "Home", icon: Home },
+  { id: "Office", label: "Office", icon: Building2 },
+  { id: "Work", label: "Work / Factory", icon: Briefcase },
+  { id: "Other", label: "Other", icon: MapPin },
+] as const;
 
 export function CheckoutClient({ settings }: CheckoutClientProps) {
   const { items, getSubtotal, getDiscountAmount, getTotal, clearCart, syncLivePrices } = useCartStore();
@@ -25,77 +58,172 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
+
+  // Saved Addresses State
+  const [savedAddresses, setSavedAddresses] = useState<AddressItem[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | "new">("new");
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+
+  const [pincodeStatus, setPincodeStatus] = useState<{
+    loading: boolean;
+    checked: boolean;
+    serviceable?: boolean;
+    message?: string;
+    estimatedDays?: string;
+    deliveryRange?: DeliveryRangeResult;
+    courierName?: string;
+  } | null>(null);
+
   const [orderDetails, setOrderDetails] = useState<{
     orderId: string;
     total: number;
     paymentMethodLabel: string;
     paymentReference: string;
+    carrier?: string;
+    deliveryRange?: DeliveryRangeResult;
   } | null>(null);
 
-  // If COD is disabled in settings, default to 'po' or 'card'
-  const initialPaymentMethod = settings.cod_enabled ? "cod" : "po";
+  // If COD is disabled in settings, default to 'prepaid'
+  const initialPaymentMethod: "cod" | "prepaid" = settings.cod_enabled ? "cod" : "prepaid";
 
   const [formData, setFormData] = useState({
     fullName: user?.name || "",
-    companyName: "",
+    companyName: user?.companyName || "",
     email: user?.email || "",
     phone: "",
     street: "",
     city: "",
-    state: "",
+    state: "Gujarat",
     zip: "",
     country: "India",
-    paymentMethod: initialPaymentMethod as "cod" | "po" | "card",
+    addressType: "Home" as "Home" | "Office" | "Work" | "Other",
+    saveAddress: true,
+    paymentMethod: initialPaymentMethod as "cod" | "prepaid",
     poNumber: "",
     cardNumber: "",
   });
 
-  // Restore saved shipping address draft from localStorage on refresh (excluding phone)
+  // Load Saved Addresses on Mount and when User is available
   useEffect(() => {
     setMounted(true);
     syncLivePrices();
-    try {
-      const saved = localStorage.getItem("om_checkout_shipping_draft");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setFormData((prev) => ({
-          ...prev,
-          fullName: parsed.fullName || prev.fullName,
-          companyName: parsed.companyName || "",
-          email: parsed.email || prev.email,
-          street: parsed.street || "",
-          city: parsed.city || "",
-          state: parsed.state || "",
-          zip: parsed.zip || "",
-          country: parsed.country || "India",
-          phone: "", // Require user to refill mobile number on refresh as requested
-        }));
-      }
-    } catch (e) {
-      console.error("Failed to restore checkout draft:", e);
-    }
-  }, []);
 
-  // Save address draft to localStorage whenever fields update (excluding phone)
+    const fetchAddresses = async () => {
+      setLoadingAddresses(true);
+      try {
+        let combined: AddressItem[] = [];
+
+        // 1. Fetch from database if user or email exists
+        if (user?.id || user?.email) {
+          const res = await getUserAddressesAction(user?.id, user?.email);
+          if (res.success && res.addresses && res.addresses.length > 0) {
+            combined = [...res.addresses];
+          }
+        }
+
+        // 2. Fetch from localStorage for guests or local offline addresses
+        try {
+          const localStored = localStorage.getItem("om_saved_addresses");
+          if (localStored) {
+            const parsed = JSON.parse(localStored);
+            if (Array.isArray(parsed)) {
+              for (const loc of parsed) {
+                if (!combined.some((c) => c.street?.trim() === loc.street?.trim() && c.zip?.trim() === loc.zip?.trim())) {
+                  combined.push(loc);
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Failed to read local addresses:", e);
+        }
+
+        setSavedAddresses(combined);
+
+        // If saved addresses exist, select the default or first one and autofill!
+        if (combined.length > 0) {
+          const defaultAddr = combined.find((a) => a.isDefault) || combined[0];
+          setSelectedAddressId(defaultAddr.id);
+          setFormData((prev) => ({
+            ...prev,
+            fullName: defaultAddr.fullName || prev.fullName,
+            companyName: defaultAddr.companyName || prev.companyName,
+            email: defaultAddr.email || prev.email || user?.email || "",
+            phone: defaultAddr.phone || prev.phone,
+            street: defaultAddr.street,
+            city: defaultAddr.city,
+            state: defaultAddr.state || "Gujarat",
+            zip: defaultAddr.zip,
+            country: defaultAddr.country || "India",
+            addressType: (defaultAddr.type as any) || "Home",
+          }));
+        } else {
+          // Restore draft if any from localStorage
+          try {
+            const savedDraft = localStorage.getItem("om_checkout_shipping_draft");
+            if (savedDraft) {
+              const parsed = JSON.parse(savedDraft);
+              setFormData((prev) => ({
+                ...prev,
+                fullName: parsed.fullName || prev.fullName,
+                companyName: parsed.companyName || prev.companyName,
+                email: parsed.email || prev.email,
+                phone: parsed.phone || prev.phone,
+                street: parsed.street || "",
+                city: parsed.city || "",
+                state: parsed.state || "Gujarat",
+                zip: parsed.zip || "",
+                country: parsed.country || "India",
+                addressType: parsed.addressType || "Home",
+              }));
+            }
+          } catch (e) {
+            console.error("Failed to restore checkout draft:", e);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load saved addresses:", e);
+      } finally {
+        setLoadingAddresses(false);
+      }
+    };
+
+    fetchAddresses();
+  }, [user?.id, user?.email]);
+
+  // Save address draft to localStorage whenever fields update
   useEffect(() => {
     try {
       const draft = {
         fullName: formData.fullName,
         companyName: formData.companyName,
         email: formData.email,
+        phone: formData.phone,
         street: formData.street,
         city: formData.city,
         state: formData.state,
         zip: formData.zip,
         country: formData.country,
+        addressType: formData.addressType,
       };
       localStorage.setItem("om_checkout_shipping_draft", JSON.stringify(draft));
     } catch (e) {
       console.error("Failed to save checkout draft:", e);
     }
-  }, [formData.fullName, formData.companyName, formData.email, formData.street, formData.city, formData.state, formData.zip, formData.country]);
+  }, [
+    formData.fullName,
+    formData.companyName,
+    formData.email,
+    formData.phone,
+    formData.street,
+    formData.city,
+    formData.state,
+    formData.zip,
+    formData.country,
+    formData.addressType,
+  ]);
 
-  // Update form fields when user logs in via Google or email
+  // Update user name/email if user logs in
   useEffect(() => {
     if (user) {
       setFormData((prev) => ({
@@ -105,6 +233,77 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
       }));
     }
   }, [user]);
+
+  // Handle selecting a saved address card
+  const handleSelectSavedAddress = (addr: AddressItem) => {
+    setSelectedAddressId(addr.id);
+    setFormData((prev) => ({
+      ...prev,
+      fullName: addr.fullName,
+      companyName: addr.companyName || "",
+      email: addr.email || prev.email || user?.email || "",
+      phone: addr.phone,
+      street: addr.street,
+      city: addr.city,
+      state: addr.state || "Gujarat",
+      zip: addr.zip,
+      country: addr.country || "India",
+      addressType: (addr.type as any) || "Home",
+    }));
+  };
+
+  // Handle choosing to enter a new address
+  const handleSelectNewAddress = () => {
+    setSelectedAddressId("new");
+    setFormData((prev) => ({
+      ...prev,
+      fullName: user?.name || "",
+      companyName: user?.companyName || "",
+      email: user?.email || "",
+      phone: "",
+      street: "",
+      city: "",
+      state: "Gujarat",
+      zip: "",
+      country: "India",
+      addressType: "Home",
+      saveAddress: true,
+    }));
+  };
+
+  // Real-Time Pincode Serviceability & Delivery Estimation Check (Only for India)
+  useEffect(() => {
+    const isIndia = !formData.country || formData.country.trim().toLowerCase() === "india";
+    const pin = formData.zip.trim();
+
+    if (isIndia && /^\d{6}$/.test(pin)) {
+      let isCurrent = true;
+      setPincodeStatus({ loading: true, checked: false });
+
+      const timer = setTimeout(() => {
+        checkPincodeServiceabilityAction(pin, 0.5, formData.paymentMethod === "cod").then((res) => {
+          if (isCurrent) {
+            setPincodeStatus({
+              loading: false,
+              checked: true,
+              serviceable: res.serviceable,
+              message: res.message,
+              estimatedDays: res.estimatedDays,
+              deliveryRange: res.deliveryRange,
+              courierName: res.recommendedCourier,
+            });
+          }
+        });
+      }, 400);
+
+      return () => {
+        isCurrent = false;
+        clearTimeout(timer);
+      };
+    } else {
+      setPincodeStatus(null);
+    }
+  }, [formData.zip, formData.country, formData.paymentMethod]);
 
   const subtotal = getSubtotal();
   const discount = getDiscountAmount();
@@ -134,10 +333,18 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
       return;
     }
 
-    const phoneDigits = formData.phone.replace(/[^\d]/g, "");
-    if (phoneDigits.length < 9) {
-      addToast("warning", "Incomplete Phone Number", "Please enter a valid mobile number.");
-      return;
+    const isIndia = !formData.country || formData.country.trim().toLowerCase() === "india";
+    if (isIndia) {
+      const phoneDigits = formData.phone.replace(/[^\d]/g, "");
+      if (phoneDigits.length < 10) {
+        addToast("warning", "Incomplete Phone Number", "Please enter a valid 10-digit Indian mobile number.");
+        return;
+      }
+      const pinVal = validatePincodeWithState(formData.zip, formData.state);
+      if (!pinVal.isValid) {
+        addToast("error", "PIN Code Mismatch", pinVal.message || "Please verify your PIN code and selected State.");
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -153,26 +360,61 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
         state: formData.state,
         zip: formData.zip,
         country: formData.country,
+        addressType: formData.addressType,
+        saveAddress: formData.saveAddress,
         paymentMethod: formData.paymentMethod,
         poNumber: formData.poNumber,
         cardNumber: formData.cardNumber,
-        items: items.map((item) => ({
-          productId: item.product.id,
-          name: item.product.name,
-          sku: item.product.sku,
-          price: item.variant ? item.variant.price : item.product.basePrice,
-          quantity: item.quantity,
-          variantId: item.variant?.id,
-        })),
+        items: items.map((item) => {
+          const varId = item.variant?.id;
+          const cleanVarId = varId && varId !== "undefined" && varId !== "null" ? varId : undefined;
+          const varName = item.variant?.name && item.variant.name !== "undefined" ? item.variant.name : "";
+          const baseName = (item.product.name || "Industrial Hardware")
+            .replace(/\s*-\s*undefined/gi, "")
+            .replace(/\s*\(undefined\)/gi, "")
+            .trim();
+          const cleanName = varName ? `${baseName} (${varName})` : baseName;
+
+          return {
+            productId: item.product.id,
+            name: cleanName,
+            sku: item.variant?.sku || item.product.sku || `SKU-${item.product.id}`,
+            price: item.variant?.price ?? item.product.basePrice ?? 0,
+            quantity: item.quantity,
+            variantId: cleanVarId,
+          };
+        }),
       });
 
       if (res.success && res.orderId) {
         try {
-          localStorage.removeItem("om_checkout_shipping_draft");
-          const stored = JSON.parse(localStorage.getItem("om-automation-placed-orders") || "[]");
-          if (!stored.includes(res.orderId)) {
-            stored.push(res.orderId);
-            localStorage.setItem("om-automation-placed-orders", JSON.stringify(stored));
+          // Save placed address to local storage addresses array for quick repeat access
+          const localAddrs: AddressItem[] = JSON.parse(localStorage.getItem("om_saved_addresses") || "[]");
+          const newLocalAddr: AddressItem = {
+            id: `local_addr_${Date.now()}`,
+            userId: user?.id || `user_${formData.phone.replace(/\D/g, "")}`,
+            fullName: formData.fullName,
+            companyName: formData.companyName,
+            email: formData.email,
+            phone: formData.phone,
+            street: formData.street,
+            city: formData.city,
+            state: formData.state,
+            zip: formData.zip,
+            country: formData.country,
+            type: formData.addressType,
+            isDefault: true,
+          };
+
+          const filtered = localAddrs.filter((a) => !(a.street === newLocalAddr.street && a.zip === newLocalAddr.zip));
+          filtered.unshift(newLocalAddr);
+          localStorage.setItem("om_saved_addresses", JSON.stringify(filtered.slice(0, 10)));
+
+          // Save placed order id to local placed orders
+          const storedOrders = JSON.parse(localStorage.getItem("om-automation-placed-orders") || "[]");
+          if (!storedOrders.includes(res.orderId)) {
+            storedOrders.push(res.orderId);
+            localStorage.setItem("om-automation-placed-orders", JSON.stringify(storedOrders));
           }
         } catch (e) {
           console.error(e);
@@ -183,10 +425,12 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
           total: res.total || total,
           paymentMethodLabel: res.paymentMethodLabel || (formData.paymentMethod === "cod" ? "Cash on Delivery" : "Purchase Order"),
           paymentReference: res.paymentReference || res.orderId,
+          carrier: res.carrier || pincodeStatus?.courierName || "Express Regional Logistics",
+          deliveryRange: res.deliveryRange || pincodeStatus?.deliveryRange,
         });
         setOrderPlaced(true);
         clearCart();
-        addToast("success", "Order Placed & Saved!", `Order ${res.orderId} recorded in database.`);
+        addToast("success", "Order Placed & Saved!", `Order ${res.orderId} created in New status.`);
       } else {
         addToast("error", "Order Placement Failed", res.error || "Could not save order.");
       }
@@ -198,9 +442,13 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
     }
   };
 
-  const isFieldMissing = (val: string) => showValidationErrors && !val.trim();
+  const isFieldMissing = (val: string) => showValidationErrors && !val?.trim();
 
   if (orderPlaced && orderDetails) {
+    const courierPartner = orderDetails.carrier || pincodeStatus?.courierName || "Express Surface Logistics";
+    const deliveryRangeStr = orderDetails.deliveryRange?.formattedDateRange || pincodeStatus?.deliveryRange?.formattedDateRange || "3 - 5 Business Days";
+    const deliveryDaysStr = orderDetails.deliveryRange?.formattedDaysRange || pincodeStatus?.deliveryRange?.formattedDaysRange || "3 - 5 Business Days";
+
     return (
       <div className="bg-[#faf9f5] min-h-screen py-16 border-b border-slate-200">
         <div className="max-w-2xl mx-auto px-4 text-center space-y-6">
@@ -209,7 +457,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
           </div>
 
           <span className="inline-flex items-center gap-2 type-label text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-            Real Database Order Created
+            Real Database Order Created (New Order Status)
           </span>
 
           <h1 className="text-3xl font-mono font-extrabold text-slate-900">
@@ -230,12 +478,28 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
               <span className="font-bold text-sky-700">{orderDetails.paymentMethodLabel}</span>
             </div>
             <div className="flex justify-between type-technical border-b border-slate-100 pb-2">
+              <span className="text-slate-500">Logistics Carrier:</span>
+              <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                <Truck className="w-4 h-4 text-sky-600" />
+                {courierPartner}
+              </span>
+            </div>
+            <div className="flex justify-between type-technical border-b border-slate-100 pb-2">
+              <span className="text-slate-500">Estimated Delivery Window:</span>
+              <div className="text-right">
+                <span className="font-bold text-emerald-700 font-mono block">{deliveryRangeStr}</span>
+                <span className="text-[10px] text-slate-400 font-mono">({deliveryDaysStr} • +2 Days Buffer Included)</span>
+              </div>
+            </div>
+            <div className="flex justify-between type-technical border-b border-slate-100 pb-2">
               <span className="text-slate-500">Total Amount:</span>
               <span className="font-bold text-slate-900 font-mono">{formatCurrency(orderDetails.total)}</span>
             </div>
-            <div className="flex justify-between type-technical border-b border-slate-100 pb-2">
-              <span className="text-slate-500">Dispatch Status:</span>
-              <span className="font-bold text-emerald-600">Processing in Database Warehouse</span>
+            <div className="flex justify-between type-technical">
+              <span className="text-slate-500">Order Fulfillment Status:</span>
+              <span className="font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 text-xs">
+                New Order • Awaiting Dispatch
+              </span>
             </div>
           </div>
 
@@ -297,7 +561,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className={`py-2 rounded-xl font-bold transition-colors ${
+                className={`py-2 rounded-xl font-bold transition-colors cursor-pointer ${
                   step === 1 ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
                 }`}
               >
@@ -306,7 +570,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className={`py-2 rounded-xl font-bold transition-colors ${
+                className={`py-2 rounded-xl font-bold transition-colors cursor-pointer ${
                   step === 2 ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
                 }`}
               >
@@ -315,7 +579,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className={`py-2 rounded-xl font-bold transition-colors ${
+                className={`py-2 rounded-xl font-bold transition-colors cursor-pointer ${
                   step === 3 ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
                 }`}
               >
@@ -325,7 +589,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
 
             <form onSubmit={handleSubmitOrder} className="space-y-6">
               {step === 1 && (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div className="flex items-center justify-between">
                     <h3 className="font-bold text-base text-slate-900 font-mono flex items-center gap-2">
                       <Building2 className="w-4 h-4 text-sky-600" /> Corporate Shipping Address
@@ -335,6 +599,98 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                     </span>
                   </div>
 
+                  {/* 1. Saved Addresses Carousel / Selector */}
+                  {savedAddresses.length > 0 && (
+                    <div className="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4 text-amber-500" />
+                          <span>Saved Delivery Addresses ({savedAddresses.length})</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          Click to autofill
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {savedAddresses.map((addr) => {
+                          const typeConfig = ADDRESS_TYPES.find((t) => t.id === addr.type) || ADDRESS_TYPES[0];
+                          const Icon = typeConfig.icon;
+                          const isSelected = selectedAddressId === addr.id;
+
+                          return (
+                            <div
+                              key={addr.id}
+                              onClick={() => handleSelectSavedAddress(addr)}
+                              className={`p-3 rounded-2xl border transition-all cursor-pointer relative text-xs flex flex-col justify-between ${
+                                isSelected
+                                  ? "bg-white border-amber-500 ring-2 ring-amber-500/20 shadow-sm"
+                                  : "bg-white/60 border-slate-200 hover:border-slate-300 hover:bg-white"
+                              }`}
+                            >
+                              <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 flex items-center gap-1 text-slate-700">
+                                    <Icon className="w-3 h-3 text-amber-600" />
+                                    {typeConfig.label}
+                                  </span>
+                                  {addr.isDefault && (
+                                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-0.5">
+                                      <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" /> Default
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div>
+                                  <h4 className="font-bold text-slate-900">
+                                    {addr.fullName}
+                                  </h4>
+                                  {addr.companyName && (
+                                    <p className="text-[11px] text-sky-600 font-mono font-medium">
+                                      {addr.companyName}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <p className="text-[11px] text-slate-600 line-clamp-2">
+                                  {addr.street}, {addr.city}, {addr.state} - {addr.zip} ({addr.country || "India"})
+                                </p>
+                                <p className="text-[10px] font-mono text-slate-500">
+                                  📱 +91 {addr.phone}
+                                </p>
+                              </div>
+
+                              <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                                <span className={`font-bold font-mono ${isSelected ? "text-amber-600 flex items-center gap-1" : "text-slate-400"}`}>
+                                  {isSelected ? "✓ Selected" : "Use this address"}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {/* Option to enter a different address */}
+                        <div
+                          onClick={handleSelectNewAddress}
+                          className={`p-3 rounded-2xl border-2 border-dashed transition-all cursor-pointer text-xs flex flex-col items-center justify-center text-center gap-1 min-h-[110px] ${
+                            selectedAddressId === "new"
+                              ? "border-sky-500 bg-sky-50/50 text-sky-700"
+                              : "border-slate-300 hover:border-slate-400 text-slate-500 bg-white/40"
+                          }`}
+                        >
+                          <Plus className="w-5 h-5" />
+                          <span className="font-bold font-mono text-xs">
+                            {selectedAddressId === "new" ? "Entering Custom Address" : "+ Enter Different Address"}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            Fill address details below
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. Contact Details */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     <div>
                       <label className="font-semibold uppercase tracking-wider text-slate-600 mb-1 flex items-center gap-1">
@@ -412,6 +768,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                     </div>
                   </div>
 
+                  {/* 3. Street Address */}
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1 flex items-center gap-1">
                       Street Address / Building / GIDC Industrial Area <span className="text-rose-500 font-bold">*</span>
@@ -435,79 +792,91 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4 text-xs">
+                  {/* 4. Country, State, City, PIN Code Cascading Selector with India Validation */}
+                  <AddressLocationSelector
+                    country={formData.country}
+                    state={formData.state}
+                    city={formData.city}
+                    zip={formData.zip}
+                    onCountryChange={(country) => setFormData({ ...formData, country })}
+                    onStateChange={(state) => setFormData({ ...formData, state })}
+                    onCityChange={(city) => setFormData({ ...formData, city })}
+                    onZipChange={(zip) => setFormData({ ...formData, zip })}
+                    isFieldMissing={isFieldMissing}
+                  />
+
+                  {/* Pincode Live Courier Serviceability Notice (When India) */}
+                  {(!formData.country || formData.country.toLowerCase() === "india") && (
                     <div>
-                      <label className="font-semibold uppercase tracking-wider text-slate-600 mb-1 flex items-center gap-1">
-                        City / District <span className="text-rose-500 font-bold">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        placeholder="e.g. Gandhinagar"
-                        className={`w-full p-3 rounded-2xl border focus:outline-none transition-all ${
-                          isFieldMissing(formData.city)
-                            ? "border-rose-500 bg-rose-50/20 ring-2 ring-rose-500/20"
-                            : "border-slate-200 focus:border-sky-500"
-                        }`}
-                        required
-                      />
-                      {isFieldMissing(formData.city) && (
-                        <span className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" /> City is required
+                      {pincodeStatus?.loading && (
+                        <span className="text-[10px] text-sky-600 font-mono flex items-center gap-1 font-semibold">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Checking live courier serviceability...
                         </span>
                       )}
+                      {pincodeStatus?.checked && (
+                        <div
+                          className={`mt-1 p-3 rounded-2xl border text-[11px] font-mono flex items-center gap-2 ${
+                            pincodeStatus.serviceable
+                              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                              : "bg-amber-50 border-amber-200 text-amber-800"
+                          }`}
+                        >
+                          {pincodeStatus.serviceable ? (
+                            <Truck className="w-4 h-4 text-emerald-600 shrink-0" />
+                          ) : (
+                            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                          )}
+                          <div>
+                            <span className="font-bold">
+                              {pincodeStatus.serviceable ? "Verified Delivery: " : "Notice: "}
+                            </span>
+                            <span>{pincodeStatus.message}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 5. Address Type Label Picker & Save Address Checkbox */}
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 text-xs">
+                    <div>
+                      <label className="block font-mono font-bold uppercase tracking-wider text-slate-700 mb-2">
+                        Save Address As:
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {ADDRESS_TYPES.map((type) => {
+                          const Icon = type.icon;
+                          const isSelected = formData.addressType === type.id;
+                          return (
+                            <button
+                              key={type.id}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, addressType: type.id as any })}
+                              className={`p-2.5 rounded-xl border text-xs font-mono font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                                isSelected
+                                  ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+                              }`}
+                            >
+                              <Icon className="w-3.5 h-3.5" />
+                              <span>{type.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="font-semibold uppercase tracking-wider text-slate-600 mb-1 flex items-center gap-1">
-                        State <span className="text-rose-500 font-bold">*</span>
-                      </label>
+                    <label className="flex items-center gap-2.5 pt-1 cursor-pointer select-none">
                       <input
-                        type="text"
-                        value={formData.state}
-                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                        placeholder="e.g. Gujarat"
-                        className={`w-full p-3 rounded-2xl border focus:outline-none transition-all ${
-                          isFieldMissing(formData.state)
-                            ? "border-rose-500 bg-rose-50/20 ring-2 ring-rose-500/20"
-                            : "border-slate-200 focus:border-sky-500"
-                        }`}
-                        required
+                        type="checkbox"
+                        checked={formData.saveAddress}
+                        onChange={(e) => setFormData({ ...formData, saveAddress: e.target.checked })}
+                        className="w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                       />
-                      {isFieldMissing(formData.state) && (
-                        <span className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" /> State is required
-                        </span>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="font-semibold uppercase tracking-wider text-slate-600 mb-1 flex items-center gap-1">
-                        PIN Code (6 Digits) <span className="text-rose-500 font-bold">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.zip}
-                        onChange={(e) => {
-                          const digits = e.target.value.replace(/[^\d]/g, "").slice(0, 6);
-                          setFormData({ ...formData, zip: digits });
-                        }}
-                        placeholder="e.g. 382028"
-                        maxLength={6}
-                        className={`w-full p-3 rounded-2xl border focus:outline-none transition-all font-mono tracking-wider ${
-                          isFieldMissing(formData.zip)
-                            ? "border-rose-500 bg-rose-50/20 ring-2 ring-rose-500/20"
-                            : "border-slate-200 focus:border-sky-500"
-                        }`}
-                        required
-                      />
-                      {isFieldMissing(formData.zip) && (
-                        <span className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" /> PIN Code is required
-                        </span>
-                      )}
-                    </div>
+                      <span className="font-semibold text-slate-700">
+                        Save this address to my profile for 1-click checkout next time
+                      </span>
+                    </label>
                   </div>
 
                   <button
@@ -518,19 +887,25 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                         addToast("warning", "Required Fields Missing", "Please fill in all highlighted required shipping address fields.");
                         return;
                       }
-                      const phoneDigits = formData.phone.replace(/[^\d]/g, "");
-                      if (phoneDigits.length < 10) {
-                        addToast("warning", "Incomplete Phone Number", "Please enter a valid 10-digit Indian mobile number.");
-                        return;
+
+                      const isIndia = !formData.country || formData.country.trim().toLowerCase() === "india";
+                      if (isIndia) {
+                        const phoneDigits = formData.phone.replace(/[^\d]/g, "");
+                        if (phoneDigits.length < 10) {
+                          addToast("warning", "Incomplete Phone Number", "Please enter a valid 10-digit Indian mobile number.");
+                          return;
+                        }
+                        const pinVal = validatePincodeWithState(formData.zip, formData.state);
+                        if (!pinVal.isValid) {
+                          addToast("error", "PIN Code Mismatch", pinVal.message || "Please verify your PIN code and selected State.");
+                          return;
+                        }
                       }
-                      if (formData.country === "India" && !/^\d{6}$/.test(formData.zip.trim())) {
-                        addToast("warning", "Invalid PIN Code", "Please enter a valid 6-digit Indian PIN code (e.g. 382028).");
-                        return;
-                      }
+
                       setShowValidationErrors(false);
                       setStep(2);
                     }}
-                    className="w-full py-3.5 rounded-full bg-slate-900 text-white type-button mt-4 hover:bg-slate-800 shadow-md transition-all active:scale-[0.99]"
+                    className="w-full py-3.5 rounded-full bg-slate-900 text-white type-button mt-4 hover:bg-slate-800 shadow-md transition-all active:scale-[0.99] cursor-pointer"
                   >
                     Continue to Payment Options →
                   </button>
@@ -539,115 +914,86 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
 
               {step === 2 && (
                 <div className="space-y-4 text-xs">
-                  <h3 className="font-bold text-base text-slate-900 font-mono flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-sky-600" /> Payment Terms & Method Selection
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-base text-slate-900 font-mono flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-sky-600" /> Payment Method Selection
+                    </h3>
+                    <span className="text-[11px] text-slate-400 font-mono">
+                      Choose COD or Pre-paid
+                    </span>
+                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* COD Option - Disabled if admin settings cod_enabled is false */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* 1. COD Option */}
                     <div
                       onClick={() => {
                         if (settings.cod_enabled) {
                           setFormData({ ...formData, paymentMethod: "cod" });
                         }
                       }}
-                      className={`p-4 rounded-2xl border transition-all ${
+                      className={`p-5 rounded-3xl border transition-all ${
                         !settings.cod_enabled
                           ? "opacity-45 bg-slate-100 border-slate-200 cursor-not-allowed"
                           : formData.paymentMethod === "cod"
-                          ? "border-emerald-600 bg-emerald-50/50 font-bold ring-2 ring-emerald-500/20 cursor-pointer"
+                          ? "border-emerald-600 bg-emerald-50/60 font-bold ring-2 ring-emerald-500/20 shadow-md cursor-pointer"
                           : "border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer"
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-sm text-slate-900 flex items-center gap-1.5">
-                          <DollarSign className="w-4 h-4 text-emerald-600" /> Cash on Delivery
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-mono text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                          <DollarSign className="w-5 h-5 text-emerald-600 shrink-0" />
+                          <span>Cash on Delivery (COD)</span>
                         </span>
                         {formData.paymentMethod === "cod" && settings.cod_enabled && (
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                          <span className="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-200" />
                         )}
                         {!settings.cod_enabled && (
                           <Lock className="w-3.5 h-3.5 text-slate-400" />
                         )}
                       </div>
-                      <span className="text-[11px] text-slate-500 leading-tight block mt-1">
+                      <p className="text-xs text-slate-600 leading-relaxed">
                         {settings.cod_enabled
-                          ? "Pay cash or cheque on freight delivery at dock"
-                          : "Disabled by Store Administrator"}
-                      </span>
+                          ? "Pay cash or company cheque on freight delivery at dock / doorstep."
+                          : "Cash on Delivery is currently disabled by store administrator."}
+                      </p>
                     </div>
 
-                    <label
-                      onClick={() => setFormData({ ...formData, paymentMethod: "po" })}
-                      className={`p-4 rounded-2xl border cursor-pointer flex flex-col gap-1.5 transition-colors ${
-                        formData.paymentMethod === "po"
-                          ? "border-sky-600 bg-sky-50/50 font-bold ring-2 ring-sky-500/20"
+                    {/* 2. Pre-paid Option */}
+                    <div
+                      onClick={() => setFormData({ ...formData, paymentMethod: "prepaid" })}
+                      className={`p-5 rounded-3xl border transition-all cursor-pointer ${
+                        formData.paymentMethod === "prepaid"
+                          ? "border-sky-600 bg-sky-50/60 font-bold ring-2 ring-sky-500/20 shadow-md"
                           : "border-slate-200 bg-slate-50 hover:bg-slate-100"
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-sm text-slate-900 flex items-center gap-1.5">
-                          <FileText className="w-4 h-4 text-sky-600" /> Net-30 PO
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-mono text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                          <Zap className="w-5 h-5 text-sky-600 fill-sky-500/20 shrink-0" />
+                          <span>Pre-paid / Online Payment</span>
                         </span>
-                        {formData.paymentMethod === "po" && (
-                          <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+                        {formData.paymentMethod === "prepaid" && (
+                          <span className="w-3 h-3 rounded-full bg-sky-500 ring-4 ring-sky-200" />
                         )}
                       </div>
-                      <span className="text-[11px] text-slate-500 leading-tight">Invoice billed to corporate credit line</span>
-                    </label>
-
-                    <label
-                      onClick={() => setFormData({ ...formData, paymentMethod: "card" })}
-                      className={`p-4 rounded-2xl border cursor-pointer flex flex-col gap-1.5 transition-colors ${
-                        formData.paymentMethod === "card"
-                          ? "border-indigo-600 bg-indigo-50/50 font-bold ring-2 ring-indigo-500/20"
-                          : "border-slate-200 bg-slate-50 hover:bg-slate-100"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-sm text-slate-900 flex items-center gap-1.5">
-                          <CreditCard className="w-4 h-4 text-indigo-600" /> Corporate Card
-                        </span>
-                        {formData.paymentMethod === "card" && (
-                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-                        )}
-                      </div>
-                      <span className="text-[11px] text-slate-500 leading-tight">Visa, MasterCard, AMEX, P-Card</span>
-                    </label>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        Direct pre-paid procurement (Cards, NetBanking, UPI & Corporate transfer).
+                      </p>
+                    </div>
                   </div>
 
-                  {formData.paymentMethod === "po" && (
-                    <div>
-                      <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">PO Number</label>
-                      <input
-                        type="text"
-                        value={formData.poNumber}
-                        onChange={(e) => setFormData({ ...formData, poNumber: e.target.value })}
-                        placeholder="e.g. PO-2026-88491"
-                        className="w-full p-3 font-mono rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {formData.paymentMethod === "card" && (
-                    <div>
-                      <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">Card Number</label>
-                      <input
-                        type="text"
-                        value={formData.cardNumber}
-                        onChange={(e) => setFormData({ ...formData, cardNumber: e.target.value })}
-                        placeholder="•••• •••• •••• 4242"
-                        className="w-full p-3 font-mono rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
-                        required
-                      />
-                    </div>
-                  )}
-
+                  {/* Selected Payment Confirmation Notice */}
                   {formData.paymentMethod === "cod" && settings.cod_enabled && (
-                    <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+                    <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2.5">
                       <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-600" />
-                      <span>Cash on Delivery selected. Pay cash or company check when shipment arrives.</span>
+                      <span>Cash on Delivery selected. Pay cash or company cheque when shipment arrives.</span>
+                    </div>
+                  )}
+
+                  {formData.paymentMethod === "prepaid" && (
+                    <div className="p-4 rounded-2xl bg-sky-50/80 border border-sky-200 text-sky-900 text-xs flex items-center gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-sky-600" />
+                      <span>Pre-paid payment selected. Order is processed as verified & paid for immediate fulfillment.</span>
                     </div>
                   )}
 
@@ -655,14 +1001,14 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                     <button
                       type="button"
                       onClick={() => setStep(1)}
-                      className="w-1/3 py-3 rounded-full bg-slate-100 text-slate-700 font-bold hover:bg-slate-200"
+                      className="w-1/3 py-3 rounded-full bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 cursor-pointer"
                     >
                       ← Back
                     </button>
                     <button
                       type="button"
                       onClick={() => setStep(3)}
-                      className="w-2/3 py-3 rounded-full bg-slate-900 text-white font-bold hover:bg-slate-800"
+                      className="w-2/3 py-3 rounded-full bg-slate-900 text-white font-bold hover:bg-slate-800 cursor-pointer"
                     >
                       Review Order →
                     </button>
@@ -677,16 +1023,46 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                   </h3>
 
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="font-bold text-slate-900">{formData.companyName || formData.fullName}</span>
                       <span className="font-mono text-emerald-600 font-bold uppercase">
-                        {formData.paymentMethod === "cod" ? "Cash on Delivery" : formData.paymentMethod === "po" ? formData.poNumber : "Corporate Card"}
+                        {formData.paymentMethod === "cod" ? "Cash on Delivery (COD)" : "Pre-paid (Online Payment)"}
                       </span>
                     </div>
-                    <div className="text-slate-600">{formData.street}, {formData.city}, {formData.state} {formData.zip}</div>
+                    <div className="text-slate-600">{formData.street}, {formData.city}, {formData.state} - {formData.zip} ({formData.country || "India"})</div>
                     <div className="text-slate-500 font-mono flex items-center gap-2">
                       <span>Contact: {formData.fullName} ({formData.email})</span>
-                      <span className="text-sky-600 font-bold">• {formData.phone}</span>
+                      <span className="text-sky-600 font-bold">• +91 {formData.phone}</span>
+                    </div>
+                    <div className="text-[11px] text-amber-700 font-mono font-semibold pt-1">
+                      Label: {formData.addressType} Delivery
+                    </div>
+                  </div>
+
+                  {/* Logistics & Delivery Window Summary */}
+                  <div className="p-4 rounded-2xl bg-sky-50/60 border border-sky-200/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-slate-900 font-mono flex items-center gap-1.5">
+                        <Truck className="w-4 h-4 text-sky-600" /> Logistics Partner & Delivery Window
+                      </div>
+                      <span className="text-[10px] font-mono bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full font-bold">
+                        +2 Days Buffer Included
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs">
+                      <div>
+                        <span className="text-slate-500 block text-[11px]">Shipping Partner:</span>
+                        <span className="font-bold text-slate-900">{pincodeStatus?.courierName || "Express Regional Logistics"}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[11px]">Estimated Delivery Window:</span>
+                        <span className="font-bold text-emerald-700 font-mono">
+                          {pincodeStatus?.deliveryRange?.formattedDateRange || "3 - 5 Business Days"}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block font-mono">
+                          ({pincodeStatus?.deliveryRange?.formattedDaysRange || "3 - 5 Business Days"})
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -701,7 +1077,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                     <button
                       type="button"
                       onClick={() => setStep(2)}
-                      className="w-1/3 py-3.5 rounded-full bg-slate-100 text-slate-700 font-bold hover:bg-slate-200"
+                      className="w-1/3 py-3.5 rounded-full bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 cursor-pointer"
                       disabled={isSubmitting}
                     >
                       ← Edit Payment
@@ -709,7 +1085,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                     <button
                       type="submit"
                       disabled={isSubmitting || isBelowMinOrder || settings.maintenance_mode}
-                      className="w-2/3 py-3.5 rounded-full bg-gradient-to-r from-sky-600 to-emerald-600 hover:from-sky-500 hover:to-emerald-500 text-white font-bold shadow-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                      className="w-2/3 py-3.5 rounded-full bg-gradient-to-r from-sky-600 to-emerald-600 hover:from-sky-500 hover:to-emerald-500 text-white font-bold shadow-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
                     >
                       {isSubmitting ? (
                         <>
@@ -730,8 +1106,8 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
           <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200 shadow-lg space-y-4">
             <h3 className="font-bold text-base text-slate-900 font-mono pb-3 border-b border-slate-100 flex items-center justify-between">
               <span>Cart Summary</span>
-              <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full" suppressHydrationWarning>
-                {mounted ? items.length : 0} items
+              <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-mono font-bold" suppressHydrationWarning>
+                {mounted ? items.reduce((s, i) => s + i.quantity, 0) : 0} items
               </span>
             </h3>
 
@@ -743,7 +1119,10 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                   return (
                     <div key={itemId} className="flex items-center justify-between text-xs">
                       <div className="min-w-0 pr-2">
-                        <div className="font-bold text-slate-900 truncate">{item.product.name} {item.variant && `- ${item.variant.name}`}</div>
+                        <div className="font-bold text-slate-900 truncate">
+                          {(item.product.name || "Product").replace(/\s*-\s*undefined/gi, "")}
+                          {item.variant?.name && item.variant.name !== "undefined" && ` - ${item.variant.name}`}
+                        </div>
                         <div className="text-[10px] text-slate-500 font-mono">Qty: {item.quantity}</div>
                       </div>
                       <div className="font-mono font-bold text-slate-900 shrink-0" suppressHydrationWarning>

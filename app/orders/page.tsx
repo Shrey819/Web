@@ -92,13 +92,18 @@ export default function OrdersPage() {
                     <div className="type-body-small text-slate-500 font-mono">
                       Placed on {ord.date} • {ord.itemCount} Line Items
                     </div>
-                    <div className="text-xs font-semibold text-slate-700 flex items-center gap-2 pt-0.5">
+                    <div className="text-xs font-semibold text-slate-700 flex flex-wrap items-center gap-2 pt-0.5">
                       <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-mono text-[10px]">
                         {ord.paymentMethod}
                       </span>
                       <span className="flex items-center gap-1 text-slate-500">
-                        <Truck className="w-3.5 h-3.5 text-sky-600" /> Carrier: {ord.carrier} ({ord.trackingNumber})
+                        <Truck className="w-3.5 h-3.5 text-sky-600" /> Carrier: {ord.carrier}
                       </span>
+                      {ord.etd && (
+                        <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">
+                          Est. Delivery: {ord.etd}
+                        </span>
+                      )}
                     </div>
                   </div>
 

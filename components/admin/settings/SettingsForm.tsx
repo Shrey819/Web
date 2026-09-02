@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { saveSettingsAction, testDbConnectionAction } from "@/app/admin/(dashboard)/settings/actions";
+import { testShiprocketAuthAction } from "@/app/actions/shiprocket";
 import { useToastStore } from "@/store/useToastStore";
 import { useAdminThemeStore } from "@/store/useAdminThemeStore";
 import {
@@ -21,6 +22,8 @@ import {
   PhoneCall,
   Mail,
   UserCheck,
+  Truck,
+  ExternalLink,
 } from "lucide-react";
 
 interface SettingsFormProps {
@@ -29,7 +32,7 @@ interface SettingsFormProps {
 
 export function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [activeTab, setActiveTab] = useState<
-    "general" | "contacts" | "commerce" | "health" | "security" | "theme"
+    "general" | "contacts" | "commerce" | "shiprocket" | "health" | "security" | "theme"
   >("general");
   const [loading, setLoading] = useState(false);
   const [dbTestResult, setDbTestResult] = useState<{
@@ -39,6 +42,13 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
     error?: string;
   } | null>(null);
   const [testingDb, setTestingDb] = useState(false);
+  const [srTestResult, setSrTestResult] = useState<{
+    success: boolean;
+    latency?: number;
+    email?: string;
+    error?: string;
+  } | null>(null);
+  const [testingSr, setTestingSr] = useState(false);
 
   const { addToast } = useToastStore();
   const { theme: currentTheme, setTheme: setAdminTheme } = useAdminThemeStore();
@@ -72,6 +82,18 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
       addToast("success", "Database Connected", `Neon Postgres responded in ${res.latency}ms`);
     } else {
       addToast("error", "Connection Error", res.error || "Database ping failed");
+    }
+  };
+
+  const handleTestShiprocket = async () => {
+    setTestingSr(true);
+    const res = await testShiprocketAuthAction();
+    setTestingSr(false);
+    setSrTestResult(res);
+    if (res.success) {
+      addToast("success", "Shiprocket Connected", `Authenticated as ${res.email} (${res.latency}ms)`);
+    } else {
+      addToast("error", "Shiprocket Error", res.error || "Authentication failed. Check API credentials.");
     }
   };
 
@@ -133,6 +155,19 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
 
         <button
           type="button"
+          onClick={() => setActiveTab("shiprocket")}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-mono font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
+            activeTab === "shiprocket"
+              ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <Truck className="w-4 h-4" />
+          Shiprocket & Logistics
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab("health")}
           className={`flex items-center gap-2 px-4 py-3 text-xs font-mono font-bold uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
             activeTab === "health"
@@ -154,7 +189,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
-          Security & Access
+          Security
         </button>
       </div>
 
@@ -502,6 +537,201 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                 <option value="false">OFF (STOREFRONT LIVE)</option>
                 <option value="true">ON (MAINTENANCE ACTIVE)</option>
               </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* TAB: SHIPROCKET & LOGISTICS */}
+      <div className={activeTab === "shiprocket" ? "block" : "hidden"}>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-2xs animate-in fade-in duration-200">
+          <div className="border-b border-slate-200 dark:border-slate-800 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                  Logistics Integration
+                </span>
+                <span className="text-xs font-mono text-slate-400 dark:text-slate-500">API v2</span>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-1">Shiprocket Courier Automation & Tracking</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Automate order fulfillment, courier rates comparison, AWB generation, and printable shipping labels/invoices.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleTestShiprocket}
+              disabled={testingSr}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold text-xs transition-colors border border-blue-200 dark:border-blue-800 font-mono cursor-pointer shrink-0"
+            >
+              {testingSr ? (
+                <Loader2 className="w-4 h-4 animate-spin text-blue-600 dark:text-blue-400" />
+              ) : (
+                <RefreshCw className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              )}
+              <span>Test Shiprocket API</span>
+            </button>
+          </div>
+
+          {/* Test connection result banner */}
+          {srTestResult && (
+            <div
+              className={`p-4 rounded-xl border ${
+                srTestResult.success
+                  ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
+                  : "bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30 text-rose-800 dark:text-rose-300"
+              }`}
+            >
+              <div className="flex items-center gap-2 text-xs font-mono font-bold">
+                {srTestResult.success ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                <span>{srTestResult.success ? "Shiprocket Authentication Successful" : "Shiprocket Connection Failed"}</span>
+              </div>
+              <p className="text-xs mt-1 font-mono opacity-90">
+                {srTestResult.success
+                  ? `Connected to Shiprocket API v2 as ${srTestResult.email} (Response: ${srTestResult.latency}ms). JWT Bearer Token cached.`
+                  : srTestResult.error}
+              </p>
+            </div>
+          )}
+
+          {/* Help Banner from Helpsheet */}
+          <div className="p-4 rounded-xl bg-amber-50/70 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-900 dark:text-amber-300 text-xs space-y-1.5">
+            <div className="font-bold flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Shiprocket API User Setup Instructions:</span>
+            </div>
+            <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-400">
+              1. Log in to your <strong>Shiprocket Panel</strong> &gt; go to <strong>Settings</strong> &gt; <strong>API</strong>.<br />
+              2. Click <strong>Configure</strong> and then click <strong>Create an API User</strong>.<br />
+              3. Enter an email ID that is <em>different from your main registered Shiprocket email</em> and set a password.<br />
+              4. Enter those API user credentials below. Auth tokens are valid for 10 days and automatically refreshed.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Service Toggle */}
+            <div className="space-y-1.5 md:col-span-2">
+              <label className="font-bold text-xs text-slate-700 dark:text-slate-300">Shiprocket Service Status</label>
+              <select
+                name="shiprocket_enabled"
+                defaultValue={initialSettings.shiprocket_enabled || "true"}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-blue-500 cursor-pointer"
+              >
+                <option value="true">ENABLED (Automated Serviceability & Waybills)</option>
+                <option value="false">DISABLED (Manual Logistics Only)</option>
+              </select>
+            </div>
+
+            {/* API Email */}
+            <div className="space-y-1.5">
+              <label className="font-bold text-xs text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>Shiprocket API User Email</span>
+                <span className="text-[10px] text-slate-400 font-normal">Created in API Panel</span>
+              </label>
+              <input
+                type="email"
+                name="shiprocket_email"
+                defaultValue={initialSettings.shiprocket_email || ""}
+                placeholder="api-user@yourdomain.com"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* API Password */}
+            <div className="space-y-1.5">
+              <label className="font-bold text-xs text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>Shiprocket API User Password</span>
+                <span className="text-[10px] text-slate-400 font-normal">API Password</span>
+              </label>
+              <input
+                type="password"
+                name="shiprocket_password"
+                defaultValue={initialSettings.shiprocket_password || ""}
+                placeholder="••••••••••••"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Pickup Location Nickname */}
+            <div className="space-y-1.5">
+              <label className="font-bold text-xs text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>Pickup Location Nickname</span>
+                <span className="text-[10px] text-slate-400 font-normal">Exact name in Shiprocket</span>
+              </label>
+              <input
+                type="text"
+                name="shiprocket_pickup_location"
+                defaultValue={initialSettings.shiprocket_pickup_location || "Primary"}
+                placeholder="Primary / Warehouse"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Origin Warehouse Pincode */}
+            <div className="space-y-1.5">
+              <label className="font-bold text-xs text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>Origin Warehouse Pincode</span>
+                <span className="text-[10px] text-slate-400 font-normal">Dispatch Postal Code</span>
+              </label>
+              <input
+                type="text"
+                name="shiprocket_pickup_pincode"
+                defaultValue={initialSettings.shiprocket_pickup_pincode || "360004"}
+                placeholder="360004"
+                maxLength={6}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Default Package Dimensions Header */}
+            <div className="md:col-span-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white font-mono">
+                Default Hardware Parcel Dimensions
+              </h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Used as defaults when generating courier quotes and calculating volumetric shipping weights.
+              </p>
+            </div>
+
+            {/* Default Weight */}
+            <div className="space-y-1.5">
+              <label className="font-bold text-xs text-slate-700 dark:text-slate-300">Default Weight (in kg)</label>
+              <input
+                type="number"
+                step="0.1"
+                name="shiprocket_default_weight"
+                defaultValue={initialSettings.shiprocket_default_weight || "0.5"}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Default Dimensions (L x B x H) */}
+            <div className="space-y-1.5">
+              <label className="font-bold text-xs text-slate-700 dark:text-slate-300">Dimensions (L × W × H in cm)</label>
+              <div className="grid grid-cols-3 gap-2">
+                <input
+                  type="number"
+                  name="shiprocket_default_length"
+                  defaultValue={initialSettings.shiprocket_default_length || "10"}
+                  placeholder="L (cm)"
+                  className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-blue-500"
+                />
+                <input
+                  type="number"
+                  name="shiprocket_default_breadth"
+                  defaultValue={initialSettings.shiprocket_default_breadth || "10"}
+                  placeholder="W (cm)"
+                  className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-blue-500"
+                />
+                <input
+                  type="number"
+                  name="shiprocket_default_height"
+                  defaultValue={initialSettings.shiprocket_default_height || "10"}
+                  placeholder="H (cm)"
+                  className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-blue-500"
+                />
+              </div>
             </div>
           </div>
         </div>

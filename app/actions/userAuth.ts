@@ -117,7 +117,8 @@ export async function loginUserAction(formData: {
     };
   } catch (error) {
     console.error("Login authentication error:", error);
-    return { success: false, error: "Authentication failed." };
+    const msg = error instanceof Error ? error.message : "Authentication failed.";
+    return { success: false, error: msg };
   }
 }
 

@@ -131,6 +131,247 @@ import {
   Copy,
 } from "lucide-react";
 
+interface OrbitStageVisualSectionProps {
+  secId: string;
+  orbitData: OrbitStageConfig;
+  updateSectionContent: (
+    instanceId: string,
+    patch: any | ((prevContent: any) => any),
+    actionDesc?: string
+  ) => void;
+}
+
+function OrbitStageVisualSection({
+  secId,
+  orbitData,
+  updateSectionContent,
+}: OrbitStageVisualSectionProps) {
+  const [orbitProgress, setOrbitProgress] = useState<number>(0);
+  const [isOrbitPlaying, setIsOrbitPlaying] = useState<boolean>(true);
+
+  // Time-based continuous animation loop isolated strictly to this 3D component
+  useEffect(() => {
+    if (!isOrbitPlaying) return;
+    let animFrameId: number;
+    let lastTimestamp: number | null = null;
+
+    const updateLoop = (timestamp: number) => {
+      if (lastTimestamp !== null) {
+        const deltaSec = (timestamp - lastTimestamp) / 1000;
+        setOrbitProgress((prev) => prev + deltaSec * 0.35);
+      }
+      lastTimestamp = timestamp;
+      animFrameId = requestAnimationFrame(updateLoop);
+    };
+
+    animFrameId = requestAnimationFrame(updateLoop);
+    return () => cancelAnimationFrame(animFrameId);
+  }, [isOrbitPlaying]);
+
+  const orbitProducts: CinematicProduct[] =
+    orbitData.products && orbitData.products.length > 0
+      ? orbitData.products.map((p, idx) => ({
+          id: p.id || `cine-${idx}`,
+          sku: p.sku || `SKU-${idx + 1}`,
+          name: p.name,
+          category: p.category,
+          subtitle: p.subtitle,
+          description: "",
+          price: p.price,
+          specs: p.specs || [],
+          image: p.image || CINEMATIC_PRODUCTS[idx % CINEMATIC_PRODUCTS.length].image,
+        }))
+      : CINEMATIC_PRODUCTS;
+
+  const numOrbitProds = orbitProducts.length;
+  const activeOrbitIdx =
+    ((Math.floor(orbitProgress + 0.5) % numOrbitProds) + numOrbitProds) % numOrbitProds;
+  const activeOrbitProd = orbitProducts[activeOrbitIdx] || orbitProducts[0];
+
+  return (
+    <section
+      id={secId}
+      className="relative w-full py-12 sm:py-20 bg-slate-950 text-white font-sans border-b border-slate-800/80 overflow-hidden min-h-[85vh] flex flex-col justify-between"
+    >
+      {/* Header Area */}
+      <div className="relative z-30 text-center max-w-3xl mx-auto space-y-2.5 px-4">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-semibold uppercase tracking-wider shadow-inner">
+          <Sparkles className="w-3.5 h-3.5" />
+          <InlineEditable
+            value={orbitData.eyebrow}
+            onChange={(val) =>
+              updateSectionContent(secId, { ...orbitData, eyebrow: val }, "Edit 3D Stage Eyebrow")
+            }
+            label="3D Orbit Section Eyebrow"
+          />
+        </div>
+
+        <InlineEditable
+          as="h2"
+          value={orbitData.title}
+          onChange={(val) =>
+            updateSectionContent(secId, { ...orbitData, title: val }, "Edit 3D Stage Title")
+          }
+          className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white font-mono"
+          label="3D Orbit Section Headline"
+        />
+
+        <InlineEditable
+          as="p"
+          value={orbitData.subtitle}
+          onChange={(val) =>
+            updateSectionContent(secId, { ...orbitData, subtitle: val }, "Edit 3D Stage Subtitle")
+          }
+          multiline
+          className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto"
+          label="3D Orbit Section Subtitle"
+        />
+      </div>
+
+      {/* Central 3D Stage */}
+      <div className="relative flex-1 w-full my-4 flex items-center justify-center">
+        <CinematicProductStage
+          products={orbitProducts}
+          progress={orbitProgress}
+          isReducedMotion={false}
+        />
+      </div>
+
+      {/* Bottom Active Orbit Product Bar */}
+      <div className="relative z-30 max-w-4xl mx-auto w-full text-center space-y-4 px-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-center gap-2 text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">
+            <Tag className="w-3.5 h-3.5" />
+            <InlineEditable
+              value={activeOrbitProd.category}
+              onChange={(val) => {
+                const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
+                prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], category: val };
+                updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Category");
+              }}
+              className="text-amber-400 uppercase tracking-widest font-mono font-bold"
+              label={`Product #${activeOrbitIdx + 1} Category Tag`}
+            />
+            <span className="text-slate-600">•</span>
+            <InlineEditable
+              value={activeOrbitProd.sku}
+              onChange={(val) => {
+                const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
+                prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], sku: val };
+                updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product SKU");
+              }}
+              className="text-slate-300 font-mono font-bold"
+              label={`Product #${activeOrbitIdx + 1} SKU`}
+            />
+          </div>
+
+          <InlineEditable
+            as="h3"
+            value={activeOrbitProd.name}
+            onChange={(val) => {
+              const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
+              prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], name: val };
+              updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Name");
+            }}
+            className="text-xl sm:text-3xl font-bold text-white tracking-tight"
+            label={`Product #${activeOrbitIdx + 1} Name`}
+          />
+
+          <InlineEditable
+            as="p"
+            value={activeOrbitProd.subtitle}
+            onChange={(val) => {
+              const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
+              prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], subtitle: val };
+              updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Subtitle");
+            }}
+            className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto"
+            label={`Product #${activeOrbitIdx + 1} Subtitle`}
+          />
+
+          {/* Specifications Rail */}
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <span className="text-base sm:text-lg font-extrabold font-mono text-amber-400 bg-amber-500/10 px-3 py-0.5 rounded-lg border border-amber-500/20">
+              <InlineEditable
+                value={activeOrbitProd.price}
+                onChange={(val) => {
+                  const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
+                  prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], price: val };
+                  updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Price");
+                }}
+                className="text-amber-400 font-extrabold font-mono"
+                label={`Product #${activeOrbitIdx + 1} Price`}
+              />
+            </span>
+            {(activeOrbitProd.specs || []).map((spec, i) => (
+              <div
+                key={i}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] text-slate-300"
+              >
+                <CheckCircle className="w-3 h-3 text-emerald-400" />
+                <InlineEditable
+                  value={spec.label}
+                  onChange={(val) => {
+                    const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
+                    const specs = [...(prods[activeOrbitIdx].specs || [])];
+                    specs[i] = { ...specs[i], label: val };
+                    prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], specs };
+                    updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Spec");
+                  }}
+                  className="text-slate-400"
+                  label={`Product #${activeOrbitIdx + 1} Spec #${i + 1} Label`}
+                />
+                <span className="text-slate-500">:</span>
+                <InlineEditable
+                  value={spec.value}
+                  onChange={(val) => {
+                    const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
+                    const specs = [...(prods[activeOrbitIdx].specs || [])];
+                    specs[i] = { ...specs[i], value: val };
+                    prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], specs };
+                    updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Spec");
+                  }}
+                  className="font-semibold text-white"
+                  label={`Product #${activeOrbitIdx + 1} Spec #${i + 1} Value`}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => setIsOrbitPlaying(!isOrbitPlaying)}
+            className="p-1.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
+          >
+            {isOrbitPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+          </button>
+
+          <div className="flex items-center gap-1.5">
+            {orbitProducts.map((p, idx) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  const currentBase = Math.floor(orbitProgress / numOrbitProds) * numOrbitProds;
+                  setOrbitProgress(currentBase + idx);
+                }}
+                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                  activeOrbitIdx === idx
+                    ? "w-8 bg-amber-400 shadow-md shadow-amber-400/40"
+                    : "w-2 bg-slate-700 hover:bg-slate-500"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 interface HomepageVisualEditorProps {
   initialData: HomepageData;
   categories: StorefrontCategory[];
@@ -171,10 +412,6 @@ export function HomepageVisualEditor({
 
   // Selected vertical index for industrial solutions showcase preview
   const [selectedVerticalIdx, setSelectedVerticalIdx] = useState(0);
-
-  // 3D Orbit Stage interactive state
-  const [orbitProgress, setOrbitProgress] = useState<number>(0);
-  const [isOrbitPlaying, setIsOrbitPlaying] = useState<boolean>(true);
 
   // Working state for all 21 homepage sections
   const [homepageState, setHomepageState] = useState<HomepageData>(() => ({
@@ -236,38 +473,22 @@ export function HomepageVisualEditor({
     window.addEventListener("mouseup", onMouseUp);
   }, []);
 
-  // ResizeObserver for canvas scaling
+  // ResizeObserver for canvas scaling with change threshold to prevent layout loops
   useEffect(() => {
     if (!canvasInnerRef.current) return;
+    let prevH = 0;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        if (entry.contentRect.height > 0) {
-          setMeasuredHeight(entry.contentRect.height);
+        const h = Math.round(entry.contentRect.height);
+        if (h > 0 && Math.abs(h - prevH) > 4) {
+          prevH = h;
+          setMeasuredHeight(h);
         }
       }
     });
     observer.observe(canvasInnerRef.current);
     return () => observer.disconnect();
   }, []);
-
-  // Continuous animation loop for 3D Orbit Stage
-  useEffect(() => {
-    if (!isOrbitPlaying) return;
-    let animFrameId: number;
-    let lastTimestamp: number | null = null;
-
-    const updateLoop = (timestamp: number) => {
-      if (lastTimestamp !== null) {
-        const deltaSec = (timestamp - lastTimestamp) / 1000;
-        setOrbitProgress((prev) => prev + deltaSec * 0.35);
-      }
-      lastTimestamp = timestamp;
-      animFrameId = requestAnimationFrame(updateLoop);
-    };
-
-    animFrameId = requestAnimationFrame(updateLoop);
-    return () => cancelAnimationFrame(animFrameId);
-  }, [isOrbitPlaying]);
 
   // Smooth scroll to section inside scaled preview
   const scrollToSection = (sectionId: string) => {
@@ -313,35 +534,6 @@ export function HomepageVisualEditor({
         products: categoryProducts,
       };
     });
-
-  const activeSlide =
-    (homepageState.heroSlides || DEFAULT_HERO_SLIDES)[activeSlideIdx] ||
-    (homepageState.heroSlides || DEFAULT_HERO_SLIDES)[0];
-
-  const currentSolutions = homepageState.solutionsShowcase || DEFAULT_SOLUTIONS_SHOWCASE;
-  const activeVertical = (currentSolutions.verticals || DEFAULT_SOLUTIONS_SHOWCASE.verticals)[selectedVerticalIdx] || DEFAULT_SOLUTIONS_SHOWCASE.verticals[0];
-
-  // 3D Orbit Products List
-  const currentOrbitStage = homepageState.orbitStage || DEFAULT_ORBIT_STAGE;
-  const orbitProducts: CinematicProduct[] =
-    currentOrbitStage.products && currentOrbitStage.products.length > 0
-      ? currentOrbitStage.products.map((p, idx) => ({
-          id: p.id || `cine-${idx}`,
-          sku: p.sku || `SKU-${idx + 1}`,
-          name: p.name,
-          category: p.category,
-          subtitle: p.subtitle,
-          description: "",
-          price: p.price,
-          specs: p.specs || [],
-          image: p.image || CINEMATIC_PRODUCTS[idx % CINEMATIC_PRODUCTS.length].image,
-        }))
-      : CINEMATIC_PRODUCTS;
-
-  const numOrbitProds = orbitProducts.length;
-  const activeOrbitIdx =
-    ((Math.floor(orbitProgress + 0.5) % numOrbitProds) + numOrbitProds) % numOrbitProds;
-  const activeOrbitProd = orbitProducts[activeOrbitIdx] || orbitProducts[0];
 
   // 3-Tab Wix Studio Sidebar Navigation State
   type SidebarTab = "sections" | "add_section" | "pages";
@@ -640,7 +832,7 @@ export function HomepageVisualEditor({
     });
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
       const stateToSave: HomepageData = {
@@ -663,7 +855,7 @@ export function HomepageVisualEditor({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [homepageState, orderedSectionIds, hiddenSectionIds, addToast, router]);
 
   const handleReset = () => {
     pushHistorySnapshot("Reset to Published State");
@@ -2859,183 +3051,12 @@ export function HomepageVisualEditor({
                           const orbitData = (instanceData || homepageState.orbitStage || DEFAULT_ORBIT_STAGE) as OrbitStageConfig;
 
                           return (
-                            <section id="sec-cinematic" className="relative w-full py-12 sm:py-20 bg-slate-950 text-white font-sans border-b border-slate-800/80 overflow-hidden min-h-[85vh] flex flex-col justify-between">
-                              {/* Header Area */}
-                              <div className="relative z-30 text-center max-w-3xl mx-auto space-y-2.5 px-4">
-                                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-semibold uppercase tracking-wider shadow-inner">
-                                  <Sparkles className="w-3.5 h-3.5" />
-                                  <InlineEditable
-                                    value={orbitData.eyebrow}
-                                    onChange={(val) =>
-                                      updateSectionContent(secId, { ...orbitData, eyebrow: val }, "Edit 3D Stage Eyebrow")
-                                    }
-                                    label="3D Orbit Section Eyebrow"
-                                  />
-                                </div>
-
-                                <InlineEditable
-                                  as="h2"
-                                  value={orbitData.title}
-                                  onChange={(val) =>
-                                    updateSectionContent(secId, { ...orbitData, title: val }, "Edit 3D Stage Title")
-                                  }
-                                  className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white font-mono"
-                                  label="3D Orbit Section Headline"
-                                />
-
-                                <InlineEditable
-                                  as="p"
-                                  value={orbitData.subtitle}
-                                  onChange={(val) =>
-                                    updateSectionContent(secId, { ...orbitData, subtitle: val }, "Edit 3D Stage Subtitle")
-                                  }
-                                  multiline
-                                  className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto"
-                                  label="3D Orbit Section Subtitle"
-                                />
-                              </div>
-
-                              {/* Central 3D Stage */}
-                              <div className="relative flex-1 w-full my-4 flex items-center justify-center">
-                                <CinematicProductStage
-                                  products={orbitProducts}
-                                  progress={orbitProgress}
-                                  isReducedMotion={false}
-                                />
-                              </div>
-
-                              {/* Bottom Active Orbit Product Bar */}
-                              <div className="relative z-30 max-w-4xl mx-auto w-full text-center space-y-4 px-4">
-                                <div className="space-y-1.5">
-                                  <div className="flex items-center justify-center gap-2 text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">
-                                    <Tag className="w-3.5 h-3.5" />
-                                    <InlineEditable
-                                      value={activeOrbitProd.category}
-                                      onChange={(val) => {
-                                        const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
-                                        prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], category: val };
-                                        updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Category");
-                                      }}
-                                      className="text-amber-400 uppercase tracking-widest font-mono font-bold"
-                                      label={`Product #${activeOrbitIdx + 1} Category Tag`}
-                                    />
-                                    <span className="text-slate-600">•</span>
-                                    <InlineEditable
-                                      value={activeOrbitProd.sku}
-                                      onChange={(val) => {
-                                        const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
-                                        prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], sku: val };
-                                        updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product SKU");
-                                      }}
-                                      className="text-slate-300 font-mono font-bold"
-                                      label={`Product #${activeOrbitIdx + 1} SKU`}
-                                    />
-                                  </div>
-
-                                  <InlineEditable
-                                    as="h3"
-                                    value={activeOrbitProd.name}
-                                    onChange={(val) => {
-                                      const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
-                                      prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], name: val };
-                                      updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Name");
-                                    }}
-                                    className="text-xl sm:text-3xl font-bold text-white tracking-tight"
-                                    label={`Product #${activeOrbitIdx + 1} Name`}
-                                  />
-
-                                  <InlineEditable
-                                    as="p"
-                                    value={activeOrbitProd.subtitle}
-                                    onChange={(val) => {
-                                      const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
-                                      prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], subtitle: val };
-                                      updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Subtitle");
-                                    }}
-                                    className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto"
-                                    label={`Product #${activeOrbitIdx + 1} Subtitle`}
-                                  />
-
-                                  {/* Specifications Rail */}
-                                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                                    <span className="text-base sm:text-lg font-extrabold font-mono text-amber-400 bg-amber-500/10 px-3 py-0.5 rounded-lg border border-amber-500/20">
-                                      <InlineEditable
-                                        value={activeOrbitProd.price}
-                                        onChange={(val) => {
-                                          const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
-                                          prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], price: val };
-                                          updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Price");
-                                        }}
-                                        className="text-amber-400 font-extrabold font-mono"
-                                        label={`Product #${activeOrbitIdx + 1} Price`}
-                                      />
-                                    </span>
-                                    {(activeOrbitProd.specs || []).map((spec, i) => (
-                                      <div
-                                        key={i}
-                                        className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] text-slate-300"
-                                      >
-                                        <CheckCircle className="w-3 h-3 text-emerald-400" />
-                                        <InlineEditable
-                                          value={spec.label}
-                                          onChange={(val) => {
-                                            const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
-                                            const specs = [...(prods[activeOrbitIdx].specs || [])];
-                                            specs[i] = { ...specs[i], label: val };
-                                            prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], specs };
-                                            updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Spec");
-                                          }}
-                                          className="text-slate-400"
-                                          label={`Product #${activeOrbitIdx + 1} Spec #${i + 1} Label`}
-                                        />
-                                        <span className="text-slate-500">:</span>
-                                        <InlineEditable
-                                          value={spec.value}
-                                          onChange={(val) => {
-                                            const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
-                                            const specs = [...(prods[activeOrbitIdx].specs || [])];
-                                            specs[i] = { ...specs[i], value: val };
-                                            prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], specs };
-                                            updateSectionContent(secId, { ...orbitData, products: prods }, "Edit Orbit Product Spec");
-                                          }}
-                                          className="font-semibold text-white"
-                                          label={`Product #${activeOrbitIdx + 1} Spec #${i + 1} Value`}
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                {/* Controls */}
-                                <div className="flex items-center justify-center gap-3 pt-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setIsOrbitPlaying(!isOrbitPlaying)}
-                                    className="p-1.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
-                                  >
-                                    {isOrbitPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                                  </button>
-
-                                  <div className="flex items-center gap-1.5">
-                                    {orbitProducts.map((p, idx) => (
-                                      <button
-                                        key={p.id}
-                                        type="button"
-                                        onClick={() => {
-                                          const currentBase = Math.floor(orbitProgress / numOrbitProds) * numOrbitProds;
-                                          setOrbitProgress(currentBase + idx);
-                                        }}
-                                        className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                                          activeOrbitIdx === idx
-                                            ? "w-8 bg-amber-400 shadow-md shadow-amber-400/40"
-                                            : "w-2 bg-slate-700 hover:bg-slate-500"
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            </section>
+                            <OrbitStageVisualSection
+                              key={secId}
+                              secId={secId}
+                              orbitData={orbitData}
+                              updateSectionContent={updateSectionContent}
+                            />
                           );
                         }
 

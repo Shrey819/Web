@@ -28,6 +28,16 @@ export async function saveSettingsAction(prevState: any, formData: FormData) {
       "tax_rate",
       "cod_enabled",
       "maintenance_mode",
+      "shiprocket_enabled",
+      "shiprocket_email",
+      "shiprocket_password",
+      "shiprocket_pickup_location",
+      "shiprocket_pickup_pincode",
+      "shiprocket_default_weight",
+      "shiprocket_default_length",
+      "shiprocket_default_breadth",
+      "shiprocket_default_height",
+      "shiprocket_auto_sync",
     ];
 
     for (const key of keys) {

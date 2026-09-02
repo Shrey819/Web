@@ -61,7 +61,8 @@ export function EditableImage({
   }, []);
 
   useEffect(() => {
-    setTempUrl(src || "");
+    const nextSrc = src || "";
+    setTempUrl((prev) => (prev !== nextSrc ? nextSrc : prev));
   }, [src]);
 
   useEffect(() => {

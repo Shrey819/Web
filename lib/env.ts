@@ -9,6 +9,9 @@ const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
+  SHIPROCKET_EMAIL: z.string().optional(),
+  SHIPROCKET_PASSWORD: z.string().optional(),
+  SHIPROCKET_API_BASE: z.string().optional(),
 });
 
 export const env = envSchema.parse({
@@ -20,4 +23,7 @@ export const env = envSchema.parse({
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+  SHIPROCKET_EMAIL: process.env.SHIPROCKET_EMAIL,
+  SHIPROCKET_PASSWORD: process.env.SHIPROCKET_PASSWORD,
+  SHIPROCKET_API_BASE: process.env.SHIPROCKET_API_BASE,
 });

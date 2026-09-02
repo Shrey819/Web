@@ -89,21 +89,34 @@ export function GoogleSignInButton({
           }),
         });
 
-        const data = await res.json();
+        let data: any = null;
+        const contentType = res.headers.get("content-type") || "";
 
-        if (res.ok && data.success && data.user) {
+        if (contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          const rawText = await res.text();
+          console.error("Non-JSON auth response:", res.status, rawText);
+          throw new Error(
+            res.status === 404
+              ? "Authentication endpoint not found on server."
+              : `Server error (${res.status}). Please check server logs.`
+          );
+        }
+
+        if (res.ok && data?.success && data?.user) {
           login(data.user);
           addToast("success", "Welcome!", `Signed in as ${data.user.name}`);
           const destination = data.returnUrl || returnUrl || "/profile";
           router.push(destination);
           router.refresh();
         } else {
-          const errorMsg = data.error || "Google authentication failed on the server.";
+          const errorMsg = data?.error || "Google authentication failed on the server.";
           addToast("error", "Sign In Failed", errorMsg);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Google auth request error:", err);
-        addToast("error", "Network Error", "Unable to connect to authentication server.");
+        addToast("error", "Sign In Error", err?.message || "Unable to connect to authentication server.");
       } finally {
         setIsLoading(false);
       }

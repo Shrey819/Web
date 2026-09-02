@@ -175,11 +175,15 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
   };
 
   const handleAddToCart = () => {
-    const optionSummary = Object.values(selectedOptions).filter(Boolean).join(" / ");
+    const formattedOptions = Object.entries(selectedOptions)
+      .filter(([k, v]) => v && v !== "undefined" && v !== "null")
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(", ");
+
     const cartProduct = {
       ...product,
       id: product.id,
-      name: optionSummary ? `${product.name} (${optionSummary})` : product.name,
+      name: formattedOptions ? `${product.name} (${formattedOptions})` : product.name,
       slug: product.slug,
       basePrice: activePrice,
       images: [{ url: activeVariant?.mediaUrl || images[selectedImageIndex]?.url || images[0].url }],
@@ -188,7 +192,13 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
     addItem(
       cartProduct,
       quantity,
-      activeVariant ? ({ ...activeVariant, price: activePrice } as any) : undefined
+      activeVariant
+        ? ({
+            ...activeVariant,
+            name: formattedOptions || (activeVariant as any).name || "Custom Option",
+            price: activePrice,
+          } as any)
+        : undefined
     );
     addToast("success", "Added to Cart", `${quantity}x ${cartProduct.name} added.`);
   };

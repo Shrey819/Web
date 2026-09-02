@@ -41,10 +41,13 @@ export const useUserStore = create<UserStoreState>()(
           set({ isSyncing: true });
           const res = await fetch("/api/auth/session", { cache: "no-store", credentials: "same-origin" });
           if (res.ok) {
-            const data = await res.json();
-            if (data?.authenticated && data?.user) {
-              set({ user: data.user, isLoggedIn: true, isSyncing: false });
-              return data.user;
+            const contentType = res.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
+              const data = await res.json();
+              if (data?.authenticated && data?.user) {
+                set({ user: data.user, isLoggedIn: true, isSyncing: false });
+                return data.user;
+              }
             }
           }
           // If server reports unauthenticated, clear local state

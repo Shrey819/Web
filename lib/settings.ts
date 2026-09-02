@@ -18,6 +18,16 @@ export interface SystemSettings {
   tax_rate: number;
   cod_enabled: boolean;
   maintenance_mode: boolean;
+  shiprocket_enabled: boolean;
+  shiprocket_email: string;
+  shiprocket_password: string;
+  shiprocket_pickup_location: string;
+  shiprocket_pickup_pincode: string;
+  shiprocket_default_weight: number;
+  shiprocket_default_length: number;
+  shiprocket_default_breadth: number;
+  shiprocket_default_height: number;
+  shiprocket_auto_sync: boolean;
 }
 
 export const DEFAULT_SETTINGS: SystemSettings = {
@@ -38,6 +48,16 @@ export const DEFAULT_SETTINGS: SystemSettings = {
   tax_rate: 18,
   cod_enabled: true,
   maintenance_mode: false,
+  shiprocket_enabled: true,
+  shiprocket_email: "",
+  shiprocket_password: "",
+  shiprocket_pickup_location: "Primary",
+  shiprocket_pickup_pincode: "360004",
+  shiprocket_default_weight: 0.5,
+  shiprocket_default_length: 10,
+  shiprocket_default_breadth: 10,
+  shiprocket_default_height: 10,
+  shiprocket_auto_sync: false,
 };
 
 export async function getSystemSettings(): Promise<SystemSettings> {
@@ -69,6 +89,16 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       tax_rate: Number(settings.tax_rate ?? DEFAULT_SETTINGS.tax_rate),
       cod_enabled: settings.cod_enabled !== "false",
       maintenance_mode: settings.maintenance_mode === "true",
+      shiprocket_enabled: settings.shiprocket_enabled !== "false",
+      shiprocket_email: settings.shiprocket_email || process.env.SHIPROCKET_EMAIL || DEFAULT_SETTINGS.shiprocket_email,
+      shiprocket_password: settings.shiprocket_password || process.env.SHIPROCKET_PASSWORD || DEFAULT_SETTINGS.shiprocket_password,
+      shiprocket_pickup_location: settings.shiprocket_pickup_location || DEFAULT_SETTINGS.shiprocket_pickup_location,
+      shiprocket_pickup_pincode: settings.shiprocket_pickup_pincode || DEFAULT_SETTINGS.shiprocket_pickup_pincode,
+      shiprocket_default_weight: Number(settings.shiprocket_default_weight ?? DEFAULT_SETTINGS.shiprocket_default_weight),
+      shiprocket_default_length: Number(settings.shiprocket_default_length ?? DEFAULT_SETTINGS.shiprocket_default_length),
+      shiprocket_default_breadth: Number(settings.shiprocket_default_breadth ?? DEFAULT_SETTINGS.shiprocket_default_breadth),
+      shiprocket_default_height: Number(settings.shiprocket_default_height ?? DEFAULT_SETTINGS.shiprocket_default_height),
+      shiprocket_auto_sync: settings.shiprocket_auto_sync === "true",
     };
   } catch (error) {
     console.error("Failed to fetch system settings:", error);

@@ -4,7 +4,7 @@ import { GoogleAuthPayload } from "@/types";
 let oauthClientInstance: OAuth2Client | null = null;
 
 function getOAuth2Client(): OAuth2Client {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   if (!clientId) {
     throw new Error("GOOGLE_CLIENT_ID is not configured in server environment variables.");
   }
@@ -23,7 +23,7 @@ export async function verifyGoogleIdToken(idToken: string): Promise<GoogleAuthPa
     throw new Error("Invalid or missing Google ID token.");
   }
 
-  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   if (!clientId) {
     throw new Error("Google Client ID is not configured on the server.");
   }

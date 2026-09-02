@@ -45,6 +45,7 @@ export function CartDrawer() {
   const subtotal = getSubtotal();
   const discount = getDiscountAmount();
   const total = getTotal();
+  const totalUnits = items.reduce((sum, item) => sum + item.quantity, 0);
   const freeShippingThreshold = 40000;
   const progressPercent = Math.min(100, (subtotal / freeShippingThreshold) * 100);
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
@@ -87,7 +88,7 @@ export function CartDrawer() {
                 <div className="flex items-center gap-2.5">
                   <ShoppingBag className="w-5 h-5 text-sky-600" />
                   <h3 className="font-bold text-lg text-slate-900 tracking-tight">
-                    Industrial Cart ({items.length})
+                    Industrial Cart ({totalUnits} {totalUnits === 1 ? "Item" : "Items"})
                   </h3>
                 </div>
                 <button
@@ -175,7 +176,8 @@ export function CartDrawer() {
                               onClick={closeCart}
                               className="font-bold text-sm text-slate-900 group-hover/item:text-sky-600 line-clamp-1 leading-snug"
                             >
-                              {item.product.name} {item.variant && `- ${item.variant.name}`}
+                              {(item.product.name || "Product").replace(/\s*-\s*undefined/gi, "")}
+                              {item.variant?.name && item.variant.name !== "undefined" && ` - ${item.variant.name}`}
                             </Link>
                             <button
                               onClick={() => removeItem(itemId)}

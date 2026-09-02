@@ -29,7 +29,8 @@ export function InlineEditable({
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    setCurrentText(value || "");
+    const nextVal = value || "";
+    setCurrentText((prev) => (prev !== nextVal ? nextVal : prev));
   }, [value]);
 
   useEffect(() => {

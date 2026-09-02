@@ -404,31 +404,33 @@ export function EditableLink({
 
   // Synchronize state from props
   useEffect(() => {
-    setTempLabel(label || "");
-    setTempHref(href || "");
-    detectActionType(href || "");
-    setShowErrorWarning(false);
+    const nextLabel = label || "";
+    const nextHref = href || "";
+    setTempLabel((prev) => (prev !== nextLabel ? nextLabel : prev));
+    setTempHref((prev) => (prev !== nextHref ? nextHref : prev));
+    detectActionType(nextHref);
+    setShowErrorWarning((prev) => (prev ? false : prev));
   }, [label, href]);
 
   // Detect action type from current href
   const detectActionType = (url: string) => {
+    let nextType: ActionType = "custom";
     if (!url) {
-      setActionType("page");
+      nextType = "page";
     } else if (url.startsWith("mailto:")) {
-      setActionType("email");
+      nextType = "email";
     } else if (url.startsWith("tel:")) {
-      setActionType("phone");
+      nextType = "phone";
     } else if (url.startsWith("#")) {
-      setActionType("anchor");
+      nextType = "anchor";
     } else if (url.startsWith("http://") || url.startsWith("https://")) {
-      setActionType("external");
+      nextType = "external";
     } else if (url.endsWith(".pdf") || url.includes("/download")) {
-      setActionType("download");
+      nextType = "download";
     } else if (url.startsWith("/")) {
-      setActionType("page");
-    } else {
-      setActionType("custom");
+      nextType = "page";
     }
+    setActionType((prev) => (prev !== nextType ? nextType : prev));
   };
 
   useEffect(() => {

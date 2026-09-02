@@ -35,6 +35,7 @@ export default function FullCartPage() {
   const subtotal = getSubtotal();
   const discount = getDiscountAmount();
   const total = getTotal();
+  const totalUnits = items.reduce((sum, item) => sum + item.quantity, 0);
   const freeShippingThreshold = 40000;
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
   const progressPercent = Math.min(100, (subtotal / freeShippingThreshold) * 100);
@@ -64,7 +65,7 @@ export default function FullCartPage() {
         </nav>
 
         <h1 className="text-3xl sm:text-4xl font-mono font-extrabold text-slate-900 mb-8">
-          Shopping Cart ({items.length} Items)
+          Shopping Cart ({totalUnits} {totalUnits === 1 ? "Item" : "Items"})
         </h1>
 
         {items.length === 0 ? (
@@ -114,14 +115,14 @@ export default function FullCartPage() {
               </div>
 
               {/* Items List */}
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-md divide-y divide-slate-100 overflow-hidden">
+              <div className="border border-slate-200 rounded-3xl overflow-hidden bg-white shadow-sm divide-y divide-slate-100">
                 {items.map((item) => {
                   const itemId = item.variant ? `${item.product.id}-${item.variant.id}` : item.product.id;
                   const itemSku = item.variant ? item.variant.sku : item.product.sku;
                   const itemPrice = item.variant ? item.variant.price : item.product.basePrice;
                   
                   return (
-                  <div key={itemId} className="p-5 flex flex-col sm:flex-row items-center gap-4">
+                  <div key={itemId} className="p-6 flex flex-col sm:flex-row items-center gap-6">
                     <div className="w-20 h-20 relative rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 shrink-0">
                       <Image src={item.product.images[0]?.url || "/placeholder.png"} alt={item.product.name} fill className="object-cover" unoptimized />
                     </div>
@@ -138,7 +139,8 @@ export default function FullCartPage() {
                       </div>
 
                       <Link href={`/product/${item.product.slug}`} className="font-bold text-sm text-slate-900 hover:text-sky-600 line-clamp-1">
-                        {item.product.name} {item.variant && `- ${item.variant.name}`}
+                        {(item.product.name || "Product").replace(/\s*-\s*undefined/gi, "")}
+                        {item.variant?.name && item.variant.name !== "undefined" && ` - ${item.variant.name}`}
                       </Link>
 
                       <div className="text-xs text-emerald-600 font-medium">
