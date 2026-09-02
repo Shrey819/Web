@@ -12,6 +12,10 @@ const envSchema = z.object({
   SHIPROCKET_EMAIL: z.string().optional(),
   SHIPROCKET_PASSWORD: z.string().optional(),
   SHIPROCKET_API_BASE: z.string().optional(),
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+  NEXT_PUBLIC_RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
 });
 
 export const env = envSchema.parse({
@@ -26,4 +30,8 @@ export const env = envSchema.parse({
   SHIPROCKET_EMAIL: process.env.SHIPROCKET_EMAIL,
   SHIPROCKET_PASSWORD: process.env.SHIPROCKET_PASSWORD,
   SHIPROCKET_API_BASE: process.env.SHIPROCKET_API_BASE,
+  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
+  RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
+  NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+  RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
 });

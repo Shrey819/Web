@@ -492,7 +492,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
               <input
                 type="number"
                 name="min_order_value"
-                defaultValue={initialSettings.min_order_value || "1000"}
+                defaultValue={initialSettings.min_order_value || "1"}
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900"
               />
             </div>

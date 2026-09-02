@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { createOrderAction } from "@/app/actions/order";
+import { createRazorpayOrderAction, verifyAndCreatePrepaidOrderAction } from "@/app/actions/razorpay";
 import { checkPincodeServiceabilityAction } from "@/app/actions/shiprocket";
 import { getUserAddressesAction, AddressItem } from "@/app/actions/address";
 import { SystemSettings } from "@/lib/settings";
@@ -36,6 +37,27 @@ import { PhoneInput } from "@/components/ui/PhoneInput";
 import { AddressLocationSelector } from "@/components/ui/AddressLocationSelector";
 import { validatePincodeWithState } from "@/lib/indiaLocations";
 import { DeliveryRangeResult } from "@/lib/shiprocket";
+
+function loadRazorpayCheckoutScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+
+    const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(true));
+      existingScript.addEventListener("error", () => resolve(false));
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
 
 interface CheckoutClientProps {
   settings: SystemSettings;
@@ -107,6 +129,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
   useEffect(() => {
     setMounted(true);
     syncLivePrices();
+    loadRazorpayCheckoutScript();
 
     const fetchAddresses = async () => {
       setLoadingAddresses(true);
@@ -347,7 +370,191 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
       }
     }
 
+    const sanitizedItems = items.map((item) => {
+      const varId = item.variant?.id;
+      const cleanVarId = varId && varId !== "undefined" && varId !== "null" ? varId : undefined;
+      const varName = item.variant?.name && item.variant.name !== "undefined" ? item.variant.name : "";
+      const baseName = (item.product.name || "Industrial Hardware")
+        .replace(/\s*-\s*undefined/gi, "")
+        .replace(/\s*\(undefined\)/gi, "")
+        .trim();
+      const cleanName = varName ? `${baseName} (${varName})` : baseName;
+
+      return {
+        productId: item.product.id,
+        name: cleanName,
+        sku: item.variant?.sku || item.product.sku || `SKU-${item.product.id}`,
+        price: item.variant?.price ?? item.product.basePrice ?? 0,
+        quantity: item.quantity,
+        variantId: cleanVarId,
+      };
+    });
+
+    const handleOrderSuccess = (orderRes: any, methodLabel: string, reference: string) => {
+      try {
+        // Save placed address to local storage addresses array for quick repeat access
+        const localAddrs: AddressItem[] = JSON.parse(localStorage.getItem("om_saved_addresses") || "[]");
+        const newLocalAddr: AddressItem = {
+          id: `local_addr_${Date.now()}`,
+          userId: user?.id || `user_${formData.phone.replace(/\D/g, "")}`,
+          fullName: formData.fullName,
+          companyName: formData.companyName,
+          email: formData.email,
+          phone: formData.phone,
+          street: formData.street,
+          city: formData.city,
+          state: formData.state,
+          zip: formData.zip,
+          country: formData.country,
+          type: formData.addressType,
+          isDefault: true,
+        };
+
+        const filtered = localAddrs.filter((a) => !(a.street === newLocalAddr.street && a.zip === newLocalAddr.zip));
+        filtered.unshift(newLocalAddr);
+        localStorage.setItem("om_saved_addresses", JSON.stringify(filtered.slice(0, 10)));
+
+        // Save placed order id to local placed orders
+        const storedOrders = JSON.parse(localStorage.getItem("om-automation-placed-orders") || "[]");
+        if (!storedOrders.includes(orderRes.orderId)) {
+          storedOrders.push(orderRes.orderId);
+          localStorage.setItem("om-automation-placed-orders", JSON.stringify(storedOrders));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      setOrderDetails({
+        orderId: orderRes.orderId,
+        total: orderRes.total || total,
+        paymentMethodLabel: orderRes.paymentMethodLabel || methodLabel,
+        paymentReference: orderRes.paymentReference || reference || orderRes.orderId,
+        carrier: orderRes.carrier || pincodeStatus?.courierName || "Express Regional Logistics",
+        deliveryRange: orderRes.deliveryRange || pincodeStatus?.deliveryRange,
+      });
+      setOrderPlaced(true);
+      clearCart();
+      addToast("success", "Order Placed & Confirmed!", `Order ${orderRes.orderId} created successfully.`);
+    };
+
     setIsSubmitting(true);
+
+    // ==========================================
+    // 1. PREPAID (Razorpay Online Checkout Modal)
+    // ==========================================
+    if (formData.paymentMethod === "prepaid") {
+      try {
+        const scriptLoaded = await loadRazorpayCheckoutScript();
+        if (!scriptLoaded || !(window as any).Razorpay) {
+          addToast(
+            "error",
+            "Payment Gateway Error",
+            "Unable to load Razorpay checkout SDK. Please check your internet connection."
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        const rzpOrderRes = await createRazorpayOrderAction({
+          amount: total,
+          currency: "INR",
+          notes: {
+            customerName: formData.fullName,
+            customerEmail: formData.email,
+            customerPhone: formData.phone,
+          },
+        });
+
+        if (!rzpOrderRes.success || !rzpOrderRes.orderId) {
+          addToast("error", "Payment Order Error", rzpOrderRes.error || "Failed to initialize payment gateway order.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        const options = {
+          key: rzpOrderRes.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          amount: rzpOrderRes.amount,
+          currency: rzpOrderRes.currency || "INR",
+          name: "Om Industrial Automation",
+          description: `Payment for Hardware Order`,
+          order_id: rzpOrderRes.orderId,
+          prefill: {
+            name: formData.fullName,
+            email: formData.email,
+            contact: formData.phone.replace(/[^\d]/g, "").slice(-10),
+          },
+          theme: {
+            color: "#0284c7",
+          },
+          handler: async function (response: {
+            razorpay_payment_id: string;
+            razorpay_order_id: string;
+            razorpay_signature: string;
+          }) {
+            setIsSubmitting(true);
+            try {
+              const verifyRes = await verifyAndCreatePrepaidOrderAction({
+                userId: user?.id,
+                fullName: formData.fullName,
+                companyName: formData.companyName,
+                email: formData.email,
+                phone: formData.phone,
+                street: formData.street,
+                city: formData.city,
+                state: formData.state,
+                zip: formData.zip,
+                country: formData.country,
+                addressType: formData.addressType,
+                saveAddress: formData.saveAddress,
+                items: sanitizedItems,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              });
+
+              if (verifyRes.success && verifyRes.orderId) {
+                handleOrderSuccess(verifyRes, "Prepaid (Razorpay)", response.razorpay_payment_id);
+              } else {
+                addToast("error", "Payment Verification Failed", verifyRes.error || "Could not verify payment signature.");
+              }
+            } catch (err: any) {
+              console.error("Payment verification error:", err);
+              addToast("error", "Order Error", "Failed to finalize order after payment.");
+            } finally {
+              setIsSubmitting(false);
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              setIsSubmitting(false);
+              addToast("info", "Payment Cancelled", "You closed the payment modal. Your cart items are preserved.");
+            },
+          },
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on("payment.failed", function (failResponse: any) {
+          console.error("Razorpay payment failed:", failResponse?.error);
+          addToast(
+            "error",
+            "Payment Failed",
+            failResponse?.error?.description || "Payment was declined by bank or UPI provider."
+          );
+          setIsSubmitting(false);
+        });
+
+        rzp.open();
+      } catch (err: any) {
+        console.error("Razorpay initiation error:", err);
+        addToast("error", "Payment Gateway Error", err?.message || "Failed to launch Razorpay payment modal.");
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // ==========================================
+    // 2. CASH ON DELIVERY (COD)
+    // ==========================================
     try {
       const res = await createOrderAction({
         userId: user?.id,
@@ -365,72 +572,11 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
         paymentMethod: formData.paymentMethod,
         poNumber: formData.poNumber,
         cardNumber: formData.cardNumber,
-        items: items.map((item) => {
-          const varId = item.variant?.id;
-          const cleanVarId = varId && varId !== "undefined" && varId !== "null" ? varId : undefined;
-          const varName = item.variant?.name && item.variant.name !== "undefined" ? item.variant.name : "";
-          const baseName = (item.product.name || "Industrial Hardware")
-            .replace(/\s*-\s*undefined/gi, "")
-            .replace(/\s*\(undefined\)/gi, "")
-            .trim();
-          const cleanName = varName ? `${baseName} (${varName})` : baseName;
-
-          return {
-            productId: item.product.id,
-            name: cleanName,
-            sku: item.variant?.sku || item.product.sku || `SKU-${item.product.id}`,
-            price: item.variant?.price ?? item.product.basePrice ?? 0,
-            quantity: item.quantity,
-            variantId: cleanVarId,
-          };
-        }),
+        items: sanitizedItems,
       });
 
       if (res.success && res.orderId) {
-        try {
-          // Save placed address to local storage addresses array for quick repeat access
-          const localAddrs: AddressItem[] = JSON.parse(localStorage.getItem("om_saved_addresses") || "[]");
-          const newLocalAddr: AddressItem = {
-            id: `local_addr_${Date.now()}`,
-            userId: user?.id || `user_${formData.phone.replace(/\D/g, "")}`,
-            fullName: formData.fullName,
-            companyName: formData.companyName,
-            email: formData.email,
-            phone: formData.phone,
-            street: formData.street,
-            city: formData.city,
-            state: formData.state,
-            zip: formData.zip,
-            country: formData.country,
-            type: formData.addressType,
-            isDefault: true,
-          };
-
-          const filtered = localAddrs.filter((a) => !(a.street === newLocalAddr.street && a.zip === newLocalAddr.zip));
-          filtered.unshift(newLocalAddr);
-          localStorage.setItem("om_saved_addresses", JSON.stringify(filtered.slice(0, 10)));
-
-          // Save placed order id to local placed orders
-          const storedOrders = JSON.parse(localStorage.getItem("om-automation-placed-orders") || "[]");
-          if (!storedOrders.includes(res.orderId)) {
-            storedOrders.push(res.orderId);
-            localStorage.setItem("om-automation-placed-orders", JSON.stringify(storedOrders));
-          }
-        } catch (e) {
-          console.error(e);
-        }
-
-        setOrderDetails({
-          orderId: res.orderId,
-          total: res.total || total,
-          paymentMethodLabel: res.paymentMethodLabel || (formData.paymentMethod === "cod" ? "Cash on Delivery" : "Purchase Order"),
-          paymentReference: res.paymentReference || res.orderId,
-          carrier: res.carrier || pincodeStatus?.courierName || "Express Regional Logistics",
-          deliveryRange: res.deliveryRange || pincodeStatus?.deliveryRange,
-        });
-        setOrderPlaced(true);
-        clearCart();
-        addToast("success", "Order Placed & Saved!", `Order ${res.orderId} created in New status.`);
+        handleOrderSuccess(res, "Cash on Delivery", res.paymentReference || res.orderId);
       } else {
         addToast("error", "Order Placement Failed", res.error || "Could not save order.");
       }
@@ -1085,15 +1231,28 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                     <button
                       type="submit"
                       disabled={isSubmitting || isBelowMinOrder || settings.maintenance_mode}
-                      className="w-2/3 py-3.5 rounded-full bg-gradient-to-r from-sky-600 to-emerald-600 hover:from-sky-500 hover:to-emerald-500 text-white font-bold shadow-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+                      className={`w-2/3 py-3.5 rounded-full font-bold shadow-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer ${
+                        formData.paymentMethod === "prepaid"
+                          ? "bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white"
+                          : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white"
+                      }`}
                     >
                       {isSubmitting ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin text-white" />
-                          <span>Saving Order to Database...</span>
+                          <span>
+                            {formData.paymentMethod === "prepaid"
+                              ? "Opening Payment Gateway..."
+                              : "Saving Order to Database..."}
+                          </span>
+                        </>
+                      ) : formData.paymentMethod === "prepaid" ? (
+                        <>
+                          <Zap className="w-4 h-4 fill-white/20" />
+                          <span>Pay with Razorpay →</span>
                         </>
                       ) : (
-                        <span>Confirm & Place Order</span>
+                        <span>Confirm & Place Order (COD)</span>
                       )}
                     </button>
                   </div>

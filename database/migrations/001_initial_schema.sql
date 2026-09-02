@@ -312,9 +312,13 @@ CREATE TABLE IF NOT EXISTS "Payment" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "method" TEXT NOT NULL,
+    "originalMethod" TEXT,
     "status" TEXT NOT NULL DEFAULT 'pending',
     "amount" INTEGER NOT NULL,
     "reference" TEXT,
+    "razorpayOrderId" TEXT,
+    "razorpayPaymentId" TEXT,
+    "razorpaySignature" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Payment_pkey" PRIMARY KEY ("id")

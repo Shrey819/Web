@@ -17,7 +17,7 @@ export default async function AdminSettingsPage() {
     sub_email_2: "padiahiren24565@gmail.com",
     currency_symbol: "₹",
     gst_number: "27AAAAA0000A1Z5",
-    min_order_value: "1000",
+    min_order_value: "1",
     tax_rate: "18",
     cod_enabled: "true",
     maintenance_mode: "false",
