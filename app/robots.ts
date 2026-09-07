@@ -1,14 +1,30 @@
 import { MetadataRoute } from "next";
+import { getSiteUrl } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://omautomation.com";
+  const siteUrl = getSiteUrl();
 
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/profile", "/orders", "/checkout"],
+      disallow: [
+        "/admin",
+        "/admin/*",
+        "/api",
+        "/api/*",
+        "/cart",
+        "/checkout",
+        "/checkout/*",
+        "/profile",
+        "/profile/*",
+        "/orders",
+        "/orders/*",
+        "/login",
+        "/register",
+        "/forgot-password",
+      ],
     },
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

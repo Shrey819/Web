@@ -270,6 +270,8 @@ export async function getActiveProductBySlug(slug: string): Promise<any | null> 
       hasVariants: variants.length > 0,
       variants,
       infoSections,
+      seoTitle: p.seoTitle || null,
+      seoDesc: p.seoDesc || null,
       rating: 4.9,
       reviewCount: 42
     };
@@ -317,4 +319,55 @@ export async function getStorefrontCategoryBySlug(slug: string): Promise<Dynamic
   }
 
   return null;
+}
+
+export interface SitemapEntry {
+  slug: string;
+  updatedAt?: string;
+}
+
+export interface SitemapData {
+  products: SitemapEntry[];
+  categories: SitemapEntry[];
+  brands: string[];
+}
+
+export async function getSitemapData(): Promise<SitemapData> {
+  try {
+    const [prodsRes, catsRes, brandsRes] = await Promise.all([
+      query(`
+        SELECT slug, COALESCE("updatedAt", "createdAt") as "updatedAt"
+        FROM "Product"
+        WHERE (status = 'ACTIVE' OR COALESCE(visible, true) = true) AND slug IS NOT NULL
+        ORDER BY "updatedAt" DESC
+      `),
+      query(`
+        SELECT slug, COALESCE("updatedAt", "createdAt") as "updatedAt"
+        FROM "Category"
+        WHERE COALESCE(status, 'active') != 'hidden' AND slug IS NOT NULL
+        ORDER BY name ASC
+      `),
+      query(`
+        SELECT DISTINCT name
+        FROM "Brand"
+        WHERE name IS NOT NULL AND TRIM(name) != ''
+        ORDER BY name ASC
+      `)
+    ]);
+
+    return {
+      products: prodsRes.rows.map((r: any) => ({
+        slug: r.slug,
+        updatedAt: r.updatedAt ? new Date(r.updatedAt).toISOString() : new Date().toISOString()
+      })),
+      categories: catsRes.rows.map((r: any) => ({
+        slug: r.slug,
+        updatedAt: r.updatedAt ? new Date(r.updatedAt).toISOString() : new Date().toISOString()
+      })),
+      brands: brandsRes.rows.map((r: any) => r.name)
+    };
+  } catch (error) {
+    console.error("Failed to fetch sitemap data:", error);
+    return { products: [], categories: [], brands: [] };
+  }
 }
