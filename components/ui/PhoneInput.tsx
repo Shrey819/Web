@@ -49,19 +49,23 @@ export function PhoneInput({ value, onChange, required = true, className = "" }:
   // Sync internal state when parent value changes or initializes
   useEffect(() => {
     if (value) {
-      const matched = COUNTRIES.find((c) => value.startsWith(c.prefix));
-      if (matched) {
-        setSelectedCountry(matched);
-        const digitsOnly = value.replace(matched.prefix, "").replace(/[^\d]/g, "").slice(0, matched.maxDigits);
-        setNationalNumber(digitsOnly);
-      } else {
-        const digitsOnly = value.replace(/[^\d]/g, "").slice(0, defaultCountry.maxDigits);
-        setNationalNumber(digitsOnly);
+      const matched = COUNTRIES.find((c) => value.startsWith(c.prefix)) || defaultCountry;
+      setSelectedCountry(matched);
+
+      let digits = value.replace(/\D/g, "");
+      const prefixDigits = matched.prefix.replace(/\D/g, "");
+
+      // If prefix was repeated or included in digits and length exceeds maxDigits
+      while (digits.length > matched.maxDigits && prefixDigits && digits.startsWith(prefixDigits)) {
+        digits = digits.slice(prefixDigits.length);
       }
+
+      const digitsOnly = digits.slice(0, matched.maxDigits);
+      setNationalNumber((prev) => (prev !== digitsOnly ? digitsOnly : prev));
     } else {
-      setNationalNumber("");
+      setNationalNumber((prev) => (prev !== "" ? "" : prev));
     }
-  }, []);
+  }, [value, defaultCountry]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

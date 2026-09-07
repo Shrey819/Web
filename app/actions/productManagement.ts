@@ -237,53 +237,63 @@ export interface BrandItem {
   id: string;
   name: string;
   slug?: string;
+  logo?: string | null;
+  country?: string | null;
+  tagline?: string | null;
+  websiteUrl?: string | null;
   productCount?: number;
 }
 
-export async function getGlobalBrands(): Promise<{ success: boolean; brands: BrandItem[]; error?: string }> {
+export async function getGlobalBrands(): Promise<{ success: boolean; brands: BrandItem[]; unbrandedCount: number; error?: string }> {
   try {
     const res = await query(`
       SELECT 
         b."id", 
         b."name", 
         b."slug",
-        (SELECT COUNT(DISTINCT "id") FROM "Product" WHERE LOWER("brand") = LOWER(b."name"))::int as "productCount"
+        b."logo",
+        b."country",
+        b."tagline",
+        b."websiteUrl",
+        (
+          SELECT COUNT(DISTINCT p."id") 
+          FROM "Product" p 
+          WHERE p."brandId" = b."id" 
+             OR (p."brandId" IS NULL AND LOWER(TRIM(p."brand")) = LOWER(TRIM(b."name")))
+        )::int as "productCount"
       FROM "Brand" b
+      WHERE b."slug" != 'default-brand' AND b."id" != 'default-brand'
       ORDER BY b."name" ASC
     `);
 
-    const brandsMap = new Map<string, BrandItem>();
-    (res.rows as BrandItem[]).forEach((b) => brandsMap.set(b.name.toLowerCase().trim(), b));
-
-    const distinctProds = await query(`
-      SELECT DISTINCT TRIM("brand") as "name" 
-      FROM "Product" 
-      WHERE "brand" IS NOT NULL AND TRIM("brand") != ''
+    // Get count of unbranded products
+    const unbrandedRes = await query(`
+      SELECT COUNT(DISTINCT "id")::int as "unbrandedCount"
+      FROM "Product"
+      WHERE ("brandId" IS NULL OR "brandId" = '' OR "brandId" = 'default-brand' OR "brandId" NOT IN (SELECT id FROM "Brand"))
     `);
 
-    for (const row of distinctProds.rows as any[]) {
-      const name = String(row.name).trim();
-      const key = name.toLowerCase();
-      if (!brandsMap.has(key)) {
-        const genId = "brand_" + key.replace(/[^a-z0-9]/g, "_");
-        brandsMap.set(key, {
-          id: genId,
-          name: name,
-          slug: key.replace(/[^a-z0-9]+/g, "-"),
-          productCount: 1,
-        });
-      }
-    }
+    const unbrandedCount = Number(unbrandedRes.rows[0]?.unbrandedCount || 0);
 
-    const result = Array.from(brandsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-    return { success: true, brands: result };
+    return { 
+      success: true, 
+      brands: res.rows as BrandItem[],
+      unbrandedCount
+    };
   } catch (error: unknown) {
+    console.error("Failed to load brands:", error);
     const message = error instanceof Error ? error.message : "Failed to load brands";
-    return { success: false, error: message, brands: [] };
+    return { success: false, error: message, brands: [], unbrandedCount: 0 };
   }
 }
 
-export async function createBrand(name: string): Promise<{ success: boolean; id?: string; name?: string; error?: string }> {
+export async function createBrand(
+  name: string,
+  logo?: string | null,
+  country?: string | null,
+  tagline?: string | null,
+  websiteUrl?: string | null
+): Promise<{ success: boolean; id?: string; name?: string; error?: string }> {
   try {
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: "Brand name cannot be empty" };
@@ -292,12 +302,20 @@ export async function createBrand(name: string): Promise<{ success: boolean; id?
     const id = "brand_" + Date.now();
 
     await query(`
-      INSERT INTO "Brand" ("id", "name", "slug", "status", "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      ON CONFLICT ("slug") DO UPDATE SET "name" = $2
-    `, [id, trimmed, slug]);
+      INSERT INTO "Brand" ("id", "name", "slug", "logo", "country", "tagline", "websiteUrl", "status", "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT ("slug") DO UPDATE SET 
+        "name" = $2,
+        "logo" = COALESCE($4, "Brand"."logo"),
+        "country" = COALESCE($5, "Brand"."country"),
+        "tagline" = COALESCE($6, "Brand"."tagline"),
+        "websiteUrl" = COALESCE($7, "Brand"."websiteUrl"),
+        "updatedAt" = CURRENT_TIMESTAMP
+    `, [id, trimmed, slug, logo?.trim() || null, country?.trim() || null, tagline?.trim() || null, websiteUrl?.trim() || null]);
 
     revalidatePath("/admin/products");
+    revalidatePath("/admin/categories");
+    revalidatePath("/brands");
     return { success: true, id, name: trimmed };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to create brand";
@@ -305,24 +323,35 @@ export async function createBrand(name: string): Promise<{ success: boolean; id?
   }
 }
 
-export async function renameBrand(
+export async function updateBrand(
   id: string,
-  newName: string,
+  name: string,
+  logo?: string | null,
+  country?: string | null,
+  tagline?: string | null,
+  websiteUrl?: string | null,
   oldName?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const trimmed = newName.trim();
+    const trimmed = name.trim();
     if (!trimmed) return { success: false, error: "Brand name cannot be empty" };
     if (trimmed.length > 50) return { success: false, error: "Brand name cannot exceed 50 characters" };
     const newSlug = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
     await query(`
       UPDATE "Brand" 
-      SET "name" = $1, "slug" = $2, "updatedAt" = CURRENT_TIMESTAMP 
-      WHERE "id" = $3
-    `, [trimmed, newSlug, id]);
+      SET 
+        "name" = $1, 
+        "slug" = $2, 
+        "logo" = $3,
+        "country" = $4,
+        "tagline" = $5,
+        "websiteUrl" = $6,
+        "updatedAt" = CURRENT_TIMESTAMP 
+      WHERE "id" = $7
+    `, [trimmed, newSlug, logo?.trim() || null, country?.trim() || null, tagline?.trim() || null, websiteUrl?.trim() || null, id]);
 
-    if (oldName && oldName.trim()) {
+    if (oldName && oldName.trim() && oldName.trim().toLowerCase() !== trimmed.toLowerCase()) {
       await query(`
         UPDATE "Product" 
         SET "brand" = $1 
@@ -331,25 +360,299 @@ export async function renameBrand(
     }
 
     revalidatePath("/admin/products");
+    revalidatePath("/admin/categories");
+    revalidatePath("/brands");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to rename brand";
+    const message = error instanceof Error ? error.message : "Failed to update brand";
+    return { success: false, error: message };
+  }
+}
+
+export async function renameBrand(
+  id: string,
+  newName: string,
+  oldName?: string,
+  logo?: string | null,
+  country?: string | null
+): Promise<{ success: boolean; error?: string }> {
+  return updateBrand(id, newName, logo, country, undefined, undefined, oldName);
+}
+
+/**
+ * DELETE BRAND WITH REASSIGNMENT (Safe delete - NO products deleted)
+ * Reassigns products to a target brand, or sets them to unbranded (brandId = null, brand = null).
+ */
+export async function deleteBrandWithReassignment(
+  brandIdToDelete: string, 
+  targetBrandId?: string | null
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // 1. Resolve brand to delete
+    const delRes = await query(`
+      SELECT id, name, slug 
+      FROM "Brand" 
+      WHERE id = $1 OR slug = $1 
+      LIMIT 1
+    `, [brandIdToDelete]);
+
+    if (delRes.rows.length === 0) {
+      return { success: false, error: "Brand to delete not found." };
+    }
+
+    const delId = delRes.rows[0].id;
+    const delName = delRes.rows[0].name;
+    const delSlug = delRes.rows[0].slug;
+
+    // 2. Resolve target brand if provided
+    let targetId: string | null = null;
+    let targetName: string | null = null;
+
+    if (targetBrandId && targetBrandId !== "unbranded" && targetBrandId !== "none") {
+      const targetRes = await query(`
+        SELECT id, name, slug 
+        FROM "Brand" 
+        WHERE id = $1 OR slug = $1 
+        LIMIT 1
+      `, [targetBrandId]);
+
+      if (targetRes.rows.length === 0) {
+        return { success: false, error: "Target brand for reassignment not found." };
+      }
+
+      targetId = targetRes.rows[0].id;
+      targetName = targetRes.rows[0].name;
+
+      if (targetId === delId) {
+        return { success: false, error: "Cannot reassign products to the same brand being deleted." };
+      }
+    }
+
+    // 3. Execute atomic reassignment and deletion
+    await transaction(async (client) => {
+      if (targetId && targetName) {
+        // Reassign products to target brand
+        await client.query(`
+          UPDATE "Product"
+          SET "brandId" = $1, "brand" = $2, "updatedAt" = CURRENT_TIMESTAMP
+          WHERE "brandId" = $3 OR "brandId" = $4 OR LOWER(TRIM("brand")) = LOWER(TRIM($5))
+        `, [targetId, targetName, delId, delSlug, delName]);
+      } else {
+        // Unbrand products (remove brand)
+        await client.query(`
+          UPDATE "Product"
+          SET "brandId" = NULL, "brand" = NULL, "updatedAt" = CURRENT_TIMESTAMP
+          WHERE "brandId" = $1 OR "brandId" = $2 OR LOWER(TRIM("brand")) = LOWER(TRIM($3))
+        `, [delId, delSlug, delName]);
+      }
+
+      // Delete the brand itself safely
+      await client.query(`
+        DELETE FROM "Brand" 
+        WHERE "id" = $1 OR "slug" = $2
+      `, [delId, delSlug]);
+    });
+
+    revalidatePath("/admin/products");
+    revalidatePath("/admin/categories");
+    revalidatePath("/brands");
+    revalidatePath("/products");
+    return { success: true };
+  } catch (error: unknown) {
+    console.error("Failed to delete brand with reassignment:", error);
+    const message = error instanceof Error ? error.message : "Failed to delete brand";
     return { success: false, error: message };
   }
 }
 
 export async function deleteBrand(id: string, name?: string): Promise<{ success: boolean; error?: string }> {
+  return deleteBrandWithReassignment(id, null);
+}
+
+/**
+ * ASSIGN OR REASSIGN A PRODUCT TO A BRAND (OR UNASSIGN IF brandId IS NULL / 'unbranded')
+ */
+export async function assignProductToBrand(
+  productId: string,
+  brandId: string | null
+): Promise<{ success: boolean; brandName?: string | null; error?: string }> {
   try {
-    if (name) {
-      await query(`DELETE FROM "Brand" WHERE "id" = $1 OR LOWER("name") = LOWER($2)`, [id, name.trim()]);
+    if (brandId && brandId !== "unbranded" && brandId !== "none") {
+      const brandRes = await query(`
+        SELECT id, name FROM "Brand" 
+        WHERE id = $1 OR slug = $1 
+        LIMIT 1
+      `, [brandId]);
+
+      if (brandRes.rows.length === 0) {
+        return { success: false, error: "Target brand not found." };
+      }
+
+      const target = brandRes.rows[0];
+      await query(`
+        UPDATE "Product"
+        SET "brandId" = $1, "brand" = $2, "updatedAt" = CURRENT_TIMESTAMP
+        WHERE id = $3
+      `, [target.id, target.name, productId]);
+
+      revalidatePath("/admin/products");
+      revalidatePath("/admin/categories");
+      revalidatePath("/brands");
+      revalidatePath("/products");
+      return { success: true, brandName: target.name };
     } else {
-      await query(`DELETE FROM "Brand" WHERE "id" = $1`, [id]);
+      // Unbrand product
+      await query(`
+        UPDATE "Product"
+        SET "brandId" = NULL, "brand" = NULL, "updatedAt" = CURRENT_TIMESTAMP
+        WHERE id = $1
+      `, [productId]);
+
+      revalidatePath("/admin/products");
+      revalidatePath("/admin/categories");
+      revalidatePath("/brands");
+      revalidatePath("/products");
+      return { success: true, brandName: null };
     }
-    revalidatePath("/admin/products");
-    return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to delete brand";
+    console.error("Failed to assign product to brand:", error);
+    const message = error instanceof Error ? error.message : "Failed to update product brand";
     return { success: false, error: message };
+  }
+}
+
+/**
+ * BATCH ASSIGN PRODUCTS TO A BRAND (OR BATCH UNASSIGN)
+ */
+export async function assignMultipleProductsToBrand(
+  productIds: string[],
+  brandId: string | null
+): Promise<{ success: boolean; count?: number; error?: string }> {
+  try {
+    if (!productIds || productIds.length === 0) {
+      return { success: false, error: "No products selected." };
+    }
+
+    if (brandId && brandId !== "unbranded" && brandId !== "none") {
+      const brandRes = await query(`
+        SELECT id, name FROM "Brand" 
+        WHERE id = $1 OR slug = $1 
+        LIMIT 1
+      `, [brandId]);
+
+      if (brandRes.rows.length === 0) {
+        return { success: false, error: "Target brand not found." };
+      }
+
+      const target = brandRes.rows[0];
+      await query(`
+        UPDATE "Product"
+        SET "brandId" = $1, "brand" = $2, "updatedAt" = CURRENT_TIMESTAMP
+        WHERE id = ANY($3)
+      `, [target.id, target.name, productIds]);
+
+      revalidatePath("/admin/products");
+      revalidatePath("/admin/categories");
+      revalidatePath("/brands");
+      revalidatePath("/products");
+      return { success: true, count: productIds.length };
+    } else {
+      await query(`
+        UPDATE "Product"
+        SET "brandId" = NULL, "brand" = NULL, "updatedAt" = CURRENT_TIMESTAMP
+        WHERE id = ANY($1)
+      `, [productIds]);
+
+      revalidatePath("/admin/products");
+      revalidatePath("/admin/categories");
+      revalidatePath("/brands");
+      revalidatePath("/products");
+      return { success: true, count: productIds.length };
+    }
+  } catch (error: unknown) {
+    console.error("Failed to batch assign products to brand:", error);
+    const message = error instanceof Error ? error.message : "Failed to batch assign products";
+    return { success: false, error: message };
+  }
+}
+
+export async function removeProductFromBrand(productId: string): Promise<{ success: boolean; error?: string }> {
+  return assignProductToBrand(productId, null);
+}
+
+export interface BrandProductItem {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string;
+  brand: string;
+  basePrice: number;
+  strikethroughPrice: number | null;
+  status: string;
+  visible: boolean;
+  createdAt: string;
+  imageUrl: string | null;
+}
+
+/**
+ * FETCH UNBRANDED PRODUCTS
+ */
+export async function getUnbrandedProducts(): Promise<{ success: boolean; products: BrandProductItem[]; error?: string }> {
+  try {
+    const res = await query(`
+      SELECT 
+        p.id, 
+        p.name, 
+        p.slug, 
+        p.sku, 
+        COALESCE(p.brand, 'Unbranded') as brand,
+        (p.price / 100.0) as "basePrice",
+        p."strikethroughPrice",
+        p.status,
+        p.visible,
+        p."createdAt",
+        (SELECT url FROM "ProductImage" WHERE "productId" = p.id ORDER BY "isPrimary" DESC, "order" ASC LIMIT 1) as "imageUrl"
+      FROM "Product" p
+      WHERE (p."brandId" IS NULL OR p."brandId" = '' OR p."brandId" = 'default-brand' OR p."brandId" NOT IN (SELECT id FROM "Brand"))
+      ORDER BY p."createdAt" DESC
+    `);
+
+    return { success: true, products: res.rows as BrandProductItem[] };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to load unbranded products";
+    return { success: false, error: message, products: [] };
+  }
+}
+
+/**
+ * FETCH PRODUCTS FOR A BRAND (by id, name, or slug)
+ */
+export async function getBrandProducts(brandIdOrName: string): Promise<{ success: boolean; products: BrandProductItem[]; error?: string }> {
+  try {
+    const res = await query(`
+      SELECT 
+        p.id, 
+        p.name, 
+        p.slug, 
+        p.sku, 
+        COALESCE(p.brand, 'Unknown') as brand,
+        (p.price / 100.0) as "basePrice",
+        p."strikethroughPrice",
+        p.status,
+        p.visible,
+        p."createdAt",
+        (SELECT url FROM "ProductImage" WHERE "productId" = p.id ORDER BY "isPrimary" DESC, "order" ASC LIMIT 1) as "imageUrl"
+      FROM "Product" p
+      WHERE p."brandId" = $1 
+         OR LOWER(TRIM(p.brand)) = LOWER(TRIM($1))
+         OR p."brandId" IN (SELECT id FROM "Brand" WHERE slug = $1 OR LOWER(TRIM(name)) = LOWER(TRIM($1)))
+      ORDER BY p."createdAt" DESC
+    `, [brandIdOrName]);
+
+    return { success: true, products: res.rows as BrandProductItem[] };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to load products for brand";
+    return { success: false, error: message, products: [] };
   }
 }
 

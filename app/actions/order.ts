@@ -18,6 +18,7 @@ export interface CreateOrderItemInput {
   price: number;
   quantity: number;
   variantId?: string;
+  buyerNote?: string;
 }
 
 export interface CreateOrderInput {
@@ -152,8 +153,8 @@ export async function createOrderAction(input: CreateOrderInput) {
           .trim();
 
         await client.query(`
-          INSERT INTO "OrderItem" ("id", "orderId", "productId", "variantId", "name", "sku", "price", "quantity", "createdAt")
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+          INSERT INTO "OrderItem" ("id", "orderId", "productId", "variantId", "name", "sku", "price", "quantity", "buyerNote", "createdAt")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
         `, [
           generateOrderItemId(),
           orderId,
@@ -162,7 +163,8 @@ export async function createOrderAction(input: CreateOrderInput) {
           cleanName,
           item.sku || `SKU-${validProductId || 'ITEM'}`,
           item.price,
-          item.quantity
+          item.quantity,
+          item.buyerNote || null,
         ]);
 
         // Deduct Inventory stock if product ID is valid
@@ -493,6 +495,7 @@ export async function getOrderByIdAction(orderId: string) {
         price: Number(r.price),
         quantity: r.quantity,
         attributes: r.attributes || [],
+        buyerNote: r.buyerNote || null,
       })),
     };
   } catch (error) {
@@ -552,6 +555,7 @@ export async function getAllOrdersAdminAction() {
               'price', oi."price",
               'quantity', oi."quantity",
               'variantId', oi."variantId",
+              'buyerNote', oi."buyerNote",
               'attributes', (
                 SELECT COALESCE(
                   json_agg(json_build_object('name', va."name", 'value', va."value")),
@@ -704,6 +708,32 @@ export async function updateOrderPaymentMethodAction(orderId: string, newMethod:
   } catch (error) {
     console.error("Failed to update order payment method:", error);
     const message = error instanceof Error ? error.message : "Failed to update payment method";
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * UPDATE ORDER ITEM BUYER NOTE DIRECTLY
+ */
+export async function updateOrderItemNoteAction(orderItemId: string, buyerNote: string) {
+  try {
+    const cleanNote = buyerNote.trim();
+    const res = await query(
+      `UPDATE "OrderItem" SET "buyerNote" = $1 WHERE "id" = $2 RETURNING *`,
+      [cleanNote || null, orderItemId]
+    );
+
+    if (res.rows.length === 0) {
+      return { success: false, error: "Order item record not found." };
+    }
+
+    revalidatePath("/admin/orders");
+    revalidatePath("/orders");
+
+    return { success: true, item: res.rows[0] };
+  } catch (error) {
+    console.error("Failed to update order item buyer note:", error);
+    const message = error instanceof Error ? error.message : "Failed to update buyer note";
     return { success: false, error: message };
   }
 }

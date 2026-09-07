@@ -788,18 +788,20 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
 
                     {/* 3 Dots Actions Menu */}
                     <td className="px-4 py-3.5 text-right relative">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1.5">
                         <Link
                           href={`/admin/products/${prod.id}/edit`}
-                          className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                          title="Edit Product"
+                          className="px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-white bg-slate-100 hover:bg-[#00a651] dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-[#00a651] rounded-md transition-all inline-flex items-center gap-1 shadow-2xs"
+                          title="Edit this product"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
                         </Link>
                         <button
                           type="button"
                           onClick={() => setActiveMenuId(activeMenuId === prod.id ? null : prod.id)}
                           className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title="More actions"
                         >
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
@@ -808,6 +810,12 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                       {/* Dropdown Menu */}
                       {activeMenuId === prod.id && (
                         <div className="absolute right-4 top-10 z-20 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-1 text-left animate-in fade-in-50 zoom-in-95">
+                          <Link
+                            href={`/admin/products/${prod.id}/edit`}
+                            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-[#00a651] hover:bg-emerald-50 dark:hover:bg-slate-800"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" /> Edit Product
+                          </Link>
                           <Link
                             href={`/product/${prod.slug}`}
                             target="_blank"

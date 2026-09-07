@@ -34,7 +34,7 @@ import {
   Loader2,
   ArrowRight
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDisplayPhone } from "@/lib/utils";
 import { 
   getUserAddressesAction, 
   createAddressAction, 
@@ -703,7 +703,7 @@ export default function ProfilePage() {
                           <div className="pt-2 border-t border-slate-100 text-xs font-mono text-slate-500 space-y-1">
                             <p className="flex items-center gap-2">
                               <Phone className="w-3.5 h-3.5 text-slate-400" />
-                              <span>+91 {addr.phone}</span>
+                              <span>{formatDisplayPhone(addr.phone)}</span>
                             </p>
                             {addr.email && (
                               <p className="flex items-center gap-2">

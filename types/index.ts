@@ -62,6 +62,8 @@ export interface Product {
   specifications: SpecificationGroup[];
   applications: string[];
   features: string[];
+  featureHighlights?: FeatureHighlight[];
+  technicalSupportLinks?: TechnicalSupportLink[];
 
   rating: number;
   reviewCount: number;
@@ -83,6 +85,17 @@ export interface Product {
   bestSeller: boolean;
   newArrival: boolean;
   createdAt: string;
+}
+
+export interface FeatureHighlight {
+  label: string;
+  value: string;
+}
+
+export interface TechnicalSupportLink {
+  title: string;
+  url: string;
+  icon?: "specs" | "selection" | "calculation" | "cad";
 }
 
 export interface Category {
@@ -109,6 +122,7 @@ export interface CartItem {
   product: Product;
   quantity: number;
   variant?: ProductVariant;
+  buyerNote?: string;
 }
 
 export interface ResourceArticle {

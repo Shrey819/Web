@@ -131,8 +131,18 @@ export async function createProduct(input: ProductFormValues) {
     const costInPaise = validated.costPrice ? Math.round(validated.costPrice * 100) : null;
 
     await transaction(async (client) => {
-      // 1. Ensure Brand
+      // 1. Ensure Brand in Brand table
       const brandName = validated.brand?.trim() || "";
+      if (brandName) {
+        const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `brand-${Date.now()}`;
+        const brandId = "brand_" + brandSlug.replace(/-/g, "_");
+        await client.query(`
+          INSERT INTO "Brand" ("id", "name", "slug", "status", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          ON CONFLICT ("slug") DO UPDATE SET "name" = $2
+        `, [brandId, brandName, brandSlug]);
+      }
+
       const primaryCat = validated.primaryCategoryId || validated.categoryIds[0] || validated.categoryId;
 
       // 2. Insert Core Product
@@ -142,6 +152,7 @@ export async function createProduct(input: ProductFormValues) {
           "categoryId", "primaryCategoryId", "primaryRibbon", "brand",
           "basePrice", "price", "compareAtPrice", "strikethroughPrice", "costPrice",
           "showPricePerUnit", "baseUnit", "baseUnitMeasurement", "totalUnits", "totalUnitsMeasurement", "taxGroup",
+          "featureHighlights", "applications", "technicalSupportLinks", "enableBuyerNote", "videoUrl", "seoTitle", "seoDesc",
           "createdAt", "updatedAt"
         )
         VALUES (
@@ -149,13 +160,21 @@ export async function createProduct(input: ProductFormValues) {
           $9, $10, $11, $12,
           $13, $14, $15, $16, $17,
           $18, $19, $20, $21, $22, $23,
+          $24, $25, $26, $27, $28, $29, $30,
           CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         )
       `, [
         productId, validated.name, slug, sku, validated.description || "", validated.visible ? 'ACTIVE' : 'DRAFT', validated.visible, validated.showInPos,
         primaryCat, primaryCat, validated.primaryRibbon || null, brandName || null,
         priceInPaise, priceInPaise, strikethroughInPaise, strikethroughInPaise, costInPaise,
-        validated.showPricePerUnit, validated.baseUnit, validated.baseUnitMeasurement, validated.totalUnits || null, validated.totalUnitsMeasurement, validated.taxGroup
+        validated.showPricePerUnit, validated.baseUnit, validated.baseUnitMeasurement, validated.totalUnits || null, validated.totalUnitsMeasurement, validated.taxGroup,
+        JSON.stringify(validated.featureHighlights || []),
+        JSON.stringify(validated.applications || []),
+        JSON.stringify(validated.technicalSupportLinks || []),
+        validated.enableBuyerNote !== false,
+        validated.videoUrl || null,
+        validated.seoTitle || null,
+        validated.seoDesc || null
       ]);
 
       // 3. Insert Category Join Table
@@ -259,6 +278,7 @@ export async function createProduct(input: ProductFormValues) {
     });
 
     safeRevalidate("/admin/products");
+    safeRevalidate("/admin/categories");
     safeRevalidate("/products");
     safeRevalidate("/");
     return { success: true, id: productId };
@@ -282,7 +302,18 @@ export async function updateProduct(productId: string, input: ProductFormValues)
     const costInPaise = validated.costPrice ? Math.round(validated.costPrice * 100) : null;
 
     await transaction(async (client) => {
+      // 1. Ensure Brand in Brand table
       const brandName = validated.brand?.trim() || "";
+      if (brandName) {
+        const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `brand-${Date.now()}`;
+        const brandId = "brand_" + brandSlug.replace(/-/g, "_");
+        await client.query(`
+          INSERT INTO "Brand" ("id", "name", "slug", "status", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          ON CONFLICT ("slug") DO UPDATE SET "name" = $2
+        `, [brandId, brandName, brandSlug]);
+      }
+
       const primaryCat = validated.primaryCategoryId || validated.categoryIds[0] || validated.categoryId;
 
       // 1. Update Core Product
@@ -292,13 +323,21 @@ export async function updateProduct(productId: string, input: ProductFormValues)
           "categoryId" = $7, "primaryCategoryId" = $8, "primaryRibbon" = $9, "brand" = $10,
           "basePrice" = $11, "price" = $12, "compareAtPrice" = $13, "strikethroughPrice" = $14, "costPrice" = $15,
           "showPricePerUnit" = $16, "baseUnit" = $17, "baseUnitMeasurement" = $18, "totalUnits" = $19, "totalUnitsMeasurement" = $20, "taxGroup" = $21,
+          "featureHighlights" = $22, "applications" = $23, "technicalSupportLinks" = $24, "enableBuyerNote" = $25, "videoUrl" = $26, "seoTitle" = $27, "seoDesc" = $28,
           "updatedAt" = CURRENT_TIMESTAMP
-        WHERE "id" = $22
+        WHERE "id" = $29
       `, [
         validated.name, slug, validated.description || "", validated.visible ? 'ACTIVE' : 'DRAFT', validated.visible, validated.showInPos,
         primaryCat, primaryCat, validated.primaryRibbon || null, brandName || null,
         priceInPaise, priceInPaise, strikethroughInPaise, strikethroughInPaise, costInPaise,
         validated.showPricePerUnit, validated.baseUnit, validated.baseUnitMeasurement, validated.totalUnits || null, validated.totalUnitsMeasurement, validated.taxGroup,
+        JSON.stringify(validated.featureHighlights || []),
+        JSON.stringify(validated.applications || []),
+        JSON.stringify(validated.technicalSupportLinks || []),
+        validated.enableBuyerNote !== false,
+        validated.videoUrl || null,
+        validated.seoTitle || null,
+        validated.seoDesc || null,
         productId
       ]);
 
@@ -409,6 +448,7 @@ export async function updateProduct(productId: string, input: ProductFormValues)
     });
 
     safeRevalidate("/admin/products");
+    safeRevalidate("/admin/categories");
     safeRevalidate(`/admin/products/${productId}`);
     safeRevalidate(`/admin/products/${productId}/variants`);
     safeRevalidate("/products");
@@ -515,6 +555,13 @@ export async function getProductForEdit(productId: string) {
       totalUnits: p.totalUnits ? Number(p.totalUnits) : null,
       totalUnitsMeasurement: p.totalUnitsMeasurement || "g",
       taxGroup: p.taxGroup || "Products (default rate)",
+      featureHighlights: typeof p.featureHighlights === "string" ? JSON.parse(p.featureHighlights) : (Array.isArray(p.featureHighlights) ? p.featureHighlights : []),
+      applications: typeof p.applications === "string" ? JSON.parse(p.applications) : (Array.isArray(p.applications) ? p.applications : []),
+      technicalSupportLinks: typeof p.technicalSupportLinks === "string" ? JSON.parse(p.technicalSupportLinks) : (Array.isArray(p.technicalSupportLinks) ? p.technicalSupportLinks : []),
+      enableBuyerNote: p.enableBuyerNote !== false,
+      videoUrl: p.videoUrl || "",
+      seoTitle: p.seoTitle || "",
+      seoDesc: p.seoDesc || "",
       images: imagesRes.rows.map((img, idx) => ({
         id: img.id,
         url: img.url,

@@ -1,6 +1,6 @@
 "use server";
 
-import { query } from "@/lib/db";
+import { query, transaction } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 
@@ -105,7 +105,12 @@ export async function getCategoryProductCount(categoryId: string): Promise<numbe
       SELECT COUNT(DISTINCT p.id)::int as count
       FROM "Product" p
       LEFT JOIN "ProductCategory" pc ON p.id = pc."productId"
-      WHERE p."categoryId" = $1 OR pc."categoryId" = $1 OR p."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1) OR pc."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1)
+      WHERE p."categoryId" = $1 
+         OR p."primaryCategoryId" = $1
+         OR pc."categoryId" = $1 
+         OR p."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1)
+         OR p."primaryCategoryId" IN (SELECT id FROM "Category" WHERE slug = $1)
+         OR pc."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1)
     `, [categoryId]);
     return Number(res.rows[0]?.count || 0);
   } catch (error) {
@@ -119,44 +124,142 @@ export async function getCategoryProductCount(categoryId: string): Promise<numbe
  */
 export async function deleteCategoryWithReassignment(categoryIdToDelete: string, targetCategoryId?: string) {
   try {
-    // 1. Get count of products affected
-    const count = await getCategoryProductCount(categoryIdToDelete);
+    // 1. Resolve category to delete
+    const delRes = await query(`
+      SELECT id, slug, name 
+      FROM "Category" 
+      WHERE id = $1 OR slug = $1 
+      LIMIT 1
+    `, [categoryIdToDelete]);
 
-    if (count > 0) {
-      if (!targetCategoryId) {
-        return { 
-          success: false, 
-          hasProducts: true,
-          productCount: count,
-          error: `Category has ${count} associated product(s). Please choose a category to reassign them to.` 
-        };
-      }
-
-      // Reassign products in ProductCategory join table
-      await query(`
-        INSERT INTO "ProductCategory" ("productId", "categoryId")
-        SELECT "productId", $1 FROM "ProductCategory" WHERE "categoryId" = $2
-        ON CONFLICT DO NOTHING
-      `, [targetCategoryId, categoryIdToDelete]);
-
-      await query(`
-        DELETE FROM "ProductCategory" WHERE "categoryId" = $1
-      `, [categoryIdToDelete]);
-
-      // Reassign legacy primary categoryId in Product table
-      await query(`
-        UPDATE "Product" 
-        SET "categoryId" = $1 
-        WHERE "categoryId" = $2
-      `, [targetCategoryId, categoryIdToDelete]);
+    if (delRes.rows.length === 0) {
+      return { success: false, error: "Category to delete not found." };
     }
 
-    // 2. Delete the category safely
-    await query(`DELETE FROM "Category" WHERE "id" = $1 OR "slug" = $1`, [categoryIdToDelete]);
+    const delId = delRes.rows[0].id;
+    const delSlug = delRes.rows[0].slug;
+
+    // 2. Resolve target category if provided
+    let targetId: string | null = null;
+    let targetSlug: string | null = null;
+
+    if (targetCategoryId) {
+      const targetRes = await query(`
+        SELECT id, slug, name 
+        FROM "Category" 
+        WHERE id = $1 OR slug = $1 
+        LIMIT 1
+      `, [targetCategoryId]);
+
+      if (targetRes.rows.length === 0) {
+        return { success: false, error: "Target category for reassignment not found." };
+      }
+
+      targetId = targetRes.rows[0].id;
+      targetSlug = targetRes.rows[0].slug;
+
+      if (targetId === delId) {
+        return { success: false, error: "Cannot reassign products to the same category being deleted." };
+      }
+    }
+
+    // 3. Count products affected
+    const count = await getCategoryProductCount(delId);
+
+    if (count > 0 && !targetId) {
+      return { 
+        success: false, 
+        hasProducts: true,
+        productCount: count,
+        error: `Category has ${count} associated product(s). Please choose a category to reassign them to.` 
+      };
+    }
+
+    // 4. Perform atomic reassignment and deletion inside transaction
+    await transaction(async (client) => {
+      if (targetId) {
+        // A. Add target category to ProductCategory for all affected products
+        await client.query(`
+          INSERT INTO "ProductCategory" ("productId", "categoryId")
+          SELECT "productId", $1 
+          FROM "ProductCategory" 
+          WHERE "categoryId" = $2 OR "categoryId" = $3
+          ON CONFLICT DO NOTHING
+        `, [targetId, delId, delSlug]);
+
+        await client.query(`
+          INSERT INTO "ProductCategory" ("productId", "categoryId")
+          SELECT "id", $1 
+          FROM "Product" 
+          WHERE "categoryId" = $2 OR "categoryId" = $3 
+             OR "primaryCategoryId" = $2 OR "primaryCategoryId" = $3
+          ON CONFLICT DO NOTHING
+        `, [targetId, delId, delSlug]);
+
+        // Remove old associations from ProductCategory
+        await client.query(`
+          DELETE FROM "ProductCategory" 
+          WHERE "categoryId" = $1 OR "categoryId" = $2
+        `, [delId, delSlug]);
+
+        // B. Reassign legacy categoryId in Product table
+        await client.query(`
+          UPDATE "Product" 
+          SET "categoryId" = $1 
+          WHERE "categoryId" = $2 OR "categoryId" = $3
+        `, [targetId, delId, delSlug]);
+
+        // C. Reassign modern primaryCategoryId in Product table (CRITICAL FIX FOR FOREIGN KEY CONSTRAINT!)
+        await client.query(`
+          UPDATE "Product" 
+          SET "primaryCategoryId" = $1 
+          WHERE "primaryCategoryId" = $2 OR "primaryCategoryId" = $3
+        `, [targetId, delId, delSlug]);
+
+        // D. Reassign any child categories that had this category as parentId
+        await client.query(`
+          UPDATE "Category"
+          SET "parentId" = $1
+          WHERE "parentId" = $2 OR "parentId" = $3
+        `, [targetId, delId, delSlug]);
+      } else {
+        // No target category (when count === 0 or forced)
+        await client.query(`
+          DELETE FROM "ProductCategory" 
+          WHERE "categoryId" = $1 OR "categoryId" = $2
+        `, [delId, delSlug]);
+
+        await client.query(`
+          UPDATE "Product" 
+          SET "categoryId" = NULL 
+          WHERE "categoryId" = $1 OR "categoryId" = $2
+        `, [delId, delSlug]);
+
+        await client.query(`
+          UPDATE "Product" 
+          SET "primaryCategoryId" = NULL 
+          WHERE "primaryCategoryId" = $1 OR "primaryCategoryId" = $2
+        `, [delId, delSlug]);
+
+        await client.query(`
+          UPDATE "Category" 
+          SET "parentId" = NULL 
+          WHERE "parentId" = $1 OR "parentId" = $2
+        `, [delId, delSlug]);
+      }
+
+      // E. Delete the category itself safely
+      await client.query(`
+        DELETE FROM "Category" 
+        WHERE "id" = $1 OR "slug" = $2
+      `, [delId, delSlug]);
+    });
 
     revalidatePath("/admin/categories");
     revalidatePath("/admin/products");
     revalidatePath("/products");
+    revalidatePath("/category/[slug]", "page");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete category with reassignment:", error);
@@ -233,7 +336,12 @@ export async function getCategoryProducts(categoryIdOrSlug: string): Promise<{ s
       LEFT JOIN "ProductCategory" pc ON p.id = pc."productId"
       LEFT JOIN "Brand" b ON p."brandId" = b."id"
       LEFT JOIN "Inventory" i ON p."id" = i."productId"
-      WHERE p."categoryId" = $1 OR pc."categoryId" = $1 OR p."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1 OR id = $1) OR pc."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1 OR id = $1)
+      WHERE p."categoryId" = $1 
+         OR p."primaryCategoryId" = $1 
+         OR pc."categoryId" = $1 
+         OR p."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1 OR id = $1) 
+         OR p."primaryCategoryId" IN (SELECT id FROM "Category" WHERE slug = $1 OR id = $1) 
+         OR pc."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1 OR id = $1)
       ORDER BY p."createdAt" DESC
     `;
 

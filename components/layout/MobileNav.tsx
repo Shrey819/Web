@@ -280,13 +280,13 @@ export function MobileNav({
                       </Link>
                       <div className="mx-5 border-b border-black/80"></div>
 
-                      <button
-                        onClick={() => setCurrentMenu("brands")}
-                        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 text-slate-900"
+                      <Link
+                        href="/brands"
+                        onClick={onClose}
+                        className="block px-5 py-4 hover:bg-slate-50 text-slate-900"
                       >
-                        <span>Brands</span>
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                      </button>
+                        Brands
+                      </Link>
                       <div className="mx-5 border-b border-black/80"></div>
 
                       <Link

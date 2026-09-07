@@ -4,12 +4,18 @@ import { transaction, query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import * as XLSX from "xlsx";
-import { cleanVal, generateSlug, autoAlignSpreadsheetOptions } from "@/lib/importHelpers";
+import {
+  cleanVal,
+  generateSlug,
+  autoAlignSpreadsheetOptions,
+  calculateProductDetailSimilarity,
+} from "@/lib/importHelpers";
 
 const generateId = (prefix = "prd_") => prefix + crypto.randomBytes(8).toString("hex");
 
 /**
  * 1. DOWNLOAD IMPORT SAMPLE TEMPLATE (EXCEL / CSV)
+ * 46 columns matching the 11 sections of "Add New Product" with no variant rows.
  */
 export async function downloadImportSampleTemplate(format: "csv" | "xlsx" = "csv"): Promise<{
   success: boolean;
@@ -20,265 +26,165 @@ export async function downloadImportSampleTemplate(format: "csv" | "xlsx" = "csv
 }> {
   try {
     const headers = [
-      "product no",
-      "Item Type",
-      "Name",
-      "Description",
+      // 1) Product Name
+      "Product Name",
+      // 2) Feature Description & Pricing
+      "Feature Description",
+      "Selling Price (₹)",
+      "Original Price (₹)",
+      // 3) Images and Videos
+      "Images URL",
+      "Product Video URL",
+      // 4) Custom Feature Cards (up to 6)
+      "Feature 1 Label",
+      "Feature 1 Value",
+      "Feature 2 Label",
+      "Feature 2 Value",
+      "Feature 3 Label",
+      "Feature 3 Value",
+      "Feature 4 Label",
+      "Feature 4 Value",
+      "Feature 5 Label",
+      "Feature 5 Value",
+      "Feature 6 Label",
+      "Feature 6 Value",
+      // 5) Applications (Tags)
+      "Applications",
+      // 6) Brand Technical Support Links (up to 6)
+      "Support Link 1 Title",
+      "Support Link 1 URL",
+      "Support Link 1 Icon",
+      "Support Link 2 Title",
+      "Support Link 2 URL",
+      "Support Link 2 Icon",
+      "Support Link 3 Title",
+      "Support Link 3 URL",
+      "Support Link 3 Icon",
+      "Support Link 4 Title",
+      "Support Link 4 URL",
+      "Support Link 4 Icon",
+      "Support Link 5 Title",
+      "Support Link 5 URL",
+      "Support Link 5 Icon",
+      "Support Link 6 Title",
+      "Support Link 6 URL",
+      "Support Link 6 Icon",
+      // 7) Custom Field for Buyer Note
+      "Enable Buyer Note",
+      // 8) Visibility
+      "Visibility",
+      // 9) Brand
       "Brand",
-      "Categories",
-      "Primary Category",
-      "Ribbon",
-      "Tags",
-      "Option 1 Name",
-      "Option 1 Value",
-      "Option 2 Name",
-      "Option 2 Value",
-      "Option 3 Name",
-      "Option 3 Value",
-      "Option 4 Name",
-      "Option 4 Value",
-      "Option 5 Name",
-      "Option 5 Value",
-      "Option 6 Name",
-      "Option 6 Value",
-      "Price",
-      "Strikethrough Price (₹)",
-      "Price per unit Visible",
-      "Price per unit price",
-      "Price per unit unit",
-      "Images url",
-      "Additional info sections Visible",
-      "section 1 Title",
-      "section 1 Name",
-      "section 2 Title",
-      "section 2 Name",
-      "section 3 Title",
-      "section 3 Name",
-      "section 4 Title",
-      "section 4 Name",
-      "section 5 Title",
-      "section 5 Name",
-      "Visibility of Product",
-      "Product URL",
+      // 10) Category
+      "Category",
+      // 11) Product URL & SEO
+      "Product URL Slug",
+      "SEO Meta Title",
+      "SEO Meta Description",
+      // Identifiers
+      "SKU",
+      "Product ID",
     ];
 
     const sampleRows: string[][] = [
       headers,
-      // Sample 1: Schneider Electric RXM Relay (Product)
+      // Sample 1: HIWIN EL Self Lubricating Ballscrew
       [
-        "p0001",
-        "Product",
-        "Schneider Electric RXM Relay",
-        "<p>High quality industrial miniature relay with 4 changeover contacts and LED indicator.</p>",
-        "Schneider Electric",
-        "Automation;Relays;Switches",
-        "Relays",
-        "Best Seller",
-        "industrial, relay, 24v, automation",
-        "Voltage",
-        "24V;110V;230V",
-        "Color",
-        "Red;Green;Yellow",
-        "Texture",
-        "Metal;Plastic",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "450.00",
-        "550.00",
-        "false",
-        "450.00;1",
-        "piece",
+        "HIWIN EL Self Lubricating Ballscrew",
+        "<p>High-performance ballscrew with integrated lubrication system providing maintenance-free operation up to 10,000 km.</p>",
+        "2500.00",
+        "3000.00",
         "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800;https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800",
-        "true",
-        "Shipping Info",
-        "Shipping Info",
-        "Return & Refund Policy",
-        "Return & Refund Policy",
-        "Demo",
-        "Hello Options",
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "COST SAVING",
+        "lubrication free",
+        "EASY INSTALLATION",
+        "Replaceable",
+        "EXTENDED MAINTENANCE",
+        "Up to 10000 KM",
         "",
         "",
         "",
         "",
-        "true",
-        "http://localhost:3000/products/schneider-electric-rxm-relay",
+        "",
+        "",
+        "Automation equipment; Industrial machine; Electronic machine; Medical equipment; Transportation; Construction",
+        "Full Specs",
+        "https://www.hiwinsupport.com/download_center.aspx?pid=BS",
+        "specs",
+        "Product Selection",
+        "https://www.hiwinsupport.com/product_select/ballscrew.aspx",
+        "selection",
+        "Life Calculation",
+        "https://www.hiwinsupport.com/life_Calculate/ballscrew.aspx",
+        "calculation",
+        "CAD Download",
+        "https://www.hiwinsupport.com/cad_download/ballscrew.aspx",
+        "cad",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "TRUE",
+        "TRUE",
+        "HIWIN",
+        "Ballscrews",
+        "hiwin-el-ballscrew",
+        "HIWIN EL Self Lubricating Ballscrew | HIWIN",
+        "Genuine HIWIN EL self-lubricating ballscrew engineered for precision motion and zero maintenance.",
+        "PRD-HW-EL2005",
+        "prd_sample01",
       ],
-      // Variant 1
+      // Sample 2: THK HSR Linear Guideway Block
       [
-        "p0001_001",
-        "Variant",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "Voltage",
-        "24V",
-        "Color",
-        "Red",
-        "Texture",
-        "Metal",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "450.00",
-        "550.00",
-        "",
-        "",
-        "",
-        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "true",
-        "",
-      ],
-      // Variant 2
-      [
-        "p0001_002",
-        "Variant",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "Voltage",
-        "110V",
-        "Color",
-        "Green",
-        "Texture",
-        "Plastic",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "480.00",
-        "600.00",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "true",
-        "",
-      ],
-      // Variant 3
-      [
-        "p0001_003",
-        "Variant",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "Voltage",
-        "230V",
-        "Color",
-        "Yellow",
-        "Texture",
-        "Plastic",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "520.00",
-        "650.00",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "true",
-        "",
-      ],
-
-      // Sample 2: Siemens S7-1200 PLC (Product without variants)
-      [
-        "p0002",
-        "Product",
-        "Siemens SIMATIC S7-1200 CPU 1214C",
-        "<p>Compact CPU with 14 digital inputs, 10 digital outputs, and 2 analog inputs.</p>",
-        "Siemens",
-        "Drives & VFDs;Automation",
-        "Drives & VFDs",
-        "New Arrival",
-        "plc, siemens, profinet",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "28000.00",
-        "32000.00",
-        "false",
-        "28000.00;1",
-        "unit",
+        "THK HSR25A Linear Motion Guide Block",
+        "<p>Heavy load type linear motion guide with 4-way equal load rating for high precision and stiffness.</p>",
+        "4200.00",
+        "4800.00",
         "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800",
-        "true",
-        "Product Info",
-        "Product Info",
-        "Shrey Demo",
-        "Standard info Section",
-        "Shipping Info",
-        "Shipping Info",
+        "",
+        "HIGH RIGIDITY",
+        "4-Way Equal Load",
+        "SMOOTH MOTION",
+        "Low Friction Loss",
         "",
         "",
         "",
         "",
-        "true",
-        "http://localhost:3000/products/siemens-simatic-s7-1200-cpu-1214c",
+        "",
+        "",
+        "",
+        "",
+        "CNC Machining Center; Packaging Machinery; Semiconductor Fabrication",
+        "Technical Catalog",
+        "https://www.thk.com/catalog",
+        "specs",
+        "3D CAD Models",
+        "https://www.thk.com/cad",
+        "cad",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "TRUE",
+        "TRUE",
+        "THK",
+        "Linear Guideways",
+        "thk-hsr25a-linear-guide",
+        "THK HSR25A Linear Motion Guide Block | THK",
+        "Original THK HSR25A linear guide block with high rigidity and smooth motion for industrial automation.",
+        "PRD-THK-HSR25A",
+        "prd_sample02",
       ],
     ];
 
@@ -298,7 +204,7 @@ export async function downloadImportSampleTemplate(format: "csv" | "xlsx" = "csv
       return { success: true, csvContent, filename };
     } else {
       const ws = XLSX.utils.aoa_to_sheet(sampleRows);
-      ws["!cols"] = headers.map(() => ({ wch: 16, width: 16 }));
+      ws["!cols"] = headers.map(() => ({ wch: 18, width: 18 }));
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Template");
       const xlsxBase64 = XLSX.write(wb, { bookType: "xlsx", type: "base64" });
@@ -340,7 +246,20 @@ export interface PreviewImportResult {
   error?: string;
 }
 
+function parseCleanPrice(val: string): number {
+  if (!val) return 0;
+  const clean = val.replace(/[₹$,\s]/g, "").trim();
+  const num = parseFloat(clean);
+  return isNaN(num) ? 0 : num;
+}
 
+function parseBoolean(val: string, defaultVal = true): boolean {
+  if (!val) return defaultVal;
+  const clean = val.toLowerCase().trim();
+  if (clean === "true" || clean === "active" || clean === "1" || clean === "yes" || clean === "on") return true;
+  if (clean === "false" || clean === "draft" || clean === "0" || clean === "no" || clean === "off") return false;
+  return defaultVal;
+}
 
 export async function previewProductsImportAction(params: {
   fileBase64?: string;
@@ -380,92 +299,89 @@ export async function previewProductsImportAction(params: {
       return { success: false, error: "No spreadsheet data provided." };
     }
 
-    // Only filter out completely empty trailing rows when parsing an uploaded file
-    if (params.fileBase64) {
-      rows = rows.filter((r) => r.some((c) => cleanVal(c) !== ""));
-    }
+    // Filter out completely empty rows
+    rows = rows.filter((r) => r.some((c) => cleanVal(c) !== ""));
 
     if (rows.length === 0) {
       if (params.rawGridRows) {
         rows = [headers.map(() => "")];
       } else {
-        return { success: false, error: "No product data rows found." };
+        return { success: false, error: "No product data rows found in file." };
       }
     }
 
-    // Automatically align option columns and fill missing option names
-    if (params.shouldAutoAlign !== false) {
-      const aligned = autoAlignSpreadsheetOptions(headers, rows);
-      rows = aligned.rows;
-    }
-
     // Column header resolution
-    const headerLower = headers.map((h) => h.toLowerCase());
+    const headerLower = headers.map((h) => cleanVal(h).toLowerCase());
     const findColIdx = (...aliases: string[]): number => {
       for (const alias of aliases) {
-        const idx = headerLower.findIndex((h) => h === alias.toLowerCase() || h.includes(alias.toLowerCase()));
+        const aLower = alias.toLowerCase();
+        const idx = headerLower.findIndex((h) => h === aLower || h.includes(aLower));
         if (idx !== -1) return idx;
       }
       return -1;
     };
 
     const colIdx = {
-      productNo: findColIdx("product no", "product_no", "handle", "slug", "sku", "id"),
-      itemType: findColIdx("item type", "item_type", "type", "fieldtype"),
-      name: findColIdx("name", "title", "product name"),
-      categories: findColIdx("categories", "categoryslugs"),
-      primaryCategory: findColIdx("primary category", "primarycategoryslug"),
+      id: findColIdx("product id", "id"),
+      sku: findColIdx("sku", "product no", "product_no", "code"),
+      slug: findColIdx("product url slug", "product url", "slug", "handle"),
+      name: findColIdx("product name", "name", "title"),
+      description: findColIdx("feature description", "description", "desc"),
+      price: findColIdx("selling price", "price", "baseprice"),
+      strikethroughPrice: findColIdx("original price", "strikethrough price", "strikethrough", "compare price", "compareatprice"),
+      imagesUrl: findColIdx("images url", "images", "image", "media"),
+      videoUrl: findColIdx("product video url", "video url", "video"),
+      applications: findColIdx("applications", "application tags", "tags"),
+      enableBuyerNote: findColIdx("enable buyer note", "buyer note", "enablebuyernote"),
+      visibility: findColIdx("visibility", "visibility of product", "visible", "status"),
       brand: findColIdx("brand"),
-      price: findColIdx("price"),
-      strikethroughPrice: findColIdx("strikethrough price", "strikethrough", "compare price", "compareatprice"),
-      pricePerUnitVisible: findColIdx("price per unit visible", "showpriceperunit"),
-      pricePerUnitPrice: findColIdx("price per unit price", "baseunit"),
-      pricePerUnitUnit: findColIdx("price per unit unit", "baseunitmeasurement"),
-      additionalInfoVisible: findColIdx("additional info sections visible"),
-      visibility: findColIdx("visibility of product", "visibility", "visible"),
+      category: findColIdx("category", "categories", "primary category"),
+      seoTitle: findColIdx("seo meta title", "seo title", "meta title"),
+      seoDesc: findColIdx("seo meta description", "seo desc", "meta description"),
     };
 
-    const sectionColIndices: Array<{ titleIdx: number; nameIdx: number }> = [];
-    for (let s = 1; s <= 5; s++) {
-      const titleIdx = findColIdx(`section ${s} title`, `section${s}title`, `section ${s}`);
-      const nameIdx = findColIdx(`section ${s} name`, `section${s}name`, `section ${s} content`);
-      sectionColIndices.push({ titleIdx, nameIdx });
+    // Feature Cards 1 to 6
+    const featureCardCols: Array<{ labelIdx: number; valIdx: number }> = [];
+    for (let i = 1; i <= 6; i++) {
+      const labelIdx = findColIdx(`feature ${i} label`, `feature${i}label`, `card ${i} label`);
+      const valIdx = findColIdx(`feature ${i} value`, `feature${i}value`, `card ${i} value`);
+      featureCardCols.push({ labelIdx, valIdx });
     }
 
-    const optionColIndices: Array<{ nameIdx: number; valIdx: number }> = [];
-    for (let o = 1; o <= 6; o++) {
-      const nameIdx = findColIdx(`option ${o} name`, `productoptionname${o}`);
-      const valIdx = findColIdx(`option ${o} value`, `productoptionchoices${o}`, `productoptionchoice${o}`);
-      optionColIndices.push({ nameIdx, valIdx });
-    }
-
-    // Load existing database records for diffing & library validation
-    const [existingProductsRes, existingCategoriesRes, existingBrandsRes, existingSectionsRes] = await Promise.all([
-      query(`SELECT "id", "name", "slug", "sku", "price" FROM "Product"`),
+    // Load existing database records for diffing
+    const [existingProductsRes, existingCategoriesRes, existingBrandsRes] = await Promise.all([
+      query(`
+        SELECT p."id", p."name", p."slug", p."sku", p."price", p."description", p."brand",
+               p."categoryId", p."primaryCategoryId", p."featureHighlights", p."applications",
+               c."name" as "categoryName"
+        FROM "Product" p
+        LEFT JOIN "Category" c ON c."id" = COALESCE(p."categoryId", p."primaryCategoryId")
+      `),
       query(`SELECT "id", "name", "slug" FROM "Category"`),
       query(`SELECT "id", "name", "slug" FROM "Brand"`),
-      query(`SELECT "id", "title", "internalName" FROM "GlobalInfoSection"`),
     ]);
 
     const existingProducts = existingProductsRes.rows as any[];
-    const existingCategories = new Set(
-      existingCategoriesRes.rows.map((c: any) => c.name.toLowerCase().trim())
+    const idMap = new Map<string, any>(existingProducts.map((p) => [p.id.toLowerCase().trim(), p]));
+    const skuMap = new Map<string, any>(
+      existingProducts.filter((p) => p.sku).map((p) => [p.sku.toLowerCase().trim(), p])
     );
-    const existingBrands = new Set(
-      existingBrandsRes.rows.map((b: any) => b.name.toLowerCase().trim())
+    const slugMap = new Map<string, any>(
+      existingProducts.filter((p) => p.slug).map((p) => [p.slug.toLowerCase().trim(), p])
     );
-    const existingSectionTitles = new Set(
-      existingSectionsRes.rows.flatMap((s: any) => [
-        (s.title || "").toLowerCase().trim(),
-        (s.internalName || "").toLowerCase().trim()
-      ]).filter(Boolean)
+    const nameMap = new Map<string, any>(
+      existingProducts.filter((p) => p.name).map((p) => [p.name.toLowerCase().trim(), p])
+    );
+    const slugOfNameMap = new Map<string, any>(
+      existingProducts.filter((p) => p.name).map((p) => [generateSlug(p.name), p])
     );
 
-    const VALID_UNITS = new Set(["kg", "g", "l", "ml", "m", "cm", "piece", "unit", "item", "pack", "box", "set"]);
-    const isValidBoolean = (v: string) => {
-      const clean = v.toLowerCase().trim();
-      return clean === "true" || clean === "false" || clean === "";
-    };
+    const existingCategories = new Set(
+      existingCategoriesRes.rows.map((c: any) => (c.name || "").toLowerCase().trim())
+    );
+    const existingBrands = new Set(
+      existingBrandsRes.rows.map((b: any) => (b.name || "").toLowerCase().trim())
+    );
 
     const rowStatuses: RowStatusInfo[] = [];
     const discoveredNewCategories = new Set<string>();
@@ -474,262 +390,167 @@ export async function previewProductsImportAction(params: {
     let newCount = 0;
     let updateCount = 0;
     let errorCount = 0;
-    let totalProducts = 0;
-
-    let currentParentStatus: "NEW" | "UPDATE" = "NEW";
-    let currentParentOptions: Array<{ name: string; choices: string[] }> = [];
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const getVal = (idx: number) => (idx !== -1 && row[idx] != null ? cleanVal(row[idx]) : "");
 
-      const productNo = getVal(colIdx.productNo);
-      const itemTypeRaw = getVal(colIdx.itemType).toLowerCase();
-      const name = getVal(colIdx.name);
-      const priceRaw = getVal(colIdx.price);
-      const brandRaw = getVal(colIdx.brand);
-      const categoriesRaw = getVal(colIdx.categories);
-
-      const isVariant =
-        itemTypeRaw === "variant" ||
-        (productNo.includes("_") && !name) ||
-        (!name && !itemTypeRaw && i > 0);
+      const idVal = getVal(colIdx.id);
+      const skuVal = getVal(colIdx.sku);
+      const slugVal = getVal(colIdx.slug);
+      const nameVal = getVal(colIdx.name);
+      const priceVal = getVal(colIdx.price);
+      const strikethroughVal = getVal(colIdx.strikethroughPrice);
+      const appsVal = getVal(colIdx.applications);
+      const brandVal = getVal(colIdx.brand);
+      const catVal = getVal(colIdx.category);
+      const visVal = getVal(colIdx.visibility);
+      const buyerNoteVal = getVal(colIdx.enableBuyerNote);
 
       const rowErrors: Record<string, string> = {};
 
-      // 1. Boolean format checks
-      if (colIdx.pricePerUnitVisible !== -1) {
-        const v = getVal(colIdx.pricePerUnitVisible);
-        if (v && !isValidBoolean(v)) {
-          rowErrors[`col_${colIdx.pricePerUnitVisible}`] = `Invalid boolean "${v}". Must be "true" or "false"`;
-        }
-      }
-      if (colIdx.additionalInfoVisible !== -1) {
-        const v = getVal(colIdx.additionalInfoVisible);
-        if (v && !isValidBoolean(v)) {
-          rowErrors[`col_${colIdx.additionalInfoVisible}`] = `Invalid boolean "${v}". Must be "true" or "false"`;
-        }
-      }
-      if (colIdx.visibility !== -1) {
-        const v = getVal(colIdx.visibility);
-        if (v && !isValidBoolean(v)) {
-          rowErrors[`col_${colIdx.visibility}`] = `Invalid boolean "${v}". Must be "true" or "false"`;
-        }
-      }
+      // 1. Check if product already exists (UPDATE) or is NEW
+      let matchedProduct: any = null;
+      let matchScore: number | null = null;
 
-      // 2. Unit measurement check
-      if (colIdx.pricePerUnitUnit !== -1) {
-        const u = getVal(colIdx.pricePerUnitUnit).toLowerCase().trim();
-        if (u && !VALID_UNITS.has(u)) {
-          rowErrors[`col_${colIdx.pricePerUnitUnit}`] = `Invalid unit "${u}". Must be one of: piece, unit, item, kg, g, l, ml, m, cm, pack, box, set`;
-        }
-      }
-
-      // 3. Price per unit price formatting check
-      if (colIdx.pricePerUnitPrice !== -1) {
-        const pp = getVal(colIdx.pricePerUnitPrice);
-        if (pp) {
-          if (pp.includes(";")) {
-            const parts = pp.split(";");
-            const p1 = parts[0]?.trim();
-            const p2 = parts[1]?.trim();
-            if (!p1 || isNaN(parseFloat(p1)) || !p2 || isNaN(parseFloat(p2))) {
-              rowErrors[`col_${colIdx.pricePerUnitPrice}`] = `Malformed price per unit "${pp}". Format must be "price;unit" (e.g. 450.00;1)`;
-            }
-          } else if (isNaN(parseFloat(pp))) {
-            rowErrors[`col_${colIdx.pricePerUnitPrice}`] = `Price per unit must be a valid number or format "price;unit" (e.g. 450.00;1)`;
-          }
-        }
-      }
-
-      // 4. Additional Info Sections Library validation (Connect Title & Name)
-      for (let s = 0; s < sectionColIndices.length; s++) {
-        const { titleIdx, nameIdx } = sectionColIndices[s];
-        const sTitle = titleIdx !== -1 ? getVal(titleIdx) : "";
-        const sName = nameIdx !== -1 ? getVal(nameIdx) : "";
-
-        if (sTitle || sName) {
-          const matched = existingSectionsRes.rows.find((sec: any) => {
-            const tLower = (sec.title || "").toLowerCase().trim();
-            const nLower = (sec.internalName || "").toLowerCase().trim();
-            const inputTLower = sTitle.toLowerCase().trim();
-            const inputNLower = sName.toLowerCase().trim();
-
-            if (inputTLower && inputNLower) {
-              return (
-                inputTLower === tLower ||
-                inputNLower === nLower ||
-                inputTLower === nLower ||
-                inputNLower === tLower
-              );
-            }
-            if (inputTLower) {
-              return inputTLower === tLower || inputTLower === nLower;
-            }
-            if (inputNLower) {
-              return inputNLower === nLower || inputNLower === tLower;
-            }
-            return false;
-          });
-
-          if (!matched) {
-            const errLabel = sName ? `"${sName}"` : `"${sTitle}"`;
-            if (nameIdx !== -1 && sName) {
-              rowErrors[`col_${nameIdx}`] = `Section Name ${errLabel} does not exist in Additional Info Sections Library!`;
-            }
-            if (titleIdx !== -1 && sTitle) {
-              rowErrors[`col_${titleIdx}`] = `Section Title "${sTitle}" does not exist in Additional Info Sections Library!`;
-            }
-          }
-        }
-      }
-
-      if (!isVariant) {
-        totalProducts++;
-        currentParentOptions = [];
-        for (let o = 0; o < 6; o++) {
-          const { nameIdx, valIdx } = optionColIndices[o];
-          const oName = getVal(nameIdx);
-          const oVal = getVal(valIdx);
-          if (oName && oVal) {
-            const choices = oVal.split(/[;,]/).map((c) => c.trim()).filter(Boolean);
-            if (choices.length > 0) {
-              currentParentOptions.push({ name: oName, choices });
-            }
-          }
-        }
-
-        if (!name && !productNo) {
-          if (colIdx.name !== -1) rowErrors[`col_${colIdx.name}`] = "Product Name or Product No is required";
-          rowErrors["name"] = "Product Name or Product No is required";
-        }
-
-        if (priceRaw) {
-          const pNum = parseFloat(priceRaw);
-          if (isNaN(pNum) || pNum < 0) {
-            if (colIdx.price !== -1) rowErrors[`col_${colIdx.price}`] = "Price must be a valid positive number";
-            rowErrors["price"] = "Price must be a valid positive number";
-          }
-        }
-
-        // Check if exists
-        const cleanSlug = name ? generateSlug(name) : "";
-        const matched = existingProducts.find(
-          (p) =>
-            (productNo && p.sku && p.sku.toLowerCase() === productNo.toLowerCase()) ||
-            (cleanSlug && p.slug === cleanSlug)
-        );
-
-        const hasErrors = Object.keys(rowErrors).length > 0;
-        let status: "NEW" | "UPDATE" | "ERROR" = "NEW";
-        let diffNote = "New product will be added";
-
-        if (hasErrors) {
-          status = "ERROR";
-          diffNote = Object.values(rowErrors).join(", ");
-          errorCount++;
-        } else if (matched) {
-          status = "UPDATE";
-          const oldPrice = ((matched.price || 0) / 100).toFixed(2);
-          diffNote = `Updates existing product "${matched.name}" (Current price: ₹${oldPrice})`;
-          updateCount++;
-          currentParentStatus = "UPDATE";
-        } else {
-          status = "NEW";
-          newCount++;
-          currentParentStatus = "NEW";
-        }
-
-        // Track new categories
-        if (categoriesRaw) {
-          const cats = categoriesRaw.split(/[;,]/).map((c) => c.trim()).filter(Boolean);
-          for (const c of cats) {
-            if (!existingCategories.has(c.toLowerCase())) {
-              discoveredNewCategories.add(c);
-            }
-          }
-        }
-
-        // Track new brand
-        if (brandRaw && !existingBrands.has(brandRaw.toLowerCase())) {
-          discoveredNewBrands.add(brandRaw);
-        }
-
-        rowStatuses.push({
-          rowIdx: i,
-          productNo: productNo || `p${String(totalProducts).padStart(4, "0")}`,
-          itemType: "Product",
-          name: name || "Untitled Product",
-          status,
-          diffNote,
-          errors: rowErrors,
-        });
+      if (idVal && idMap.has(idVal.toLowerCase())) {
+        matchedProduct = idMap.get(idVal.toLowerCase());
+      } else if (skuVal && skuMap.has(skuVal.toLowerCase())) {
+        matchedProduct = skuMap.get(skuVal.toLowerCase());
       } else {
-        // Variant row validation
-        if (priceRaw) {
-          const pNum = parseFloat(priceRaw);
-          if (isNaN(pNum) || pNum < 0) {
-            if (colIdx.price !== -1) rowErrors[`col_${colIdx.price}`] = "Variant Price must be a valid number";
-            rowErrors["price"] = "Variant Price must be a valid number";
+        // Resolve incoming product details for >= 90% similarity comparison
+        const incomingFeatures: Array<{ label: string; value: string }> = [];
+        for (let c = 0; c < 6; c++) {
+          const { labelIdx, valIdx } = featureCardCols[c];
+          const l = getVal(labelIdx);
+          const v = getVal(valIdx);
+          if (l || v) {
+            incomingFeatures.push({ label: l, value: v });
           }
         }
 
-        const seenOptionNames = new Set<string>();
-        for (let o = 0; o < 6; o++) {
-          const { nameIdx, valIdx } = optionColIndices[o];
-          const oName = getVal(nameIdx);
-          const oVal = getVal(valIdx);
+        const incomingApps: string[] = appsVal
+          ? appsVal.split(/[;,]/).map((t) => t.trim()).filter(Boolean).slice(0, 20)
+          : [];
 
-          if (oName) {
-            const lowerName = oName.toLowerCase().trim();
-            if (seenOptionNames.has(lowerName)) {
-              if (nameIdx !== -1) rowErrors[`col_${nameIdx}`] = `Duplicate option name "${oName}" in row`;
-            }
-            seenOptionNames.add(lowerName);
+        const incomingPrice = colIdx.price !== -1 && priceVal ? parseCleanPrice(priceVal) : null;
 
-            // Validate choice against parent options
-            if (currentParentOptions.length > 0 && oVal) {
-              const matchedParentOpt = currentParentOptions.find(
-                (p) => p.name.toLowerCase().trim() === lowerName
-              );
+        const incomingDetails = {
+          name: nameVal,
+          description: getVal(colIdx.description),
+          price: incomingPrice,
+          brand: brandVal,
+          category: catVal,
+          features: incomingFeatures,
+          applications: incomingApps,
+        };
 
-              if (!matchedParentOpt) {
-                if (nameIdx !== -1) rowErrors[`col_${nameIdx}`] = `Option "${oName}" does not exist on parent product`;
-              } else {
-                const isValidChoice = matchedParentOpt.choices.some(
-                  (c) => c.toLowerCase().trim() === oVal.toLowerCase().trim()
-                );
-                if (!isValidChoice) {
-                  const correctParentOpt = currentParentOptions.find((p) =>
-                    p.choices.some((c) => c.toLowerCase().trim() === oVal.toLowerCase().trim())
-                  );
-                  if (correctParentOpt) {
-                    if (nameIdx !== -1) rowErrors[`col_${nameIdx}`] = `"${oVal}" belongs to "${correctParentOpt.name}", not "${oName}"!`;
-                  } else {
-                    if (valIdx !== -1) rowErrors[`col_${valIdx}`] = `"${oVal}" is not a valid choice for "${oName}" (Available: ${matchedParentOpt.choices.join(", ")})`;
-                  }
-                }
-              }
-            }
+        let bestScore = 0;
+        let bestCandidate: any = null;
+
+        for (const p of existingProducts) {
+          const sim = calculateProductDetailSimilarity(
+            incomingDetails,
+            {
+              name: p.name,
+              description: p.description,
+              price: p.price,
+              brand: p.brand,
+              categoryName: p.categoryName,
+              featureHighlights: p.featureHighlights,
+              applications: p.applications,
+            },
+            90
+          );
+
+          if (sim.score > bestScore) {
+            bestScore = sim.score;
+            bestCandidate = p;
           }
         }
 
-        const hasErrors = Object.keys(rowErrors).length > 0;
-        const status = hasErrors ? "ERROR" : currentParentStatus;
-        if (hasErrors) errorCount++;
-
-        rowStatuses.push({
-          rowIdx: i,
-          productNo,
-          itemType: "Variant",
-          name: "",
-          status,
-          diffNote: hasErrors
-            ? Object.values(rowErrors).join("; ")
-            : `Variant linked to parent (${currentParentStatus === "UPDATE" ? "Updating" : "New"})`,
-          errors: rowErrors,
-        });
+        // Only mark as UPDATE if at least 90% details match
+        if (bestCandidate && bestScore >= 90) {
+          matchedProduct = bestCandidate;
+          matchScore = bestScore;
+        }
       }
+
+      const isUpdate = Boolean(matchedProduct);
+
+      // 2. Validate Required Fields
+      if (!nameVal) {
+        const targetCol = colIdx.name !== -1 ? colIdx.name : 0;
+        rowErrors[`col_${targetCol}`] = "Product Name is required";
+      }
+
+      if (colIdx.price !== -1 && priceVal) {
+        const pNum = parseCleanPrice(priceVal);
+        if (isNaN(pNum) || pNum < 0) {
+          rowErrors[`col_${colIdx.price}`] = `Invalid selling price "${priceVal}". Must be a positive number.`;
+        }
+      }
+
+      if (colIdx.strikethroughPrice !== -1 && strikethroughVal) {
+        const sNum = parseCleanPrice(strikethroughVal);
+        if (isNaN(sNum) || sNum < 0) {
+          rowErrors[`col_${colIdx.strikethroughPrice}`] = `Invalid original price "${strikethroughVal}". Must be a number.`;
+        }
+      }
+
+      if (colIdx.visibility !== -1 && visVal) {
+        const cleanV = visVal.toLowerCase();
+        if (!["true", "false", "active", "draft", "1", "0", "yes", "no"].includes(cleanV)) {
+          rowErrors[`col_${colIdx.visibility}`] = `Invalid visibility "${visVal}". Use TRUE/Active or FALSE/Draft.`;
+        }
+      }
+
+      if (colIdx.enableBuyerNote !== -1 && buyerNoteVal) {
+        const cleanB = buyerNoteVal.toLowerCase();
+        if (!["true", "false", "on", "off", "1", "0", "yes", "no"].includes(cleanB)) {
+          rowErrors[`col_${colIdx.enableBuyerNote}`] = `Invalid buyer note toggle "${buyerNoteVal}". Use TRUE or FALSE.`;
+        }
+      }
+
+      // 3. Track newly discovered Categories and Brands
+      if (catVal && !existingCategories.has(catVal.toLowerCase())) {
+        discoveredNewCategories.add(catVal);
+      }
+      if (brandVal && !existingBrands.has(brandVal.toLowerCase())) {
+        discoveredNewBrands.add(brandVal);
+      }
+
+      const hasErrors = Object.keys(rowErrors).length > 0;
+      let status: "NEW" | "UPDATE" | "ERROR";
+      let diffNote: string;
+
+      if (hasErrors) {
+        status = "ERROR";
+        errorCount++;
+        diffNote = Object.values(rowErrors).join("; ");
+      } else if (isUpdate) {
+        status = "UPDATE";
+        updateCount++;
+        const matchInfo =
+          matchScore != null
+            ? `${matchScore}% details match`
+            : (matchedProduct.sku || matchedProduct.id);
+        diffNote = `Updating existing product "${matchedProduct.name}" (${matchInfo})`;
+      } else {
+        status = "NEW";
+        newCount++;
+        diffNote = "New product to create";
+      }
+
+      rowStatuses.push({
+        rowIdx: i,
+        productNo: skuVal || idVal || `ROW-${i + 1}`,
+        itemType: "Product",
+        name: nameVal || "Untitled Product",
+        status,
+        diffNote,
+        errors: rowErrors,
+      });
     }
 
     return {
@@ -739,7 +560,7 @@ export async function previewProductsImportAction(params: {
       rowStatuses,
       stats: {
         totalRows: rows.length,
-        totalProducts,
+        totalProducts: rows.length,
         newCount,
         updateCount,
         newCategories: Array.from(discoveredNewCategories),
@@ -749,23 +570,20 @@ export async function previewProductsImportAction(params: {
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to analyze import preview";
+    console.error("Preview import error:", error);
     return { success: false, error: message };
   }
 }
 
 /**
  * 3. IMPORT PRODUCTS BACKEND ENGINE (From Base64 or Direct Edited Rows)
+ * Supports both creating new products and updating existing products without variants.
  */
 interface ImportOptions {
   fileBase64?: string;
   filename?: string;
   rawGridHeaders?: string[];
   rawGridRows?: string[][];
-}
-
-interface ParsedProductGroup {
-  parentRow: Record<string, string>;
-  variantRows: Record<string, string>[];
 }
 
 export async function importProductsAction(options: ImportOptions): Promise<{
@@ -777,10 +595,12 @@ export async function importProductsAction(options: ImportOptions): Promise<{
   error?: string;
 }> {
   try {
-    let rawData: any[][] = [];
+    let rawHeaders: string[] = [];
+    let rawRows: string[][] = [];
 
     if (options.rawGridHeaders && options.rawGridRows) {
-      rawData = [options.rawGridHeaders, ...options.rawGridRows];
+      rawHeaders = options.rawGridHeaders;
+      rawRows = options.rawGridRows;
     } else if (options.fileBase64) {
       const buffer = Buffer.from(options.fileBase64, "base64");
       const wb = XLSX.read(buffer, { type: "buffer" });
@@ -789,202 +609,216 @@ export async function importProductsAction(options: ImportOptions): Promise<{
         return { success: false, error: "The uploaded spreadsheet has no sheets." };
       }
       const ws = wb.Sheets[sheetName];
-      rawData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+      const data: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+      if (data.length < 2) {
+        return { success: false, error: "The uploaded file is empty or missing data rows." };
+      }
+
+      rawHeaders = data[0].map((h) => cleanVal(h));
+      rawRows = data.slice(1).map((r) => {
+        const rowArr: string[] = [];
+        for (let i = 0; i < rawHeaders.length; i++) {
+          rowArr.push(r[i] != null ? cleanVal(r[i]) : "");
+        }
+        return rowArr;
+      });
     } else {
       return { success: false, error: "No file content or grid data provided for import." };
     }
 
-    if (rawData.length < 2) {
-      return { success: false, error: "The uploaded file is empty or missing data rows." };
+    rawRows = rawRows.filter((r) => r.some((c) => cleanVal(c) !== ""));
+
+    if (rawRows.length === 0) {
+      return { success: false, error: "No product data rows found to import." };
     }
 
-    // 2. Parse Headers & Normalize Column Names
-    const headerRow: string[] = rawData[0].map((h: any) => cleanVal(h).toLowerCase());
-
+    // Resolve column headers
+    const headerLower = rawHeaders.map((h) => cleanVal(h).toLowerCase());
     const findColIdx = (...aliases: string[]): number => {
       for (const alias of aliases) {
-        const idx = headerRow.findIndex((h) => h === alias.toLowerCase() || h.includes(alias.toLowerCase()));
+        const aLower = alias.toLowerCase();
+        const idx = headerLower.findIndex((h) => h === aLower || h.includes(aLower));
         if (idx !== -1) return idx;
       }
       return -1;
     };
 
-    // Header index map
     const colIdx = {
-      productNo: findColIdx("product no", "product_no", "handle", "slug", "sku", "id"),
-      itemType: findColIdx("item type", "item_type", "type", "fieldtype"),
-      name: findColIdx("name", "title", "product name"),
-      description: findColIdx("description", "plaindescription", "desc"),
-      brand: findColIdx("brand"),
-      categories: findColIdx("categories", "categoryslugs"),
-      primaryCategory: findColIdx("primary category", "primarycategoryslug"),
-      ribbon: findColIdx("ribbon", "badge"),
-      tags: findColIdx("tags"),
-      price: findColIdx("price"),
-      strikethroughPrice: findColIdx("strikethrough price", "strikethrough", "compare price", "compareatprice"),
-      pricePerUnitVisible: findColIdx("price per unit visible", "showpriceperunit"),
-      pricePerUnitPrice: findColIdx("price per unit price", "baseunit"),
-      pricePerUnitUnit: findColIdx("price per unit unit", "baseunitmeasurement"),
+      id: findColIdx("product id", "id"),
+      sku: findColIdx("sku", "product no", "product_no", "code"),
+      slug: findColIdx("product url slug", "product url", "slug", "handle"),
+      name: findColIdx("product name", "name", "title"),
+      description: findColIdx("feature description", "description", "desc"),
+      price: findColIdx("selling price", "price", "baseprice"),
+      strikethroughPrice: findColIdx("original price", "strikethrough price", "strikethrough", "compare price", "compareatprice"),
       imagesUrl: findColIdx("images url", "images", "image", "media"),
-      additionalInfoVisible: findColIdx("additional info sections visible"),
-      visibility: findColIdx("visibility of product", "visibility", "visible"),
-      productUrl: findColIdx("product url", "url"),
+      videoUrl: findColIdx("product video url", "video url", "video"),
+      applications: findColIdx("applications", "application tags", "tags"),
+      enableBuyerNote: findColIdx("enable buyer note", "buyer note", "enablebuyernote"),
+      visibility: findColIdx("visibility", "visibility of product", "visible", "status"),
+      brand: findColIdx("brand"),
+      category: findColIdx("category", "categories", "primary category"),
+      seoTitle: findColIdx("seo meta title", "seo title", "meta title"),
+      seoDesc: findColIdx("seo meta description", "seo desc", "meta description"),
     };
 
-    // Section columns indices (1 to 5)
-    const sectionColIndices: Array<{ titleIdx: number; nameIdx: number }> = [];
-    for (let i = 1; i <= 5; i++) {
-      const titleIdx = findColIdx(`section ${i} title`, `section${i}title`, `section ${i}`);
-      const nameIdx = findColIdx(`section ${i} name`, `section${i}name`, `section ${i} content`);
-      sectionColIndices.push({ titleIdx, nameIdx });
-    }
-
-    // Option columns indices (1 to 6)
-    const optionColIndices: Array<{ nameIdx: number; valIdx: number }> = [];
+    // Feature Cards 1 to 6
+    const featureCardCols: Array<{ labelIdx: number; valIdx: number }> = [];
     for (let i = 1; i <= 6; i++) {
-      const nameIdx = findColIdx(`option ${i} name`, `productoptionname${i}`);
-      const valIdx = findColIdx(`option ${i} value`, `productoptionchoices${i}`, `productoptionchoice${i}`);
-      optionColIndices.push({ nameIdx, valIdx });
+      const labelIdx = findColIdx(`feature ${i} label`, `feature${i}label`, `card ${i} label`);
+      const valIdx = findColIdx(`feature ${i} value`, `feature${i}value`, `card ${i} value`);
+      featureCardCols.push({ labelIdx, valIdx });
     }
 
-    // 3. Group rows into Parent Products and Child Variants
-    const productGroups: ParsedProductGroup[] = [];
-    let currentGroup: ParsedProductGroup | null = null;
-
-    for (let rowIdx = 1; rowIdx < rawData.length; rowIdx++) {
-      const row = rawData[rowIdx];
-      if (!row || row.every((c: any) => !cleanVal(c))) continue;
-
-      const getCol = (idx: number) => (idx !== -1 && row[idx] != null ? cleanVal(row[idx]) : "");
-
-      const productNo = getCol(colIdx.productNo);
-      const itemType = getCol(colIdx.itemType).toLowerCase();
-      const name = getCol(colIdx.name);
-
-      const isVariant =
-        itemType === "variant" ||
-        (productNo.includes("_") && !name) ||
-        (!name && !itemType && currentGroup !== null);
-
-      const rowMap: Record<string, string> = {
-        productNo,
-        itemType: isVariant ? "Variant" : "Product",
-        name,
-        description: getCol(colIdx.description),
-        brand: getCol(colIdx.brand),
-        categories: getCol(colIdx.categories),
-        primaryCategory: getCol(colIdx.primaryCategory),
-        ribbon: getCol(colIdx.ribbon),
-        tags: getCol(colIdx.tags),
-        price: getCol(colIdx.price),
-        strikethroughPrice: getCol(colIdx.strikethroughPrice),
-        pricePerUnitVisible: getCol(colIdx.pricePerUnitVisible),
-        pricePerUnitPrice: getCol(colIdx.pricePerUnitPrice),
-        pricePerUnitUnit: getCol(colIdx.pricePerUnitUnit),
-        imagesUrl: getCol(colIdx.imagesUrl),
-        additionalInfoVisible: getCol(colIdx.additionalInfoVisible),
-        visibility: getCol(colIdx.visibility),
-        productUrl: getCol(colIdx.productUrl),
-      };
-
-      // Add sections 1 to 5
-      for (let i = 0; i < 5; i++) {
-        const { titleIdx, nameIdx } = sectionColIndices[i];
-        rowMap[`section${i + 1}Title`] = getCol(titleIdx);
-        rowMap[`section${i + 1}Name`] = getCol(nameIdx);
-      }
-
-      // Add options 1 to 6
-      for (let i = 0; i < 6; i++) {
-        const { nameIdx, valIdx } = optionColIndices[i];
-        rowMap[`option${i + 1}Name`] = getCol(nameIdx);
-        rowMap[`option${i + 1}Value`] = getCol(valIdx);
-      }
-
-      if (isVariant && currentGroup) {
-        currentGroup.variantRows.push(rowMap);
-      } else {
-        if (!name && !productNo) continue; // skip completely empty rows
-        currentGroup = {
-          parentRow: rowMap,
-          variantRows: [],
-        };
-        productGroups.push(currentGroup);
-      }
-    }
-
-    if (productGroups.length === 0) {
-      return { success: false, error: "No valid product entries found in the file." };
+    // Support Links 1 to 6
+    const supportLinkCols: Array<{ titleIdx: number; urlIdx: number; iconIdx: number }> = [];
+    for (let i = 1; i <= 6; i++) {
+      const titleIdx = findColIdx(`support link ${i} title`, `link ${i} title`, `supportlink${i}title`);
+      const urlIdx = findColIdx(`support link ${i} url`, `link ${i} url`, `supportlink${i}url`);
+      const iconIdx = findColIdx(`support link ${i} icon`, `link ${i} icon`, `supportlink${i}icon`);
+      supportLinkCols.push({ titleIdx, urlIdx, iconIdx });
     }
 
     let createdCount = 0;
     let updatedCount = 0;
     const errors: string[] = [];
 
-    // 4. Process each Product Group inside a Transaction
+    // Process all products inside a database transaction
     await transaction(async (client) => {
-      for (const group of productGroups) {
-        const { parentRow, variantRows } = group;
+      // Query existing products for detail similarity matching and deduplication
+      const existingProductsRes = await client.query(`
+        SELECT p."id", p."name", p."slug", p."sku", p."price", p."description", p."brand",
+               p."categoryId", p."primaryCategoryId", p."featureHighlights", p."applications",
+               c."name" as "categoryName"
+        FROM "Product" p
+        LEFT JOIN "Category" c ON c."id" = COALESCE(p."categoryId", p."primaryCategoryId")
+      `);
+      const dbProducts = existingProductsRes.rows as any[];
 
-        const prodNo = parentRow.productNo || ("PRD-" + Date.now().toString(36).toUpperCase());
-        const prodName = parentRow.name || "Untitled Product";
-        const cleanSlug = generateSlug(prodName);
+      for (let rIdx = 0; rIdx < rawRows.length; rIdx++) {
+        const row = rawRows[rIdx];
+        const getVal = (idx: number) => (idx !== -1 && row[idx] != null ? cleanVal(row[idx]) : "");
 
-        // Check if product already exists by SKU (productNo) or slug
-        const existingRes = await client.query(
-          `SELECT "id" FROM "Product" WHERE "sku" = $1 OR "slug" = $2 LIMIT 1`,
-          [prodNo, cleanSlug]
-        );
+        const nameInput = getVal(colIdx.name);
+        if (!nameInput && !getVal(colIdx.sku) && !getVal(colIdx.id)) {
+          continue; // Skip blank row
+        }
 
-        const isUpdate = existingRes.rows.length > 0;
-        const productId = isUpdate ? existingRes.rows[0].id : generateId("prd_");
+        const prodName = nameInput || "Untitled Product";
+        const idInput = getVal(colIdx.id);
+        const skuInput = getVal(colIdx.sku);
+        const slugInput = getVal(colIdx.slug);
+        const descInput = getVal(colIdx.description);
+        const priceInput = getVal(colIdx.price);
+        const strikethroughInput = getVal(colIdx.strikethroughPrice);
+        const imagesInput = getVal(colIdx.imagesUrl);
+        const videoInput = getVal(colIdx.videoUrl);
+        const appsInput = getVal(colIdx.applications);
+        const buyerNoteInput = getVal(colIdx.enableBuyerNote);
+        const visInput = getVal(colIdx.visibility);
+        const brandInput = getVal(colIdx.brand);
+        const catInput = getVal(colIdx.category);
+        const seoTitleInput = getVal(colIdx.seoTitle);
+        const seoDescInput = getVal(colIdx.seoDesc);
 
-        // Resolve Price
-        const priceNum = parseFloat(parentRow.price) || 0;
+        // Resolve Prices
+        const priceNum = parseCleanPrice(priceInput);
         const priceInPaise = Math.round(priceNum * 100);
 
-        const strikethroughNum = parseFloat(parentRow.strikethroughPrice);
-        const strikethroughInPaise = !isNaN(strikethroughNum) && strikethroughNum > 0
-          ? Math.round(strikethroughNum * 100)
-          : null;
+        const strikeNum = parseCleanPrice(strikethroughInput);
+        const strikethroughInPaise = strikeNum > 0 ? Math.round(strikeNum * 100) : null;
 
-        // Resolve Visibility
-        const isVisible = parentRow.visibility.toLowerCase() !== "false";
-
-        // Resolve Categories
-        const catNames = parentRow.categories
-          ? parentRow.categories.split(/[;,]/).map((c) => c.trim()).filter(Boolean)
-          : [];
-
-        let primaryCatName = parentRow.primaryCategory || catNames[0] || "General";
-        let primaryCatId: string | null = null;
-
-        // Auto-create / resolve categories in DB
-        const categoryIds: string[] = [];
-        const uniqueCatNames = Array.from(new Set([primaryCatName, ...catNames]));
-
-        for (const catName of uniqueCatNames) {
-          const catSlug = generateSlug(catName);
-          const catRes = await client.query(
-            `INSERT INTO "Category" ("id", "name", "slug", "status", "sortOrder", "createdAt", "updatedAt")
-             VALUES ($1, $2, $3, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-             ON CONFLICT ("slug") DO UPDATE SET "name" = EXCLUDED."name"
-             RETURNING "id"`,
-            [generateId("cat_"), catName, catSlug]
-          );
-          const catId = catRes.rows[0].id;
-          categoryIds.push(catId);
-          if (catName.toLowerCase() === primaryCatName.toLowerCase()) {
-            primaryCatId = catId;
+        // Resolve Feature Highlight Cards (up to 6)
+        const featureHighlights: Array<{ label: string; value: string }> = [];
+        for (let c = 0; c < 6; c++) {
+          const { labelIdx, valIdx } = featureCardCols[c];
+          const l = getVal(labelIdx);
+          const v = getVal(valIdx);
+          if (l || v) {
+            featureHighlights.push({ label: l, value: v });
           }
         }
 
-        if (!primaryCatId && categoryIds.length > 0) {
-          primaryCatId = categoryIds[0];
+        // Resolve Applications Tags (up to 20)
+        const applications: string[] = appsInput
+          ? appsInput.split(/[;,]/).map((t) => t.trim()).filter(Boolean).slice(0, 20)
+          : [];
+
+        // 1. Check if product exists in DB by ID, SKU, or Detail Similarity (>= 90%)
+        let matchedProduct: any = null;
+        if (idInput) {
+          matchedProduct = dbProducts.find((p) => p.id.toLowerCase() === idInput.toLowerCase());
+        }
+        if (!matchedProduct && skuInput) {
+          matchedProduct = dbProducts.find((p) => p.sku && p.sku.toLowerCase() === skuInput.toLowerCase());
         }
 
-        // Resolve Brand
-        const brandName = parentRow.brand || null;
+        // If no explicit ID or SKU match, compare detail similarity with candidate products
+        if (!matchedProduct) {
+          const incomingDetails = {
+            name: prodName,
+            description: descInput,
+            price: priceNum,
+            brand: brandInput,
+            category: catInput,
+            features: featureHighlights,
+            applications,
+          };
+
+          let bestScore = 0;
+          let bestCandidate: any = null;
+
+          for (const p of dbProducts) {
+            const sim = calculateProductDetailSimilarity(
+              incomingDetails,
+              {
+                name: p.name,
+                description: p.description,
+                price: p.price,
+                brand: p.brand,
+                categoryName: p.categoryName,
+                featureHighlights: p.featureHighlights,
+                applications: p.applications,
+              },
+              90
+            );
+
+            if (sim.score > bestScore) {
+              bestScore = sim.score;
+              bestCandidate = p;
+            }
+          }
+
+          if (bestCandidate && bestScore >= 90) {
+            matchedProduct = bestCandidate;
+          }
+        }
+
+        const isUpdate = Boolean(matchedProduct);
+        const existing = matchedProduct;
+        const productId = isUpdate ? existing.id : (idInput && idInput.startsWith("prd_") ? idInput : generateId("prd_"));
+
+        // 2. Resolve Slug
+        let cleanSlug = slugInput ? generateSlug(slugInput) : (isUpdate && existing.slug ? existing.slug : generateSlug(prodName));
+        // Check slug collision with other products
+        const slugCollision = await client.query(
+          `SELECT "id" FROM "Product" WHERE "slug" = $1 AND "id" <> $2 LIMIT 1`,
+          [cleanSlug, productId]
+        );
+        if (slugCollision.rows.length > 0) {
+          cleanSlug = `${cleanSlug}-${Date.now().toString(36).slice(-4)}`;
+        }
+
+        // 3. Resolve SKU
+        const cleanSku = skuInput || (isUpdate && existing.sku ? existing.sku : `PRD-${productId.slice(-6).toUpperCase()}`);
+
+        // 4. Resolve Visibility & Buyer Note
+        const isVisible = parseBoolean(visInput, true);
+        const enableBuyerNote = parseBoolean(buyerNoteInput, true);
+
+        // 5. Resolve Brand (Auto-create in Brand table)
+        const brandName = brandInput || null;
         if (brandName) {
           const brandSlug = generateSlug(brandName);
           await client.query(
@@ -995,308 +829,183 @@ export async function importProductsAction(options: ImportOptions): Promise<{
           );
         }
 
-        // Resolve Ribbon
-        const ribbonName = parentRow.ribbon || null;
-        if (ribbonName) {
-          await client.query(
-            `INSERT INTO "ProductRibbon" ("id", "name", "color", "createdAt")
-             VALUES ($1, $2, '#3b82f6', CURRENT_TIMESTAMP)
-             ON CONFLICT ("name") DO NOTHING`,
-            [generateId("rib_"), ribbonName]
+        // 6. Resolve Category (Auto-create in Category table)
+        let categoryId: string | null = null;
+        if (catInput) {
+          const catSlug = generateSlug(catInput);
+          const catRes = await client.query(
+            `INSERT INTO "Category" ("id", "name", "slug", "status", "sortOrder", "createdAt", "updatedAt")
+             VALUES ($1, $2, $3, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+             ON CONFLICT ("slug") DO UPDATE SET "name" = EXCLUDED."name"
+             RETURNING "id"`,
+            [generateId("cat_"), catInput, catSlug]
           );
+          categoryId = catRes.rows[0].id;
         }
 
-        // Resolve Price per unit
-        const showPricePerUnit = parentRow.pricePerUnitVisible.toLowerCase() === "true";
-        let baseUnitNum: number | null = null;
-        let totalUnitsPriceNum: number | null = null;
-
-        if (parentRow.pricePerUnitPrice) {
-          const rawPricePerUnit = parentRow.pricePerUnitPrice.trim();
-          if (rawPricePerUnit.includes(";")) {
-            const parts = rawPricePerUnit.split(";");
-            totalUnitsPriceNum = parseFloat(parts[0]?.trim()) || priceNum;
-            baseUnitNum = parseFloat(parts[1]?.trim()) || 1;
-          } else {
-            totalUnitsPriceNum = parseFloat(rawPricePerUnit) || priceNum;
-            baseUnitNum = 1;
+        // 7. Resolve Technical Support Links (up to 6)
+        const technicalSupportLinks: Array<{ title: string; url: string; icon: string }> = [];
+        for (let l = 0; l < 6; l++) {
+          const { titleIdx, urlIdx, iconIdx } = supportLinkCols[l];
+          const title = getVal(titleIdx);
+          const url = getVal(urlIdx);
+          let icon = getVal(iconIdx).toLowerCase();
+          if (!["specs", "selection", "calculation", "cad"].includes(icon)) {
+            icon = "specs";
           }
-        } else if (showPricePerUnit) {
-          totalUnitsPriceNum = priceNum;
-          baseUnitNum = 1;
+          if (title || url) {
+            technicalSupportLinks.push({ title, url, icon });
+          }
         }
 
-        const baseUnitMeasurement = parentRow.pricePerUnitUnit?.toLowerCase() || (showPricePerUnit ? "piece" : null);
+        // 8. Resolve SEO Title and Description
+        const seoTitle = seoTitleInput || (prodName ? `${prodName} | ${brandName || "HIWIN"}` : null);
+        const seoDesc = seoDescInput || (descInput ? descInput.replace(/<[^>]*>/g, "").slice(0, 160).trim() : null);
 
-        // --- UPSERT CORE PRODUCT ---
+        // 9. Upsert Core Product Record
         if (isUpdate) {
           await client.query(
             `UPDATE "Product" SET
-               "name" = $1, "slug" = $2, "sku" = $3, "description" = $4, "status" = $5, "visible" = $6,
-               "categoryId" = $7, "primaryCategoryId" = $8, "primaryRibbon" = $9, "brand" = $10,
-               "basePrice" = $11, "price" = $12, "compareAtPrice" = $13, "strikethroughPrice" = $14,
-               "showPricePerUnit" = $15, "baseUnit" = $16, "baseUnitMeasurement" = $17, "totalUnits" = $18,
+               "name" = $1, "slug" = $2, "sku" = $3, "description" = $4,
+               "status" = $5, "visible" = $6, "brand" = $7,
+               "categoryId" = COALESCE($8, "categoryId"),
+               "primaryCategoryId" = COALESCE($8, "primaryCategoryId"),
+               "basePrice" = $9, "price" = $9,
+               "compareAtPrice" = $10, "strikethroughPrice" = $10,
+               "featureHighlights" = $11, "applications" = $12, "technicalSupportLinks" = $13,
+               "enableBuyerNote" = $14, "videoUrl" = $15,
+               "seoTitle" = $16, "seoDesc" = $17,
                "updatedAt" = CURRENT_TIMESTAMP
-             WHERE "id" = $19`,
+             WHERE "id" = $18`,
             [
-              prodName, cleanSlug, prodNo, parentRow.description || "", isVisible ? "ACTIVE" : "DRAFT", isVisible,
-              primaryCatId, primaryCatId, ribbonName, brandName,
-              priceInPaise, priceInPaise, strikethroughInPaise, strikethroughInPaise,
-              showPricePerUnit, baseUnitNum, baseUnitMeasurement, totalUnitsPriceNum,
+              prodName, cleanSlug, cleanSku, descInput || "",
+              isVisible ? "ACTIVE" : "DRAFT", isVisible, brandName,
+              categoryId,
+              priceInPaise, strikethroughInPaise,
+              JSON.stringify(featureHighlights),
+              JSON.stringify(applications),
+              JSON.stringify(technicalSupportLinks),
+              enableBuyerNote,
+              videoInput || null,
+              seoTitle,
+              seoDesc,
               productId,
             ]
           );
           updatedCount++;
+          if (existing) {
+            existing.name = prodName;
+            existing.description = descInput || "";
+            existing.brand = brandName;
+            existing.price = priceInPaise;
+            existing.featureHighlights = featureHighlights;
+            existing.applications = applications;
+            if (catInput) existing.categoryName = catInput;
+          }
         } else {
           await client.query(
             `INSERT INTO "Product" (
-               "id", "name", "slug", "sku", "description", "status", "visible", "showInPos",
-               "categoryId", "primaryCategoryId", "primaryRibbon", "brand",
+               "id", "name", "slug", "sku", "description",
+               "status", "visible", "showInPos", "brand",
+               "categoryId", "primaryCategoryId",
                "basePrice", "price", "compareAtPrice", "strikethroughPrice",
-               "showPricePerUnit", "baseUnit", "baseUnitMeasurement", "totalUnits",
+               "featureHighlights", "applications", "technicalSupportLinks",
+               "enableBuyerNote", "videoUrl", "seoTitle", "seoDesc",
                "createdAt", "updatedAt"
              )
-             VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+             VALUES (
+               $1, $2, $3, $4, $5,
+               $6, $7, true, $8,
+               $9, $9,
+               $10, $10, $11, $11,
+               $12, $13, $14,
+               $15, $16, $17, $18,
+               CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+             )`,
             [
-              productId, prodName, cleanSlug, prodNo, parentRow.description || "", isVisible ? "ACTIVE" : "DRAFT", isVisible,
-              primaryCatId, primaryCatId, ribbonName, brandName,
-              priceInPaise, priceInPaise, strikethroughInPaise, strikethroughInPaise,
-              showPricePerUnit, baseUnitNum, baseUnitMeasurement, totalUnitsPriceNum,
+              productId, prodName, cleanSlug, cleanSku, descInput || "",
+              isVisible ? "ACTIVE" : "DRAFT", isVisible, brandName,
+              categoryId,
+              priceInPaise, strikethroughInPaise,
+              JSON.stringify(featureHighlights),
+              JSON.stringify(applications),
+              JSON.stringify(technicalSupportLinks),
+              enableBuyerNote,
+              videoInput || null,
+              seoTitle,
+              seoDesc,
             ]
           );
           createdCount++;
+          dbProducts.push({
+            id: productId,
+            name: prodName,
+            slug: cleanSlug,
+            sku: cleanSku,
+            price: priceInPaise,
+            description: descInput || "",
+            brand: brandName,
+            categoryId,
+            primaryCategoryId: categoryId,
+            categoryName: catInput || null,
+            featureHighlights,
+            applications,
+          });
         }
 
-        // --- SYNC CATEGORIES ---
-        await client.query(`DELETE FROM "ProductCategory" WHERE "productId" = $1`, [productId]);
-        for (const catId of categoryIds) {
+        // 13. Sync Category Join
+        if (categoryId) {
           await client.query(
-            `INSERT INTO "ProductCategory" ("productId", "categoryId") VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-            [productId, catId]
+            `INSERT INTO "ProductCategory" ("productId", "categoryId")
+             VALUES ($1, $2)
+             ON CONFLICT ("productId", "categoryId") DO NOTHING`,
+            [productId, categoryId]
           );
         }
 
-        // --- SYNC TAGS ---
-        const tagNames = parentRow.tags
-          ? parentRow.tags.split(/[,;]/).map((t) => t.trim()).filter(Boolean)
-          : [];
-        await client.query(`DELETE FROM "ProductTagAssignment" WHERE "productId" = $1`, [productId]);
-        for (const tagName of tagNames) {
-          const tagRes = await client.query(
-            `INSERT INTO "ProductTag" ("id", "name", "createdAt")
-             VALUES ($1, $2, CURRENT_TIMESTAMP)
-             ON CONFLICT ("name") DO UPDATE SET "name" = EXCLUDED."name"
-             RETURNING "id"`,
-            [generateId("tag_"), tagName]
-          );
-          const tagId = tagRes.rows[0].id;
-          await client.query(
-            `INSERT INTO "ProductTagAssignment" ("productId", "tagId") VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-            [productId, tagId]
-          );
-        }
-
-        // --- SYNC IMAGES ---
-        const imageUrls = parentRow.imagesUrl
-          ? parentRow.imagesUrl.split(/[;,]/).map((u) => u.trim()).filter(Boolean)
-          : [];
-        await client.query(`DELETE FROM "ProductImage" WHERE "productId" = $1`, [productId]);
-        for (let imgIdx = 0; imgIdx < imageUrls.length; imgIdx++) {
-          const imgUrl = imageUrls[imgIdx];
-          await client.query(
-            `INSERT INTO "ProductImage" ("id", "productId", "url", "alt", "isPrimary", "order", "createdAt")
-             VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)`,
-            [generateId("med_"), productId, imgUrl, prodName, imgIdx === 0, imgIdx]
-          );
-        }
-
-        // --- SYNC OPTIONS & CHOICES ---
-        const optionsList: Array<{ name: string; choices: string[] }> = [];
-        for (let i = 1; i <= 6; i++) {
-          const optName = parentRow[`option${i}Name`];
-          const optVal = parentRow[`option${i}Value`];
-          if (optName && optVal) {
-            const choices = optVal.split(/[;,]/).map((c) => c.trim()).filter(Boolean);
-            if (choices.length > 0) {
-              optionsList.push({ name: optName, choices });
-            }
-          }
-        }
-
-        await client.query(`DELETE FROM "ProductOption" WHERE "productId" = $1`, [productId]);
-        for (let optIdx = 0; optIdx < optionsList.length; optIdx++) {
-          const opt = optionsList[optIdx];
-          const optId = generateId("opt_");
-          const isSwatch = opt.name.toLowerCase() === "color" || opt.name.toLowerCase() === "colour";
-          const fieldType = isSwatch ? "SWATCH_CHOICES" : "TEXT_CHOICES";
-
-          await client.query(
-            `INSERT INTO "ProductOption" ("id", "productId", "name", "fieldType", "sortOrder", "createdAt")
-             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
-            [optId, productId, opt.name, fieldType, optIdx]
-          );
-          for (let chIdx = 0; chIdx < opt.choices.length; chIdx++) {
-            const chName = opt.choices[chIdx];
-            await client.query(
-              `INSERT INTO "ProductOptionChoice" ("id", "optionId", "name", "sortOrder")
-               VALUES ($1, $2, $3, $4)`,
-              [generateId("ch_"), optId, chName, chIdx]
-            );
-          }
-        }
-
-        // --- SYNC VARIANTS (WITH AUTO-GENERATION FOR UNMAPPED COMBINATIONS) ---
-        await client.query(`DELETE FROM "ProductVariant" WHERE "productId" = $1`, [productId]);
-
-        if (optionsList.length > 0) {
-          // 1. Cartesian product of all option choices
-          const cartesian = (arrays: string[][]): string[][] => {
-            return arrays.reduce<string[][]>(
-              (acc, curr) => acc.flatMap((c) => curr.map((n) => [...c, n])),
-              [[]]
-            );
-          };
-
-          const optionNames = optionsList.map((o) => o.name);
-          const optionChoiceArrays = optionsList.map((o) => o.choices);
-          const allCombinations = cartesian(optionChoiceArrays);
-
-          // 2. Map existing CSV variant rows by normalized attributes key
-          const getComboKey = (attrs: Record<string, string>) =>
-            optionNames.map((name) => (attrs[name] || "").toLowerCase().trim()).join("|");
-
-          const csvVariantsMap = new Map<string, typeof variantRows[0]>();
-          for (const vRow of variantRows) {
-            const vAttributes: Record<string, string> = {};
-            for (let i = 1; i <= 6; i++) {
-              const optName = vRow[`option${i}Name`] || (optionsList[i - 1]?.name);
-              const optVal = vRow[`option${i}Value`];
-              if (optName && optVal) {
-                vAttributes[optName] = optVal;
-              }
-            }
-            csvVariantsMap.set(getComboKey(vAttributes), vRow);
-          }
-
-          const findMatchingCsvRow = (currentAttrs: Record<string, string>) => {
-            const exactKey = getComboKey(currentAttrs);
-            if (csvVariantsMap.has(exactKey)) return csvVariantsMap.get(exactKey);
-
-            // Partial matching for variants where some options are omitted
-            for (const vRow of variantRows) {
-              const vAttrs: Record<string, string> = {};
-              for (let i = 1; i <= 6; i++) {
-                const optName = vRow[`option${i}Name`] || (optionsList[i - 1]?.name);
-                const optVal = vRow[`option${i}Value`];
-                if (optName && optVal) {
-                  vAttrs[optName] = optVal;
-                }
-              }
-              if (Object.keys(vAttrs).length > 0) {
-                const isMatch = Object.entries(vAttrs).every(
-                  ([k, v]) => !v || (currentAttrs[k] || "").toLowerCase().trim() === v.toLowerCase().trim()
-                );
-                if (isMatch) return vRow;
-              }
-            }
-            return undefined;
-          };
-
-          // 3. Insert each combination (using custom CSV override if matched, or parent product defaults)
-          for (let cIdx = 0; cIdx < allCombinations.length; cIdx++) {
-            const combo = allCombinations[cIdx];
-            const currentAttrs: Record<string, string> = {};
-            optionNames.forEach((name, i) => {
-              currentAttrs[name] = combo[i];
-            });
-
-            const matchedCsvRow = findMatchingCsvRow(currentAttrs);
-
-            let vSku: string;
-            let vPricePaise: number;
-            let vStrikePaise: number | null;
-            let vImg: string | null = null;
-
-            if (matchedCsvRow) {
-              vSku = matchedCsvRow.productNo || `${prodNo}_${String(cIdx + 1).padStart(3, "0")}`;
-              const vPriceNum = parseFloat(matchedCsvRow.price);
-              vPricePaise = !isNaN(vPriceNum) && vPriceNum > 0 ? Math.round(vPriceNum * 100) : priceInPaise;
-              const vStrikeNum = parseFloat(matchedCsvRow.strikethroughPrice);
-              vStrikePaise = !isNaN(vStrikeNum) && vStrikeNum > 0 ? Math.round(vStrikeNum * 100) : strikethroughInPaise;
-              vImg = matchedCsvRow.imagesUrl || null;
-            } else {
-              // Auto-generate rest variant using parent product's default values
-              vSku = `${prodNo}_${String(cIdx + 1).padStart(3, "0")}`;
-              vPricePaise = priceInPaise;
-              vStrikePaise = strikethroughInPaise;
-              vImg = null;
-            }
-
-            await client.query(
-              `INSERT INTO "ProductVariant" (
-                 "id", "productId", "sku", "price", "strikethroughPrice", "trackQuantity", "stockQuantity",
-                 "inventoryStatus", "mediaUrl", "attributes", "createdAt", "updatedAt"
-               )
-               VALUES ($1, $2, $3, $4, $5, true, 100, 'IN_STOCK', $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-              [
-                generateId("var_"), productId, vSku, vPricePaise, vStrikePaise,
-                vImg, JSON.stringify(currentAttrs),
-              ]
-            );
-          }
-        }
-
-        // --- SYNC INFO SECTIONS ---
-        await client.query(`DELETE FROM "ProductAssignedInfoSection" WHERE "productId" = $1`, [productId]);
-
-        const hasInfoSectionsVisible = parentRow.additionalInfoVisible.toLowerCase() !== "false";
-
-        for (let sIdx = 1; sIdx <= 5; sIdx++) {
-          const sTitle = parentRow[`section${sIdx}Title`];
-          const sName = parentRow[`section${sIdx}Name`];
-
-          if (sTitle || sName) {
-            // Check if GlobalInfoSection with same title or internalName exists
-            const existingSec = await client.query(
-              `SELECT "id", "title", "internalName" FROM "GlobalInfoSection"
-               WHERE (LOWER("title") = LOWER($1) AND $1 <> '')
-                  OR (LOWER("internalName") = LOWER($1) AND $1 <> '')
-                  OR (LOWER("title") = LOWER($2) AND $2 <> '')
-                  OR (LOWER("internalName") = LOWER($2) AND $2 <> '')
-               LIMIT 1`,
-              [sTitle || "", sName || ""]
-            );
-
-            let secId: string;
-            if (existingSec.rows.length > 0) {
-              secId = existingSec.rows[0].id;
-            } else {
-              secId = generateId("sec_");
-              const publicTitle = sTitle || sName || `Section ${sIdx}`;
-              const internalName = sName || sTitle || `Section ${sIdx}`;
+        // 14. Sync Images
+        if (imagesInput) {
+          const imageUrls = imagesInput.split(/[;,]/).map((u) => u.trim()).filter(Boolean);
+          if (imageUrls.length > 0) {
+            await client.query(`DELETE FROM "ProductImage" WHERE "productId" = $1`, [productId]);
+            for (let imgIdx = 0; imgIdx < imageUrls.length; imgIdx++) {
               await client.query(
-                `INSERT INTO "GlobalInfoSection" ("id", "internalName", "title", "content", "sortOrder", "createdAt", "updatedAt")
-                 VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-                [secId, internalName, publicTitle, publicTitle, sIdx - 1]
-              );
-            }
-
-            if (hasInfoSectionsVisible) {
-              await client.query(
-                `INSERT INTO "ProductAssignedInfoSection" ("productId", "sectionId", "sortOrder")
-                 VALUES ($1, $2, $3)
-                 ON CONFLICT ("productId", "sectionId") DO UPDATE SET "sortOrder" = $3`,
-                [productId, secId, sIdx - 1]
+                `INSERT INTO "ProductImage" ("id", "productId", "url", "alt", "isPrimary", "order", "createdAt")
+                 VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)`,
+                [generateId("med_"), productId, imageUrls[imgIdx], prodName, imgIdx === 0, imgIdx]
               );
             }
           }
         }
+
+        // 15. Ensure default base variant in ProductVariant (for cart / order compatibility)
+        await client.query(
+          `INSERT INTO "ProductVariant" (
+             "id", "productId", "sku", "price", "strikethroughPrice",
+             "trackQuantity", "stockQuantity", "inventoryStatus",
+             "attributes", "createdAt", "updatedAt"
+           )
+           VALUES ($1, $2, $3, $4, $5, true, 100, 'IN_STOCK', '{}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+           ON CONFLICT ("sku") DO UPDATE SET
+             "price" = EXCLUDED."price",
+             "strikethroughPrice" = EXCLUDED."strikethroughPrice",
+             "updatedAt" = CURRENT_TIMESTAMP`,
+          [generateId("var_"), productId, cleanSku, priceInPaise, strikethroughInPaise]
+        );
       }
     });
 
-    revalidatePath("/admin/products");
-    revalidatePath("/products");
-    revalidatePath("/");
+    const safeRevalidate = (p: string) => {
+      try {
+        revalidatePath(p);
+      } catch {
+        // Safe when running outside Next.js request context
+      }
+    };
+
+    safeRevalidate("/admin/products");
+    safeRevalidate("/products");
+    safeRevalidate("/");
 
     return {
       success: true,

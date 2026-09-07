@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useCartStore } from "@/store/useCartStore";
+import { useCartStore, getCartItemId } from "@/store/useCartStore";
 import { useToastStore } from "@/store/useToastStore";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ShieldCheck, Tag, ChevronRight, Truck } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
@@ -117,7 +117,7 @@ export default function FullCartPage() {
               {/* Items List */}
               <div className="border border-slate-200 rounded-3xl overflow-hidden bg-white shadow-sm divide-y divide-slate-100">
                 {items.map((item) => {
-                  const itemId = item.variant ? `${item.product.id}-${item.variant.id}` : item.product.id;
+                  const itemId = getCartItemId(item.product.id, item.variant?.id, item.buyerNote);
                   const itemSku = item.variant ? item.variant.sku : item.product.sku;
                   const itemPrice = item.variant ? item.variant.price : item.product.basePrice;
                   
@@ -142,6 +142,13 @@ export default function FullCartPage() {
                         {(item.product.name || "Product").replace(/\s*-\s*undefined/gi, "")}
                         {item.variant?.name && item.variant.name !== "undefined" && ` - ${item.variant.name}`}
                       </Link>
+
+                      {item.buyerNote && (
+                        <div className="mt-1 px-2.5 py-1 rounded bg-amber-50/80 border border-amber-200/80 text-xs text-amber-900 inline-block">
+                          <span className="font-semibold text-amber-950">Model / Note: </span>
+                          <span className="italic">{item.buyerNote}</span>
+                        </div>
+                      )}
 
                       <div className="text-xs text-emerald-600 font-medium">
                         {item.product.stockStatus === 'in-stock' ? 'In Stock' : 'Low Stock'}

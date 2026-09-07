@@ -2,6 +2,7 @@
 
 import { query, transaction } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { formatDisplayPhone } from "@/lib/utils";
 import crypto from "crypto";
 
 export interface AddressItem {
@@ -49,7 +50,8 @@ export async function getUserAddressesAction(userId?: string | null, userEmail?:
     const res = await query(
       `SELECT * FROM "Address" 
        WHERE "userId" = $1 OR ("email" = $2 AND $2 IS NOT NULL AND $2 != '')
-       ORDER BY "isDefault" DESC, "updatedAt" DESC, "createdAt" DESC`,
+       ORDER BY "isDefault" DESC, "updatedAt" DESC, "createdAt" DESC
+       LIMIT 4`,
       [userId || "", userEmail || ""]
     );
 
@@ -59,7 +61,7 @@ export async function getUserAddressesAction(userId?: string | null, userEmail?:
       fullName: r.fullName,
       companyName: r.companyName || "",
       email: r.email || "",
-      phone: r.phone || "",
+      phone: r.phone ? formatDisplayPhone(r.phone) : "",
       street: r.street,
       city: r.city,
       state: r.state,
@@ -91,6 +93,16 @@ export async function createAddressAction(data: AddressInput) {
     const userId = data.userId || `user_${data.phone.replace(/[^\d]/g, "").slice(-10)}`;
     const isDefault = Boolean(data.isDefault);
 
+    // Limit to max 4 saved addresses per user
+    const countRes = await query(
+      `SELECT count(*) as count FROM "Address" WHERE "userId" = $1`,
+      [userId]
+    );
+    const existingCount = parseInt(countRes.rows[0]?.count || "0", 10);
+    if (existingCount >= 4) {
+      return { success: false, error: "Maximum 4 saved addresses allowed. Please delete an existing address." };
+    }
+
     if (isDefault && data.userId) {
       await query(`UPDATE "Address" SET "isDefault" = false WHERE "userId" = $1`, [data.userId]);
     }
@@ -107,7 +119,7 @@ export async function createAddressAction(data: AddressInput) {
         data.fullName.trim(),
         data.companyName?.trim() || null,
         data.email?.trim() || null,
-        data.phone.trim(),
+        formatDisplayPhone(data.phone),
         data.street.trim(),
         data.city.trim(),
         data.state.trim(),
@@ -268,7 +280,7 @@ export async function saveAddressFromCheckoutAction(data: {
           data.fullName.trim(),
           data.companyName?.trim() || null,
           data.email?.trim() || null,
-          data.phone.trim(),
+          formatDisplayPhone(data.phone),
           data.city.trim(),
           data.state.trim(),
           data.country?.trim() || "India",
@@ -279,6 +291,17 @@ export async function saveAddressFromCheckoutAction(data: {
       );
       return { success: true, address: res.rows[0] };
     } else {
+      // Check count limit: Maximum 4 saved addresses allowed
+      const countRes = await query(
+        `SELECT count(*) as count FROM "Address" WHERE "userId" = $1`,
+        [userId]
+      );
+      const existingCount = parseInt(countRes.rows[0]?.count || "0", 10);
+      if (existingCount >= 4) {
+        // Skip inserting 5th address to respect max 4 limit
+        return { success: false, error: "Maximum 4 saved addresses reached. Please delete an address to save a new one." };
+      }
+
       // Insert new address
       const id = `addr_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
       if (data.saveAsDefault) {
@@ -296,7 +319,7 @@ export async function saveAddressFromCheckoutAction(data: {
           data.fullName.trim(),
           data.companyName?.trim() || null,
           data.email?.trim() || null,
-          data.phone.trim(),
+          formatDisplayPhone(data.phone),
           data.street.trim(),
           data.city.trim(),
           data.state.trim(),

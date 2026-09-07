@@ -28,10 +28,11 @@ import {
   ChevronRight,
   ShieldCheck,
   Star,
-  Check
+  Check,
+  Plus
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { updateOrderStatusAction, updateOrderPaymentMethodAction } from "@/app/actions/order";
+import { updateOrderStatusAction, updateOrderPaymentMethodAction, updateOrderItemNoteAction } from "@/app/actions/order";
 import { 
   adminGetShiprocketRatesForOrderAction,
   adminGetShiprocketPickupLocationsAction,
@@ -55,6 +56,7 @@ interface OrderItem {
   price: number;
   quantity: number;
   attributes?: { name: string; value: string }[];
+  buyerNote?: string;
 }
 
 interface OrderRow {
@@ -128,6 +130,37 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderRow[]
   const [pickupLocations, setPickupLocations] = useState<ShiprocketPickupLocation[]>([]);
   const [selectedPickupLocation, setSelectedPickupLocation] = useState<string>("warehouse");
   const [selectedPickupPincode, setSelectedPickupPincode] = useState<string>("360003");
+
+  // Order Item Buyer Note Editing State
+  const [editingNoteItemId, setEditingNoteItemId] = useState<string | null>(null);
+  const [editingNoteText, setEditingNoteText] = useState("");
+  const [isSavingNote, setIsSavingNote] = useState(false);
+
+  const handleSaveNote = async (orderItemId: string) => {
+    setIsSavingNote(true);
+    try {
+      const res = await updateOrderItemNoteAction(orderItemId, editingNoteText);
+      if (res.success) {
+        if (inspectingOrder && inspectingOrder.items) {
+          const updatedItems = inspectingOrder.items.map((i: any) =>
+            i.id === orderItemId ? { ...i, buyerNote: editingNoteText.trim() || undefined } : i
+          );
+          const updatedOrder = { ...inspectingOrder, items: updatedItems };
+          setInspectingOrder(updatedOrder);
+          setOrders((prev) =>
+            prev.map((o) => (o.id === inspectingOrder.id ? updatedOrder : o))
+          );
+        }
+        setEditingNoteItemId(null);
+      } else {
+        alert(res.error || "Failed to update note");
+      }
+    } catch (e: any) {
+      alert(e.message || "Failed to save note");
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
 
   // Load registered Shiprocket pickup locations on mount
   useEffect(() => {
@@ -1014,8 +1047,17 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderRow[]
                   inspectingOrder.items.map((item: any) => {
                     // Extract options from attributes or from parentheses in item name
                     const rawName = item.name || "Industrial Component";
-                    const match = rawName.match(/^(.*?)\s*\((.*?)\)$/);
-                    const baseName = match ? match[1].trim() : rawName;
+                    let note = item.buyerNote;
+                    let cleanName = rawName;
+
+                    const noteMatch = cleanName.match(/\s*\[(?:Model\/Note|Note):\s*(.*?)\]/i) || cleanName.match(/\s*\((?:Model\/Note|Note):\s*(.*?)\)/i);
+                    if (noteMatch) {
+                      if (!note) note = noteMatch[1].trim();
+                      cleanName = cleanName.replace(noteMatch[0], "").trim();
+                    }
+
+                    const match = cleanName.match(/^(.*?)\s*\((.*?)\)$/);
+                    const baseName = match ? match[1].trim() : cleanName;
                     const nameOptions = match
                       ? match[2].split(/[,/]/).map((s: string) => {
                           const parts = s.split(":");
@@ -1036,8 +1078,68 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderRow[]
                             {baseName}
                           </div>
 
+                          {/* Buyer Provided Note / Edit Note */}
+                          {editingNoteItemId === item.id ? (
+                            <div className="flex items-center gap-2 pt-1 max-w-md">
+                              <input
+                                type="text"
+                                value={editingNoteText}
+                                onChange={(e) => setEditingNoteText(e.target.value)}
+                                placeholder="Type buyer note / custom model..."
+                                className="px-2.5 py-1 text-xs rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none flex-1 font-mono"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                disabled={isSavingNote}
+                                onClick={() => handleSaveNote(item.id)}
+                                className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[11px] font-bold font-mono flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                              >
+                                {isSavingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingNoteItemId(null)}
+                                className="px-2 py-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-[11px] font-mono cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+                              {note ? (
+                                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-300 text-xs font-medium">
+                                  <span className="font-bold text-[11px] uppercase font-mono text-amber-800 dark:text-amber-400">Buyer Note:</span>
+                                  <span className="italic text-slate-700 dark:text-slate-300">{note}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingNoteItemId(item.id);
+                                      setEditingNoteText(note || "");
+                                    }}
+                                    className="ml-1 text-[10px] text-amber-700 dark:text-amber-400 hover:underline font-mono cursor-pointer opacity-70 hover:opacity-100"
+                                    title="Edit buyer note"
+                                  >
+                                    (Edit)
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingNoteItemId(item.id);
+                                    setEditingNoteText("");
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-dashed border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-[11px] font-mono hover:bg-amber-50 dark:hover:bg-amber-950/30 cursor-pointer transition-colors"
+                                >
+                                  <Plus className="w-3 h-3" /> Add Buyer Note
+                                </button>
+                              )}
+                            </div>
+                          )}
+
                           {/* Chosen Variants Badges */}
-                          {combinedAttrs.length > 0 ? (
+                          {combinedAttrs.length > 0 && (
                             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                               {combinedAttrs.map((attr: any, i: number) => (
                                 <span
@@ -1049,10 +1151,6 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderRow[]
                                 </span>
                               ))}
                             </div>
-                          ) : (
-                            <span className="inline-block text-[10px] font-mono text-slate-400 italic">
-                              Standard Base Configuration
-                            </span>
                           )}
 
                           <div className="font-mono text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-2 pt-0.5">
@@ -1082,10 +1180,6 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderRow[]
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
                   <span>{formatCurrency(inspectingOrder.subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>GST Tax (18% Included):</span>
-                  <span>{formatCurrency(inspectingOrder.tax)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping Freight:</span>

@@ -113,8 +113,17 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 bg-white">
               {order.items.map((item: any) => {
                 const rawName = item.name || "Industrial Component";
-                const match = rawName.match(/^(.*?)\s*\((.*?)\)$/);
-                const baseName = match ? match[1].trim() : rawName;
+                let note = item.buyerNote;
+                let cleanName = rawName;
+
+                const noteMatch = cleanName.match(/\s*\[(?:Model\/Note|Note):\s*(.*?)\]/i) || cleanName.match(/\s*\((?:Model\/Note|Note):\s*(.*?)\)/i);
+                if (noteMatch) {
+                  if (!note) note = noteMatch[1].trim();
+                  cleanName = cleanName.replace(noteMatch[0], "").trim();
+                }
+
+                const match = cleanName.match(/^(.*?)\s*\((.*?)\)$/);
+                const baseName = match ? match[1].trim() : cleanName;
                 const nameOptions = match
                   ? match[2].split(/[,/]/).map((s: string) => {
                       const parts = s.split(":");
@@ -132,6 +141,14 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                   <div key={item.id} className="p-4 flex items-start justify-between gap-4 text-xs hover:bg-slate-50/50">
                     <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="font-bold text-slate-900 text-sm">{baseName}</div>
+
+                      {/* Buyer Provided Note */}
+                      {note && (
+                        <div className="inline-flex items-start gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
+                          <span className="font-bold text-[11px] uppercase font-mono text-amber-800">Buyer Note:</span>
+                          <span className="italic text-slate-700">{note}</span>
+                        </div>
+                      )}
                       
                       {combinedAttrs.length > 0 && (
                         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
@@ -168,10 +185,6 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
               <div className="flex justify-between text-slate-600">
                 <span>Subtotal:</span>
                 <span>{formatCurrency(order.subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>GST (18% Included):</span>
-                <span>{formatCurrency(order.tax)}</span>
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>Shipping Freight:</span>

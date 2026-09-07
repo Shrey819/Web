@@ -21,7 +21,11 @@ import {
   Copy,
   Clipboard,
   Scissors,
+  Upload,
+  Image as ImageIcon,
+  Loader2,
 } from "lucide-react";
+import { BulkImageMatchModal } from "./BulkImageMatchModal";
 import type { RowStatusInfo } from "@/app/actions/productImport";
 import { cleanVal } from "@/lib/importHelpers";
 
@@ -103,6 +107,82 @@ export function ImportSpreadsheetGrid({
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "NEW" | "UPDATE" | "ERROR">("ALL");
+
+  // Bulk Image Modal & Single Upload State
+  const [isBulkImageModalOpen, setIsBulkImageModalOpen] = useState(false);
+  const singleFileInputRef = useRef<HTMLInputElement>(null);
+  const [singleUploadTarget, setSingleUploadTarget] = useState<{ r: number; c: number } | null>(null);
+  const [isUploadingSingle, setIsUploadingSingle] = useState(false);
+
+  // Find images column index
+  const imagesColIdx = useMemo(() => {
+    return headers.findIndex((h) => {
+      const cleanH = (h || "").toLowerCase().trim();
+      return cleanH === "images url" || cleanH === "image url" || cleanH.includes("image");
+    });
+  }, [headers]);
+
+  // Check if any row has non-empty image filename (not a web url)
+  const hasImageFilenames = useMemo(() => {
+    if (imagesColIdx === -1) return false;
+    return rows.some((r) => {
+      const val = (r[imagesColIdx] || "").trim();
+      return (
+        val.length > 0 &&
+        !val.startsWith("http://") &&
+        !val.startsWith("https://") &&
+        !val.startsWith("/") &&
+        (val.endsWith(".jpg") || val.endsWith(".jpeg") || val.endsWith(".png") || val.endsWith(".webp"))
+      );
+    });
+  }, [rows, imagesColIdx]);
+
+  const handleTriggerSingleUpload = (rIdx: number, cIdx: number) => {
+    setSingleUploadTarget({ r: rIdx, c: cIdx });
+    singleFileInputRef.current?.click();
+  };
+
+  const handleSingleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0] || !singleUploadTarget) return;
+    const file = e.target.files[0];
+    setIsUploadingSingle(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.urls && data.urls[0]) {
+        const targetR = singleUploadTarget.r;
+        const targetC = singleUploadTarget.c;
+        const newRows = rows.map((r, rI) => {
+          if (rI === targetR) {
+            const newRow = [...r];
+            newRow[targetC] = data.urls[0];
+            return newRow;
+          }
+          return r;
+        });
+        setRows(newRows);
+        showToast(`Image uploaded & attached to Row #${targetR + 1}!`);
+      } else {
+        showToast(data.error || "Failed to upload image");
+      }
+    } catch (err: any) {
+      showToast(err.message || "Failed to upload image");
+    } finally {
+      setIsUploadingSingle(false);
+      setSingleUploadTarget(null);
+      if (singleFileInputRef.current) singleFileInputRef.current.value = "";
+    }
+  };
+
+  const handleApplyBulkMatches = (updatedRows: string[][], matchedCount: number) => {
+    setRows(updatedRows);
+    showToast(`Successfully matched and attached ${matchedCount} images!`);
+  };
 
   // Keep internal state updated if props refresh from revalidate
   useEffect(() => {
@@ -869,20 +949,15 @@ export function ImportSpreadsheetGrid({
             )}
           </button>
 
+
           <button
             type="button"
-            onClick={async () => {
-              const { autoAlignSpreadsheetOptions } = await import("@/lib/importHelpers");
-              const result = autoAlignSpreadsheetOptions(headers, rows);
-              setRows(result.rows);
-              await onRevalidate(headers, result.rows);
-            }}
-            disabled={isValidating}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
-            title="Automatically detect choices, fill missing option names, and align option slots"
+            onClick={() => setIsBulkImageModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+            title="Upload and auto-match product images in bulk"
           >
-            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-            <span>Auto-Align</span>
+            <ImageIcon className="w-3.5 h-3.5 text-blue-600" />
+            <span>Upload Images</span>
           </button>
 
           <button
@@ -897,6 +972,40 @@ export function ImportSpreadsheetGrid({
           </button>
         </div>
       </div>
+
+      {/* Hidden single file upload input */}
+      <input
+        ref={singleFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleSingleFileChange}
+      />
+
+      {/* Informational Banner for Image Filenames */}
+      {hasImageFilenames && (
+        <div className="p-3 px-4 bg-blue-50/90 border border-blue-200 rounded-xl flex items-center justify-between gap-3 text-xs text-blue-950 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 bg-blue-100 text-blue-700 rounded-lg shrink-0">
+              <ImageIcon className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold">Image filenames mapped in spreadsheet.</span>
+              <span className="text-blue-700 block text-[11px] mt-0.5">
+                Drop your downloaded image files from <code className="bg-blue-100/70 px-1 py-0.5 rounded text-[11px] font-mono">D:\Website\Product_uplode\Image</code> to auto-match them, or upload individually per row.
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsBulkImageModalOpen(true)}
+            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shrink-0 cursor-pointer text-xs shadow-2xs flex items-center gap-1.5 transition-colors"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Bulk Upload Images</span>
+          </button>
+        </div>
+      )}
 
       {/* 3. SPREADSHEET DATA GRID */}
       <div className="border border-slate-200 rounded-xl bg-white shadow-2xs overflow-hidden">
@@ -1235,24 +1344,91 @@ export function ImportSpreadsheetGrid({
                                 />
                               );
                             })()
-                          ) : (
-                            <div className="flex items-center justify-between gap-1">
-                              <span
-                                className={`block truncate text-xs ${
-                                  cellError
-                                    ? "text-rose-900 font-semibold"
-                                    : !cellVal
-                                    ? "text-slate-300 italic"
-                                    : "text-slate-800"
-                                }`}
-                              >
-                                {cellVal || "—"}
-                              </span>
-                              {cellError && (
-                                <AlertCircle className="w-3 h-3 text-rose-600 shrink-0" />
-                              )}
-                            </div>
-                          )}
+                          ) : (() => {
+                            const isImageCol = cIdx === imagesColIdx || (headers[cIdx] || "").toLowerCase().includes("image");
+
+                            if (isImageCol) {
+                              const isWebUrl = typeof cellVal === "string" && (cellVal.startsWith("http://") || cellVal.startsWith("https://") || cellVal.startsWith("/"));
+                              const isLocalFile = typeof cellVal === "string" && cellVal.length > 0 && !isWebUrl;
+                              const isRowUploading = isUploadingSingle && singleUploadTarget?.r === rIdx && singleUploadTarget?.c === cIdx;
+
+                              return (
+                                <div className="flex items-center justify-between gap-1.5 py-0.5 group/imgcell">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    {isWebUrl ? (
+                                      <div className="relative w-6 h-6 rounded overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                                        <img
+                                          src={cellVal}
+                                          alt=""
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            (e.target as HTMLElement).style.display = "none";
+                                          }}
+                                        />
+                                      </div>
+                                    ) : isLocalFile ? (
+                                      <span className="p-0.5 bg-amber-50 text-amber-700 rounded border border-amber-200 shrink-0" title="Local filename mapped">
+                                        <ImageIcon className="w-3 h-3" />
+                                      </span>
+                                    ) : null}
+
+                                    <span
+                                      className={`block truncate text-xs ${
+                                        cellError
+                                          ? "text-rose-900 font-semibold"
+                                          : !cellVal
+                                          ? "text-slate-300 italic"
+                                          : isLocalFile
+                                          ? "text-amber-800 font-medium font-mono text-[11px]"
+                                          : "text-slate-800"
+                                      }`}
+                                      title={cellVal}
+                                    >
+                                      {cellVal || "—"}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {isRowUploading ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleTriggerSingleUpload(rIdx, cIdx);
+                                        }}
+                                        className="opacity-0 group-hover/imgcell:opacity-100 p-1 hover:bg-blue-100 text-blue-600 rounded transition-all cursor-pointer"
+                                        title="Upload / replace image for this product"
+                                      >
+                                        <Upload className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                    {cellError && <AlertCircle className="w-3 h-3 text-rose-600 shrink-0" />}
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div className="flex items-center justify-between gap-1">
+                                <span
+                                  className={`block truncate text-xs ${
+                                    cellError
+                                      ? "text-rose-900 font-semibold"
+                                      : !cellVal
+                                      ? "text-slate-300 italic"
+                                      : "text-slate-800"
+                                  }`}
+                                >
+                                  {cellVal || "—"}
+                                </span>
+                                {cellError && (
+                                  <AlertCircle className="w-3 h-3 text-rose-600 shrink-0" />
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
                       );
                     })}
@@ -1359,19 +1535,20 @@ export function ImportSpreadsheetGrid({
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  "Option 4 Name",
-                  "Option 4 Value",
-                  "Option 5 Name",
-                  "Option 5 Value",
-                  "Option 6 Name",
-                  "Option 6 Value",
-                  "Ribbon",
-                  "Tags",
-                  "Brand",
-                  "section 4 Title",
-                  "section 4 Name",
-                  "section 5 Title",
-                  "section 5 Name",
+                  "Feature 4 Label",
+                  "Feature 4 Value",
+                  "Feature 5 Label",
+                  "Feature 5 Value",
+                  "Feature 6 Label",
+                  "Feature 6 Value",
+                  "Applications",
+                  "Support Link 3 Title",
+                  "Support Link 3 URL",
+                  "Support Link 3 Icon",
+                  "Product Video URL",
+                  "Enable Buyer Note",
+                  "SEO Meta Title",
+                  "SEO Meta Description",
                 ].map((preset) => (
                   <button
                     key={preset}
@@ -1405,7 +1582,16 @@ export function ImportSpreadsheetGrid({
         </div>
       )}
 
-      {/* 6. TOAST NOTIFICATION */}
+      {/* 6. BULK IMAGE MATCH MODAL */}
+      <BulkImageMatchModal
+        isOpen={isBulkImageModalOpen}
+        onClose={() => setIsBulkImageModalOpen(false)}
+        headers={headers}
+        rows={rows}
+        onApplyMatches={handleApplyBulkMatches}
+      />
+
+      {/* 7. TOAST NOTIFICATION */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl shadow-2xl text-xs font-semibold animate-in fade-in slide-in-from-bottom-2 duration-150">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />

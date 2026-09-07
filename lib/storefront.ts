@@ -223,6 +223,20 @@ export async function getActiveProductBySlug(slug: string): Promise<any | null> 
     const rawPrice = (p.price || p.basePrice || 0) / 100;
     const rawStrikethrough = (p.strikethroughPrice || p.compareAtPrice) ? (p.strikethroughPrice || p.compareAtPrice) / 100 : null;
 
+    const featureHighlights = typeof p.featureHighlights === "string" 
+      ? JSON.parse(p.featureHighlights) 
+      : (Array.isArray(p.featureHighlights) ? p.featureHighlights : []);
+
+    const applications = typeof p.applications === "string" 
+      ? JSON.parse(p.applications) 
+      : (Array.isArray(p.applications) ? p.applications : []);
+
+    const technicalSupportLinks = typeof p.technicalSupportLinks === "string" 
+      ? JSON.parse(p.technicalSupportLinks) 
+      : (Array.isArray(p.technicalSupportLinks) ? p.technicalSupportLinks : []);
+
+    const enableBuyerNote = p.enableBuyerNote !== false;
+
     return {
       id: p.id,
       name: p.name,
@@ -230,6 +244,7 @@ export async function getActiveProductBySlug(slug: string): Promise<any | null> 
       sku: p.sku,
       brand: p.brand || "Industrial Standard",
       description: p.description || "",
+      shortDescription: p.shortDescription || p.description?.replace(/<[^>]*>?/gm, "").slice(0, 160) || "",
       categoryId: p.categoryId,
       primaryRibbon: p.primaryRibbon,
       basePrice: rawPrice,
@@ -241,6 +256,11 @@ export async function getActiveProductBySlug(slug: string): Promise<any | null> 
       baseUnitMeasurement: p.baseUnitMeasurement || "g",
       totalUnits: p.totalUnits ? Number(p.totalUnits) : null,
       totalUnitsMeasurement: p.totalUnitsMeasurement || "g",
+      featureHighlights,
+      applications,
+      technicalSupportLinks,
+      enableBuyerNote,
+      videoUrl: p.videoUrl || "",
       images: imagesRes.rows.map((img: any) => ({
         url: img.url,
         alt: img.alt || p.name,

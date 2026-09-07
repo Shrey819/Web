@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useCartStore } from "@/store/useCartStore";
 import { useToastStore } from "@/store/useToastStore";
 import { useUserStore } from "@/store/useUserStore";
 import { 
   ChevronRight, 
+  ChevronDown,
   ShieldCheck, 
   CheckCircle2, 
   CreditCard, 
@@ -25,13 +26,14 @@ import {
   Briefcase, 
   Plus, 
   Check, 
-  Star 
+  Star,
+  Trash2
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDisplayPhone } from "@/lib/utils";
 import { createOrderAction } from "@/app/actions/order";
 import { createRazorpayOrderAction, verifyAndCreatePrepaidOrderAction } from "@/app/actions/razorpay";
 import { checkPincodeServiceabilityAction } from "@/app/actions/shiprocket";
-import { getUserAddressesAction, AddressItem } from "@/app/actions/address";
+import { getUserAddressesAction, deleteAddressAction, AddressItem } from "@/app/actions/address";
 import { SystemSettings } from "@/lib/settings";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { AddressLocationSelector } from "@/components/ui/AddressLocationSelector";
@@ -85,6 +87,20 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
   const [savedAddresses, setSavedAddresses] = useState<AddressItem[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | "new">("new");
   const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const [isAddressDropdownOpen, setIsAddressDropdownOpen] = useState(false);
+  const [isDeletingAddress, setIsDeletingAddress] = useState<string | null>(null);
+  const addressDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close address dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (addressDropdownRef.current && !addressDropdownRef.current.contains(event.target as Node)) {
+        setIsAddressDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const [pincodeStatus, setPincodeStatus] = useState<{
     loading: boolean;
@@ -161,9 +177,17 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
           console.error("Failed to read local addresses:", e);
         }
 
+        // Limit to maximum 4 saved addresses
+        combined = combined.slice(0, 4);
+
         setSavedAddresses(combined);
+        if (combined.length >= 4) {
+          setFormData((prev) => ({ ...prev, saveAddress: false }));
+        }
 
         // If saved addresses exist, select the default or first one and autofill!
+        const lastSavedPhone = localStorage.getItem("om_last_used_phone") || "";
+
         if (combined.length > 0) {
           const defaultAddr = combined.find((a) => a.isDefault) || combined[0];
           setSelectedAddressId(defaultAddr.id);
@@ -172,7 +196,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
             fullName: defaultAddr.fullName || prev.fullName,
             companyName: defaultAddr.companyName || prev.companyName,
             email: defaultAddr.email || prev.email || user?.email || "",
-            phone: defaultAddr.phone || prev.phone,
+            phone: defaultAddr.phone || lastSavedPhone || prev.phone,
             street: defaultAddr.street,
             city: defaultAddr.city,
             state: defaultAddr.state || "Gujarat",
@@ -191,7 +215,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                 fullName: parsed.fullName || prev.fullName,
                 companyName: parsed.companyName || prev.companyName,
                 email: parsed.email || prev.email,
-                phone: parsed.phone || prev.phone,
+                phone: parsed.phone || lastSavedPhone || prev.phone,
                 street: parsed.street || "",
                 city: parsed.city || "",
                 state: parsed.state || "Gujarat",
@@ -199,6 +223,8 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                 country: parsed.country || "India",
                 addressType: parsed.addressType || "Home",
               }));
+            } else if (lastSavedPhone) {
+              setFormData((prev) => ({ ...prev, phone: prev.phone || lastSavedPhone }));
             }
           } catch (e) {
             console.error("Failed to restore checkout draft:", e);
@@ -257,15 +283,25 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
     }
   }, [user]);
 
-  // Handle selecting a saved address card
+  // Track and remember last used valid phone number in localStorage
+  useEffect(() => {
+    if (formData.phone && formData.phone.replace(/\D/g, "").length >= 10) {
+      try {
+        localStorage.setItem("om_last_used_phone", formData.phone);
+      } catch (e) {}
+    }
+  }, [formData.phone]);
+
+  // Handle selecting a saved address
   const handleSelectSavedAddress = (addr: AddressItem) => {
     setSelectedAddressId(addr.id);
+    setIsAddressDropdownOpen(false);
     setFormData((prev) => ({
       ...prev,
       fullName: addr.fullName,
       companyName: addr.companyName || "",
       email: addr.email || prev.email || user?.email || "",
-      phone: addr.phone,
+      phone: addr.phone || prev.phone || (typeof window !== "undefined" ? localStorage.getItem("om_last_used_phone") || "" : ""),
       street: addr.street,
       city: addr.city,
       state: addr.state || "Gujarat",
@@ -278,20 +314,66 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
   // Handle choosing to enter a new address
   const handleSelectNewAddress = () => {
     setSelectedAddressId("new");
+    setIsAddressDropdownOpen(false);
     setFormData((prev) => ({
       ...prev,
       fullName: user?.name || "",
       companyName: user?.companyName || "",
       email: user?.email || "",
-      phone: "",
+      phone: prev.phone || (typeof window !== "undefined" ? localStorage.getItem("om_last_used_phone") || "" : ""),
       street: "",
       city: "",
       state: "Gujarat",
       zip: "",
       country: "India",
       addressType: "Home",
-      saveAddress: true,
+      saveAddress: savedAddresses.length < 4,
     }));
+  };
+
+  // Handle deleting a saved address
+  const handleDeleteAddress = async (e: React.MouseEvent, addrId: string) => {
+    e.stopPropagation();
+    if (isDeletingAddress) return;
+    if (!confirm("Are you sure you want to delete this saved address?")) return;
+
+    setIsDeletingAddress(addrId);
+    try {
+      // 1. Delete from database
+      await deleteAddressAction(addrId);
+
+      // 2. Delete from localStorage
+      try {
+        const localStored = localStorage.getItem("om_saved_addresses");
+        if (localStored) {
+          const parsed = JSON.parse(localStored);
+          if (Array.isArray(parsed)) {
+            const updated = parsed.filter((a: any) => a.id !== addrId);
+            localStorage.setItem("om_saved_addresses", JSON.stringify(updated));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to update localStorage after address deletion:", err);
+      }
+
+      const updatedAddresses = savedAddresses.filter((a) => a.id !== addrId);
+      setSavedAddresses(updatedAddresses);
+      addToast("success", "Address Deleted", "Address removed from your saved list.");
+
+      // If active address was deleted, switch to next available or 'new'
+      if (selectedAddressId === addrId) {
+        if (updatedAddresses.length > 0) {
+          handleSelectSavedAddress(updatedAddresses[0]);
+        } else {
+          handleSelectNewAddress();
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete address:", err);
+      addToast("error", "Deletion Failed", "Could not delete address. Please try again.");
+    } finally {
+      setIsDeletingAddress(null);
+    }
   };
 
   // Real-Time Pincode Serviceability & Delivery Estimation Check (Only for India)
@@ -378,7 +460,10 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
         .replace(/\s*-\s*undefined/gi, "")
         .replace(/\s*\(undefined\)/gi, "")
         .trim();
-      const cleanName = varName ? `${baseName} (${varName})` : baseName;
+      const parts = [baseName];
+      if (varName) parts.push(`(${varName})`);
+      if (item.buyerNote) parts.push(`[Model/Note: ${item.buyerNote}]`);
+      const cleanName = parts.join(" ");
 
       return {
         productId: item.product.id,
@@ -387,6 +472,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
         price: item.variant?.price ?? item.product.basePrice ?? 0,
         quantity: item.quantity,
         variantId: cleanVarId,
+        buyerNote: item.buyerNote?.trim() || undefined,
       };
     });
 
@@ -745,94 +831,227 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                     </span>
                   </div>
 
-                  {/* 1. Saved Addresses Carousel / Selector */}
+                  {/* 1. Saved Addresses Dropdown Selector (Unified for Mobile & Desktop) */}
                   {savedAddresses.length > 0 && (
-                    <div className="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200">
+                    <div className="space-y-2 relative" ref={addressDropdownRef}>
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                           <MapPin className="w-4 h-4 text-amber-500" />
-                          <span>Saved Delivery Addresses ({savedAddresses.length})</span>
+                          <span>Delivery Address</span>
+                          <span className="text-[10px] font-normal px-2 py-0.5 rounded-full bg-amber-100/80 text-amber-800 border border-amber-200">
+                            {savedAddresses.length}/4 saved
+                          </span>
                         </label>
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          Click to autofill
+                        <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
+                          Select from saved or enter new
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {savedAddresses.map((addr) => {
-                          const typeConfig = ADDRESS_TYPES.find((t) => t.id === addr.type) || ADDRESS_TYPES[0];
-                          const Icon = typeConfig.icon;
-                          const isSelected = selectedAddressId === addr.id;
-
-                          return (
-                            <div
-                              key={addr.id}
-                              onClick={() => handleSelectSavedAddress(addr)}
-                              className={`p-3 rounded-2xl border transition-all cursor-pointer relative text-xs flex flex-col justify-between ${
-                                isSelected
-                                  ? "bg-white border-amber-500 ring-2 ring-amber-500/20 shadow-sm"
-                                  : "bg-white/60 border-slate-200 hover:border-slate-300 hover:bg-white"
-                              }`}
-                            >
-                              <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 flex items-center gap-1 text-slate-700">
-                                    <Icon className="w-3 h-3 text-amber-600" />
-                                    {typeConfig.label}
-                                  </span>
-                                  {addr.isDefault && (
-                                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-0.5">
-                                      <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" /> Default
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div>
-                                  <h4 className="font-bold text-slate-900">
-                                    {addr.fullName}
-                                  </h4>
-                                  {addr.companyName && (
-                                    <p className="text-[11px] text-sky-600 font-mono font-medium">
-                                      {addr.companyName}
-                                    </p>
-                                  )}
-                                </div>
-
-                                <p className="text-[11px] text-slate-600 line-clamp-2">
-                                  {addr.street}, {addr.city}, {addr.state} - {addr.zip} ({addr.country || "India"})
-                                </p>
-                                <p className="text-[10px] font-mono text-slate-500">
-                                  📱 +91 {addr.phone}
-                                </p>
-                              </div>
-
-                              <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                                <span className={`font-bold font-mono ${isSelected ? "text-amber-600 flex items-center gap-1" : "text-slate-400"}`}>
-                                  {isSelected ? "✓ Selected" : "Use this address"}
+                      {/* Dropdown Toggle Trigger Button */}
+                      <div
+                        onClick={() => setIsAddressDropdownOpen((prev) => !prev)}
+                        className={`p-3 sm:p-4 rounded-2xl border transition-all cursor-pointer select-none bg-white relative flex items-center justify-between gap-3 shadow-sm hover:border-slate-300 ${
+                          isAddressDropdownOpen
+                            ? "border-amber-500 ring-2 ring-amber-500/20"
+                            : selectedAddressId === "new"
+                            ? "border-sky-300 bg-sky-50/20"
+                            : "border-slate-200"
+                        }`}
+                      >
+                        {selectedAddressId === "new" ? (
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 mt-0.5">
+                              <Plus className="w-5 h-5" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-xs sm:text-sm text-slate-900 font-mono">
+                                  + Enter Different Address
+                                </span>
+                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 font-semibold">
+                                  Custom
                                 </span>
                               </div>
+                              <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                                Filling custom shipping address in form fields below
+                              </p>
                             </div>
-                          );
-                        })}
+                          </div>
+                        ) : (
+                          (() => {
+                            const activeAddr = savedAddresses.find((a) => a.id === selectedAddressId) || savedAddresses[0];
+                            const typeConfig = ADDRESS_TYPES.find((t) => t.id === activeAddr.type) || ADDRESS_TYPES[0];
+                            const Icon = typeConfig.icon;
 
-                        {/* Option to enter a different address */}
-                        <div
-                          onClick={handleSelectNewAddress}
-                          className={`p-3 rounded-2xl border-2 border-dashed transition-all cursor-pointer text-xs flex flex-col items-center justify-center text-center gap-1 min-h-[110px] ${
-                            selectedAddressId === "new"
-                              ? "border-sky-500 bg-sky-50/50 text-sky-700"
-                              : "border-slate-300 hover:border-slate-400 text-slate-500 bg-white/40"
-                          }`}
-                        >
-                          <Plus className="w-5 h-5" />
-                          <span className="font-bold font-mono text-xs">
-                            {selectedAddressId === "new" ? "Entering Custom Address" : "+ Enter Different Address"}
+                            return (
+                              <div className="flex items-start gap-3 min-w-0">
+                                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-bold text-xs sm:text-sm text-slate-900 truncate">
+                                      {activeAddr.fullName}
+                                    </span>
+                                    {activeAddr.companyName && (
+                                      <span className="text-[11px] text-sky-600 font-mono font-medium truncate max-w-[150px]">
+                                        ({activeAddr.companyName})
+                                      </span>
+                                    )}
+                                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 flex items-center gap-0.5">
+                                      {typeConfig.label}
+                                    </span>
+                                    {activeAddr.isDefault && (
+                                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-0.5">
+                                        <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" /> Default
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-slate-600 truncate mt-0.5">
+                                    {activeAddr.street}, {activeAddr.city}, {activeAddr.state} - {activeAddr.zip}
+                                  </p>
+                                  <p className="text-[10px] font-mono text-slate-400">
+                                    📱 {formatDisplayPhone(activeAddr.phone)}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })()
+                        )}
+
+                        {/* Dropdown Arrow & Label */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="hidden sm:inline-block text-[11px] font-mono font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
+                            Change
                           </span>
-                          <span className="text-[10px] text-slate-400">
-                            Fill address details below
-                          </span>
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 transition-transform">
+                            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isAddressDropdownOpen ? "rotate-180 text-amber-600" : ""}`} />
+                          </div>
                         </div>
                       </div>
+
+                      {/* Dropdown Floating Menu */}
+                      {isAddressDropdownOpen && (
+                        <div className="absolute left-0 right-0 top-full mt-2 z-30 bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-150">
+                          <div className="p-3 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+                            <span className="text-[11px] font-mono font-bold text-slate-600 uppercase tracking-wider">
+                              Select Delivery Address ({savedAddresses.length}/4)
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              Max 4 allowed
+                            </span>
+                          </div>
+
+                          {/* List of Saved Addresses */}
+                          <div className="max-h-72 overflow-y-auto p-2 space-y-1.5">
+                            {savedAddresses.map((addr) => {
+                              const typeConfig = ADDRESS_TYPES.find((t) => t.id === addr.type) || ADDRESS_TYPES[0];
+                              const Icon = typeConfig.icon;
+                              const isSelected = selectedAddressId === addr.id;
+
+                              return (
+                                <div
+                                  key={addr.id}
+                                  onClick={() => handleSelectSavedAddress(addr)}
+                                  className={`group flex items-start justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+                                    isSelected
+                                      ? "bg-amber-50/70 border-amber-400 ring-1 ring-amber-400/30"
+                                      : "bg-white border-slate-100 hover:bg-slate-50 hover:border-slate-200"
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-2.5 min-w-0 pr-2">
+                                    <div className="mt-1 shrink-0">
+                                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                        isSelected
+                                          ? "border-amber-600 bg-amber-600"
+                                          : "border-slate-300 group-hover:border-slate-400"
+                                      }`}>
+                                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                      </div>
+                                    </div>
+                                    <div className="space-y-0.5 min-w-0">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="text-xs font-bold text-slate-900">
+                                          {addr.fullName}
+                                        </span>
+                                        {addr.companyName && (
+                                          <span className="text-[10px] text-sky-600 font-mono">
+                                            ({addr.companyName})
+                                          </span>
+                                        )}
+                                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600 flex items-center gap-0.5">
+                                          <Icon className="w-2.5 h-2.5" />
+                                          {typeConfig.label}
+                                        </span>
+                                        {addr.isDefault && (
+                                          <span className="text-[9px] font-mono font-bold px-1 py-0.2 rounded bg-amber-100 text-amber-800 flex items-center gap-0.5">
+                                            <Star className="w-2 h-2 fill-amber-500 text-amber-500" /> Default
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-[11px] text-slate-600 line-clamp-1">
+                                        {addr.street}, {addr.city}, {addr.state} - {addr.zip}
+                                      </p>
+                                      <p className="text-[10px] font-mono text-slate-400">
+                                        📱 {formatDisplayPhone(addr.phone)}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Delete button */}
+                                  <button
+                                    type="button"
+                                    title="Delete address"
+                                    disabled={isDeletingAddress === addr.id}
+                                    onClick={(e) => handleDeleteAddress(e, addr.id)}
+                                    className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                                  >
+                                    {isDeletingAddress === addr.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin text-rose-500" />
+                                    ) : (
+                                      <Trash2 className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Bottom option inside Dropdown: Enter Different Address */}
+                          <div className="p-2 bg-slate-50/50">
+                            <button
+                              type="button"
+                              onClick={handleSelectNewAddress}
+                              className={`w-full p-2.5 rounded-xl border-2 border-dashed flex items-center justify-between text-left transition-all cursor-pointer ${
+                                selectedAddressId === "new"
+                                  ? "border-sky-500 bg-sky-50/60 text-sky-800"
+                                  : "border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+                                  <Plus className="w-3.5 h-3.5" />
+                                </div>
+                                <div>
+                                  <span className="font-bold text-xs font-mono block">
+                                    + Enter Different Address
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 block">
+                                    {savedAddresses.length >= 4
+                                      ? "Max 4 saved reached (One-time delivery without saving)"
+                                      : "Fill custom address below and optionally save it"}
+                                  </span>
+                                </div>
+                              </div>
+                              {selectedAddressId === "new" && (
+                                <span className="text-[10px] font-mono font-bold text-sky-600 bg-sky-100 px-2 py-0.5 rounded-full">
+                                  Active
+                                </span>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -983,46 +1202,102 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                     </div>
                   )}
 
-                  {/* 5. Address Type Label Picker & Save Address Checkbox */}
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 text-xs">
-                    <div>
-                      <label className="block font-mono font-bold uppercase tracking-wider text-slate-700 mb-2">
-                        Save Address As:
-                      </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {ADDRESS_TYPES.map((type) => {
-                          const Icon = type.icon;
-                          const isSelected = formData.addressType === type.id;
-                          return (
-                            <button
-                              key={type.id}
-                              type="button"
-                              onClick={() => setFormData({ ...formData, addressType: type.id as any })}
-                              className={`p-2.5 rounded-xl border text-xs font-mono font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                                isSelected
-                                  ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-                                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
-                              }`}
-                            >
-                              <Icon className="w-3.5 h-3.5" />
-                              <span>{type.label}</span>
-                            </button>
-                          );
-                        })}
+                  {/* 5. Address Saving Slider Switch & Type Picker */}
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5 text-xs transition-all">
+                    {/* Slider Button Row */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div
+                        className="cursor-pointer select-none flex-1"
+                        onClick={() => setFormData((prev) => ({ ...prev, saveAddress: !prev.saveAddress }))}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold uppercase tracking-wider text-slate-800 text-xs">
+                            Save Address for Future Orders
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
+                              formData.saveAddress
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-slate-200 text-slate-600"
+                            }`}
+                          >
+                            {formData.saveAddress ? "ON" : "OFF"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {formData.saveAddress
+                            ? "Address will be saved for fast 1-click checkout next time"
+                            : "One-time delivery (address will not be saved)"}
+                        </p>
                       </div>
+
+                      {/* Slider / Switch Toggle Button */}
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={formData.saveAddress}
+                        onClick={() => setFormData((prev) => ({ ...prev, saveAddress: !prev.saveAddress }))}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 ${
+                          formData.saveAddress ? "bg-slate-900" : "bg-slate-300"
+                        }`}
+                      >
+                        <span className="sr-only">Toggle save address</span>
+                        <span
+                          aria-hidden="true"
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                            formData.saveAddress ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
                     </div>
 
-                    <label className="flex items-center gap-2.5 pt-1 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={formData.saveAddress}
-                        onChange={(e) => setFormData({ ...formData, saveAddress: e.target.checked })}
-                        className="w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
-                      />
-                      <span className="font-semibold text-slate-700">
-                        Save this address to my profile for 1-click checkout next time
-                      </span>
-                    </label>
+                    {/* Shown ONLY when Slider is ON */}
+                    {formData.saveAddress && (
+                      <div className="pt-3 border-t border-slate-200/80 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
+                        <div>
+                          <label className="block font-mono font-bold uppercase tracking-wider text-slate-700 mb-2">
+                            Save Address As:
+                          </label>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {ADDRESS_TYPES.map((type) => {
+                              const Icon = type.icon;
+                              const isSelected = formData.addressType === type.id;
+                              return (
+                                <button
+                                  key={type.id}
+                                  type="button"
+                                  onClick={() => setFormData({ ...formData, addressType: type.id as any })}
+                                  className={`p-2.5 rounded-xl border text-xs font-mono font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                                    isSelected
+                                      ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+                                  }`}
+                                >
+                                  <Icon className="w-3.5 h-3.5" />
+                                  <span>{type.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {savedAddresses.length >= 4 ? (
+                          <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200/80 text-amber-900 text-xs flex items-start gap-2.5">
+                            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                            <div>
+                              <span className="font-bold">Maximum 4 saved addresses reached.</span>
+                              <p className="text-[11px] text-amber-800 mt-0.5">
+                                To save this new address permanently for 1-click checkout, please delete an existing address from the dropdown selector above.
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-slate-500 font-mono">
+                            Address will be stored ({savedAddresses.length}/4 used)
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <button
@@ -1049,6 +1324,58 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                       }
 
                       setShowValidationErrors(false);
+
+                      // Persist phone and address immediately so mobile number is never lost
+                      try {
+                        localStorage.setItem("om_last_used_phone", formData.phone);
+
+                        if (formData.saveAddress) {
+                          const localAddrs: AddressItem[] = JSON.parse(localStorage.getItem("om_saved_addresses") || "[]");
+                          const existingIndex = localAddrs.findIndex(
+                            (a) => a.street?.trim().toLowerCase() === formData.street?.trim().toLowerCase() && a.zip?.trim() === formData.zip?.trim()
+                          );
+
+                          const currentAddrItem: AddressItem = {
+                            id: selectedAddressId !== "new" ? selectedAddressId : `local_addr_${Date.now()}`,
+                            userId: user?.id || `user_${formData.phone.replace(/\D/g, "").slice(-10)}`,
+                            fullName: formData.fullName,
+                            companyName: formData.companyName,
+                            email: formData.email,
+                            phone: formData.phone,
+                            street: formData.street,
+                            city: formData.city,
+                            state: formData.state,
+                            zip: formData.zip,
+                            country: formData.country,
+                            type: formData.addressType,
+                            isDefault: localAddrs.length === 0,
+                          };
+
+                          if (existingIndex >= 0) {
+                            localAddrs[existingIndex] = { ...localAddrs[existingIndex], ...currentAddrItem };
+                          } else if (localAddrs.length < 4) {
+                            localAddrs.unshift(currentAddrItem);
+                          }
+                          localStorage.setItem("om_saved_addresses", JSON.stringify(localAddrs.slice(0, 4)));
+
+                          setSavedAddresses((prev) => {
+                            const pIndex = prev.findIndex(
+                              (a) => a.street?.trim().toLowerCase() === formData.street?.trim().toLowerCase() && a.zip?.trim() === formData.zip?.trim()
+                            );
+                            if (pIndex >= 0) {
+                              const updated = [...prev];
+                              updated[pIndex] = { ...updated[pIndex], ...currentAddrItem };
+                              return updated;
+                            } else if (prev.length < 4) {
+                              return [currentAddrItem, ...prev];
+                            }
+                            return prev;
+                          });
+                        }
+                      } catch (err) {
+                        console.error("Failed to auto-save address locally:", err);
+                      }
+
                       setStep(2);
                     }}
                     className="w-full py-3.5 rounded-full bg-slate-900 text-white type-button mt-4 hover:bg-slate-800 shadow-md transition-all active:scale-[0.99] cursor-pointer"
@@ -1178,7 +1505,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                     <div className="text-slate-600">{formData.street}, {formData.city}, {formData.state} - {formData.zip} ({formData.country || "India"})</div>
                     <div className="text-slate-500 font-mono flex items-center gap-2">
                       <span>Contact: {formData.fullName} ({formData.email})</span>
-                      <span className="text-sky-600 font-bold">• +91 {formData.phone}</span>
+                      <span className="text-sky-600 font-bold">• {formatDisplayPhone(formData.phone)}</span>
                     </div>
                     <div className="text-[11px] text-amber-700 font-mono font-semibold pt-1">
                       Label: {formData.addressType} Delivery
@@ -1282,7 +1609,14 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                           {(item.product.name || "Product").replace(/\s*-\s*undefined/gi, "")}
                           {item.variant?.name && item.variant.name !== "undefined" && ` - ${item.variant.name}`}
                         </div>
-                        <div className="text-[10px] text-slate-500 font-mono">Qty: {item.quantity}</div>
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono">
+                          <span>Qty: {item.quantity}</span>
+                          {item.buyerNote && (
+                            <span className="text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 truncate max-w-[140px]">
+                              Note: {item.buyerNote}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="font-mono font-bold text-slate-900 shrink-0" suppressHydrationWarning>
                         {formatCurrency(itemPrice * item.quantity)}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useUserStore } from "@/store/useUserStore";
@@ -85,6 +85,7 @@ function getThumbnailUrl(url: string) {
 
 export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [isBrandsMenuOpen, setIsBrandsMenuOpen] = useState(false);
@@ -734,16 +735,16 @@ export function Header() {
                   Wholesale
                 </Link>
 
-                <div
-                  className="relative hidden sm:block py-1"
-                  onMouseEnter={() => setIsBrandsMenuOpen(true)}
-                  onMouseLeave={() => setIsBrandsMenuOpen(false)}
+                <Link
+                  href="/brands"
+                  className={`transition-colors font-bold py-1 ${
+                    pathname === "/brands"
+                      ? "text-amber-400 border-b-2 border-amber-400"
+                      : "text-slate-300 hover:text-amber-400"
+                  }`}
                 >
-                  <button className="flex items-center gap-1 text-slate-300 hover:text-amber-400 transition-colors py-1">
-                    <span>Brands</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                  </button>
-                </div>
+                  Brands
+                </Link>
 
                 <Link
                   href="/products?sort=newest"

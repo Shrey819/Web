@@ -11,9 +11,10 @@ interface CartState {
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
-  addItem: (product: Product, quantity?: number, variant?: ProductVariant) => void;
+  addItem: (product: Product, quantity?: number, variant?: ProductVariant, buyerNote?: string) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
+  updateBuyerNote: (itemId: string, buyerNote: string) => void;
   clearCart: () => void;
   applyCoupon: (code: string) => { success: boolean; message: string };
   removeCoupon: () => void;
@@ -24,9 +25,11 @@ interface CartState {
   getItemCount: () => number;
 }
 
-// Generate a unique ID for cart items to handle multiple variants of the same product
-const getCartItemId = (productId: string, variantId?: string) => 
-  variantId ? `${productId}-${variantId}` : productId;
+// Generate a unique ID for cart items to handle multiple variants or custom buyer notes of the same product
+export const getCartItemId = (productId: string, variantId?: string, buyerNote?: string) => {
+  const base = variantId ? `${productId}-${variantId}` : productId;
+  return buyerNote && buyerNote.trim() ? `${base}__${buyerNote.trim()}` : base;
+};
 
 // Sanitize any price that was historically stored in paise (e.g. 20000 -> 200)
 const sanitizeItemPrice = (item: CartItem): CartItem => {
@@ -42,6 +45,7 @@ const sanitizeItemPrice = (item: CartItem): CartItem => {
 
   return {
     ...item,
+    buyerNote: item.buyerNote,
     product: {
       ...item.product,
       basePrice: prodPrice,
@@ -74,8 +78,8 @@ export const useCartStore = create<CartState>()(
         if (nextState) get().syncLivePrices();
       },
 
-      addItem: (product: Product, quantity = 1, variant?: ProductVariant) => {
-        trackUserAction("ADD_TO_CART", `Added ${quantity}x "${product.name}" to cart`);
+      addItem: (product: Product, quantity = 1, variant?: ProductVariant, buyerNote?: string) => {
+        trackUserAction("ADD_TO_CART", `Added ${quantity}x "${product.name}" to cart${buyerNote ? ` (Note: ${buyerNote})` : ""}`);
         
         let safeProdPrice = product.basePrice || (product as any).price || 0;
         if (safeProdPrice >= 10000) safeProdPrice = safeProdPrice / 100;
@@ -87,11 +91,12 @@ export const useCartStore = create<CartState>()(
 
         const cleanProduct = { ...product, basePrice: safeProdPrice };
         const cleanVariant = variant ? { ...variant, price: safeVarPrice ?? safeProdPrice } : undefined;
+        const cleanNote = buyerNote && buyerNote.trim() ? buyerNote.trim() : undefined;
 
         set((state) => {
-          const itemId = getCartItemId(cleanProduct.id, cleanVariant?.id);
+          const itemId = getCartItemId(cleanProduct.id, cleanVariant?.id, cleanNote);
           const existingIndex = state.items.findIndex(
-            (item) => getCartItemId(item.product.id, item.variant?.id) === itemId
+            (item) => getCartItemId(item.product.id, item.variant?.id, item.buyerNote) === itemId
           );
 
           let updatedItems: CartItem[];
@@ -99,7 +104,7 @@ export const useCartStore = create<CartState>()(
             updatedItems = [...state.items];
             updatedItems[existingIndex].quantity += quantity;
           } else {
-            updatedItems = [...state.items, { product: cleanProduct, quantity, variant: cleanVariant }];
+            updatedItems = [...state.items, { product: cleanProduct, quantity, variant: cleanVariant, buyerNote: cleanNote }];
           }
 
           return { items: updatedItems, isOpen: true };
@@ -110,12 +115,12 @@ export const useCartStore = create<CartState>()(
       },
 
       removeItem: (itemId: string) => {
-        const itemToRemove = get().items.find((i) => getCartItemId(i.product.id, i.variant?.id) === itemId);
+        const itemToRemove = get().items.find((i) => getCartItemId(i.product.id, i.variant?.id, i.buyerNote) === itemId);
         if (itemToRemove) {
           trackUserAction("REMOVE_FROM_CART", `Removed "${itemToRemove.product.name}" from cart`);
         }
         set((state) => ({
-          items: state.items.filter((item) => getCartItemId(item.product.id, item.variant?.id) !== itemId),
+          items: state.items.filter((item) => getCartItemId(item.product.id, item.variant?.id, item.buyerNote) !== itemId),
         }));
       },
 
@@ -127,8 +132,20 @@ export const useCartStore = create<CartState>()(
 
         set((state) => ({
           items: state.items.map((item) =>
-            getCartItemId(item.product.id, item.variant?.id) === itemId ? { ...item, quantity } : item
+            getCartItemId(item.product.id, item.variant?.id, item.buyerNote) === itemId ? { ...item, quantity } : item
           ),
+        }));
+      },
+
+      updateBuyerNote: (itemId: string, buyerNote: string) => {
+        const clean = buyerNote.trim();
+        set((state) => ({
+          items: state.items.map((item) => {
+            if (getCartItemId(item.product.id, item.variant?.id, item.buyerNote) === itemId) {
+              return { ...item, buyerNote: clean || undefined };
+            }
+            return item;
+          }),
         }));
       },
 
@@ -149,6 +166,7 @@ export const useCartStore = create<CartState>()(
                 quantity: item.quantity,
                 product: item.product,
                 variant: item.variant,
+                buyerNote: item.buyerNote,
               })),
             }),
           });
@@ -157,10 +175,11 @@ export const useCartStore = create<CartState>()(
             const data = await res.json();
             if (data.success && Array.isArray(data.items)) {
               set({
-                items: data.items.map((synced: any) => ({
+                items: data.items.map((synced: any, idx: number) => ({
                   product: synced.product,
                   quantity: synced.quantity,
                   variant: synced.variant,
+                  buyerNote: synced.buyerNote || currentItems[idx]?.buyerNote,
                 })),
               });
             }

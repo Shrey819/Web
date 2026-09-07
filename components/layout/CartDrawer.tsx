@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useCartStore } from "@/store/useCartStore";
+import { useCartStore, getCartItemId } from "@/store/useCartStore";
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, ShieldCheck, Tag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatCurrency } from "@/lib/utils";
@@ -151,7 +151,7 @@ export function CartDrawer() {
                 </div>
               ) : (
                 items.map((item) => {
-                  const itemId = item.variant ? `${item.product.id}-${item.variant.id}` : item.product.id;
+                  const itemId = getCartItemId(item.product.id, item.variant?.id, item.buyerNote);
                   const itemSku = item.variant ? item.variant.sku : item.product.sku;
                   const itemPrice = item.variant ? item.variant.price : item.product.basePrice;
 
@@ -196,6 +196,12 @@ export function CartDrawer() {
                               SKU: {itemSku}
                             </span>
                           </div>
+                          {item.buyerNote && (
+                            <div className="mt-1.5 px-2 py-1 rounded bg-amber-50/80 border border-amber-200/80 text-[11px] text-amber-900 leading-tight">
+                              <span className="font-semibold text-amber-950">Model/Note: </span>
+                              <span className="italic">{item.buyerNote}</span>
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between mt-3">

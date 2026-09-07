@@ -12,21 +12,30 @@ import { LayoutGrid, List, SlidersHorizontal, ChevronRight, Search } from "lucid
 interface StorefrontCatalogProps {
   initialProducts: Product[];
   categories?: CategoryFilterItem[];
+  initialBrand?: string;
+  initialCategory?: string;
+  initialSearch?: string;
 }
 
-export function StorefrontCatalog({ initialProducts, categories = [] }: StorefrontCatalogProps) {
+export function StorefrontCatalog({
+  initialProducts,
+  categories = [],
+  initialBrand,
+  initialCategory,
+  initialSearch,
+}: StorefrontCatalogProps) {
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<"featured" | "price-low" | "price-high" | "rating">("featured");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
-    category: "all",
-    brand: [],
+    category: initialCategory || "all",
+    brand: initialBrand ? [initialBrand] : [],
     minPrice: 0,
     maxPrice: 250000,
     inStockOnly: false,
     ipRating: "all",
-    searchQuery: "",
+    searchQuery: initialSearch || "",
   });
 
   const resetFilters = () => {
@@ -51,7 +60,14 @@ export function StorefrontCatalog({ initialProducts, categories = [] }: Storefro
                                 pCategoryIds.some((cid: string) => cid === filters.category || (catObj && (cid === catObj.id || cid === catObj.slug)));
         if (!matchesCategory) return false;
       }
-      if (filters.brand.length > 0 && !filters.brand.includes(p.brand)) return false;
+      if (
+        filters.brand.length > 0 &&
+        !filters.brand.some(
+          (b) => b.toLowerCase() === (p.brand || "").toLowerCase()
+        )
+      ) {
+        return false;
+      }
       if (p.basePrice > filters.maxPrice * 100) return false;
       if (filters.inStockOnly && p.stockStatus === 'out-of-stock') return false;
       if (

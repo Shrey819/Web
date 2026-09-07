@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      return new Promise<string>((resolve, reject) => {
+      return new Promise<{ originalName: string; url: string }>((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
             folder: "products",
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
               console.error("Cloudinary upload error:", error);
               reject(error);
             } else if (result?.secure_url) {
-              resolve(result.secure_url);
+              resolve({ originalName: file.name, url: result.secure_url });
             } else {
               reject(new Error("No secure_url returned from Cloudinary"));
             }
@@ -57,11 +57,13 @@ export async function POST(request: Request) {
       });
     });
 
-    const urls = await Promise.all(uploadPromises);
+    const uploadedItems = await Promise.all(uploadPromises);
+    const urls = uploadedItems.map((item) => item.url);
 
     return NextResponse.json({
       success: true,
       urls,
+      items: uploadedItems,
       count: urls.length,
     });
   } catch (error: any) {

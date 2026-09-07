@@ -4,7 +4,10 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { productFormSchema, type ProductFormValues } from "@/lib/validations/product";
+import {
+  productFormSchema,
+  type ProductFormValues,
+} from "@/lib/validations/product";
 import {
   createProduct,
   updateProduct,
@@ -13,7 +16,6 @@ import {
   checkSlugAvailability,
 } from "@/app/actions/product";
 import { useToastStore } from "@/store/useToastStore";
-import { generateCartesianVariants, type GeneratedVariant } from "@/lib/variantGenerator";
 import {
   Save,
   Trash2,
@@ -21,87 +23,46 @@ import {
   Loader2,
   Image as ImageIcon,
   Plus,
-  Sparkles,
-  Bold,
-  Italic,
-  Underline,
-  Link as LinkIcon,
-  List,
-  ListOrdered,
-  GripVertical,
-  Flag,
-  MoreHorizontal,
-  Info,
-  ExternalLink,
-  HelpCircle,
   X,
-  Palette,
   Check,
-  Tag as TagIcon,
-  Bookmark,
-  Layers,
-  Edit2,
-  ChevronDown,
   Globe,
-  RotateCcw,
-  Copy,
-  AlertCircle,
+  Video,
+  FileText,
+  ExternalLink,
+  Wrench,
+  Calculator,
+  Download,
+  Eye,
+  EyeOff,
+  Sparkles,
+  Layers,
+  Tag,
+  ChevronDown,
+  IndianRupee,
 } from "lucide-react";
 import Link from "next/link";
-import { CldUploadButton } from "next-cloudinary";
-
-import { AssignCategoriesModal } from "./modals/AssignCategoriesModal";
-import { ManageRibbonsModal } from "./modals/ManageRibbonsModal";
-import { ManageTagsModal } from "./modals/ManageTagsModal";
-import { EditInfoSectionModal } from "./modals/EditInfoSectionModal";
-import { ManageGlobalOptionsModal } from "./modals/ManageGlobalOptionsModal";
-import { AddProductOptionModal } from "./modals/AddProductOptionModal";
-import { ProductMediaManagerModal } from "./modals/ProductMediaManagerModal";
-import { SaveOptionPresetModal } from "./modals/SaveOptionPresetModal";
-import { ApplyOptionPresetModal } from "./modals/ApplyOptionPresetModal";
-import { VariantMatrixEditorModal } from "./modals/VariantMatrixEditorModal";
-import { SelectInfoSectionsModal } from "./modals/SelectInfoSectionsModal";
 import { WixRichTextEditor } from "./WixRichTextEditor";
 
 interface CategoryItem {
   id: string;
   name: string;
   slug?: string;
-  status?: string;
-}
-
-interface RibbonItem {
-  id: string;
-  name: string;
-  color?: string;
-}
-
-interface TagItem {
-  id: string;
-  name: string;
-}
-
-interface InfoSectionItem {
-  id: string;
-  internalName: string;
-  title: string;
-  content: string;
-  productCount?: number;
 }
 
 interface BrandItem {
   id: string;
   name: string;
   slug?: string;
-  productCount?: number;
+  country?: string | null;
+  logo?: string | null;
 }
 
 interface ProductEditorFormProps {
   initialData?: any;
   categories: CategoryItem[];
-  allRibbons?: RibbonItem[];
-  allTags?: TagItem[];
-  allInfoSections?: InfoSectionItem[];
+  allRibbons?: any[];
+  allTags?: any[];
+  allInfoSections?: any[];
   allBrands?: BrandItem[];
   defaultSectionIds?: string[];
   defaultCategoryIds?: string[];
@@ -111,2242 +72,1568 @@ interface ProductEditorFormProps {
 
 export function ProductEditorForm({
   initialData,
-  categories: initialCategories,
-  allRibbons = [],
-  allTags = [],
-  allInfoSections = [],
+  categories = [],
   allBrands = [],
-  defaultSectionIds = [],
-  defaultCategoryIds = [],
-  defaultPrimaryCategoryId,
   isEdit = false,
 }: ProductEditorFormProps) {
   const router = useRouter();
   const { addToast } = useToastStore();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [slugChecking, setSlugChecking] = useState(false);
+  const [slugWarning, setSlugWarning] = useState<string | null>(null);
 
-  // Lists & Choices
-  const [categoriesList, setCategoriesList] = useState<CategoryItem[]>(initialCategories);
-  const [ribbonsList, setRibbonsList] = useState<RibbonItem[]>(allRibbons);
-  const [tagsList, setTagsList] = useState<TagItem[]>(allTags);
-  const [infoSectionsList, setInfoSectionsList] = useState<InfoSectionItem[]>(allInfoSections);
-  const [brandsList, setBrandsList] = useState<BrandItem[]>(allBrands);
+  // File Upload State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
 
-  // Brand Combobox State
-  const brandRef = useRef<HTMLDivElement>(null);
-  const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
-  const [brandSearch, setBrandSearch] = useState("");
-  const [isCreatingBrand, setIsCreatingBrand] = useState(false);
+  // New application input state
+  const [newAppInput, setNewAppInput] = useState("");
 
-  // Tag Direct Input & Autocomplete State
-  const tagContainerRef = useRef<HTMLDivElement>(null);
-  const tagInputRef = useRef<HTMLInputElement>(null);
-  const [tagInput, setTagInput] = useState("");
-  const [isTagSuggestOpen, setIsTagSuggestOpen] = useState(false);
-  const [highlightedTagIdx, setHighlightedTagIdx] = useState(-1);
-  const [isCreatingTag, setIsCreatingTag] = useState(false);
+  // New image URL input state
+  const [newImageUrl, setNewImageUrl] = useState("");
 
-  // Selected State
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(() => {
-    if (isEdit && initialData) {
-      if (initialData?.categoryIds && initialData.categoryIds.length > 0) return initialData.categoryIds;
-      if (initialData?.categoryId) return [initialData.categoryId];
-      return [initialCategories[0]?.id || "cat_default"];
-    }
-    if (defaultCategoryIds && defaultCategoryIds.length > 0) {
-      return defaultCategoryIds;
-    }
-    return [initialCategories[0]?.id || "cat_default"];
-  });
-  const [primaryCatId, setPrimaryCatId] = useState<string>(() => {
-    if (isEdit && initialData) {
-      return initialData?.primaryCategoryId || initialData?.categoryId || initialCategories[0]?.id || "";
-    }
-    if (defaultPrimaryCategoryId) {
-      return defaultPrimaryCategoryId;
-    }
-    if (defaultCategoryIds && defaultCategoryIds.length > 0) {
-      return defaultCategoryIds[0];
-    }
-    return initialCategories[0]?.id || "";
-  });
-
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialData?.tagIds || []);
-  const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>(() => {
-    if (isEdit && initialData) {
-      return initialData.infoSectionIds || [];
-    }
-    if (defaultSectionIds && defaultSectionIds.length > 0) {
-      return defaultSectionIds;
-    }
-    return allInfoSections.slice(0, 3).map((s) => s.id);
-  });
-  const [isInfoSectionsEnabled, setIsInfoSectionsEnabled] = useState<boolean>(() => {
-    if (isEdit && initialData) {
-      return Boolean(initialData.infoSectionIds && initialData.infoSectionIds.length > 0);
-    }
-    return true;
-  });
-
-  // Options & Variants Matrix State
-  const [options, setOptions] = useState<any[]>(initialData?.options || []);
-  const [variants, setVariants] = useState<GeneratedVariant[]>(initialData?.variants || []);
-  const [images, setImages] = useState<any[]>(initialData?.images || []);
-
-  // UI Modals Open State
-  const [isAssignCategoriesOpen, setIsAssignCategoriesOpen] = useState(false);
-  const [isManageRibbonsOpen, setIsManageRibbonsOpen] = useState(false);
-  const [isManageTagsOpen, setIsManageTagsOpen] = useState(false);
-  const [isManageOptionsOpen, setIsManageOptionsOpen] = useState(false);
-  const [isAddOptionOpen, setIsAddOptionOpen] = useState(false);
-  const [editingOption, setEditingOption] = useState<any | null>(null);
-  const [editingOptionIndex, setEditingOptionIndex] = useState<number | null>(null);
-  const [isSelectInfoSectionsOpen, setIsSelectInfoSectionsOpen] = useState(false);
-  const [isEditInfoSectionOpen, setIsEditInfoSectionOpen] = useState(false);
-  const [editingSection, setEditingSection] = useState<InfoSectionItem | null>(null);
-  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
-  const [isSavePresetOpen, setIsSavePresetOpen] = useState(false);
-  const [isApplyPresetOpen, setIsApplyPresetOpen] = useState(false);
-  const [isEditVariantsModalOpen, setIsEditVariantsModalOpen] = useState(false);
-
-  // Drag and Drop state for Options
-  const [draggedOptionIdx, setDraggedOptionIdx] = useState<number | null>(null);
-  const [dragOverOptionIdx, setDragOverOptionIdx] = useState<number | null>(null);
-
-  // Drag and Drop state for Info Sections
-  const [draggedSectionIdx, setDraggedSectionIdx] = useState<number | null>(null);
-  const [dragOverSectionIdx, setDragOverSectionIdx] = useState<number | null>(null);
-
-  // Pricing & Unit pricing
-  const [showPricePerUnit, setShowPricePerUnit] = useState<boolean>(
-    Boolean(initialData?.showPricePerUnit ?? false)
-  );
-
-  // SEO & Slug State
-  const [isCustomSlug, setIsCustomSlug] = useState<boolean>(Boolean(initialData?.slug));
-  const [isEditingSlug, setIsEditingSlug] = useState<boolean>(false);
-  const [isCopiedSlug, setIsCopiedSlug] = useState<boolean>(false);
-  const [slugAvailability, setSlugAvailability] = useState<{
-    checked: boolean;
-    exists: boolean;
-    suggestedSlug?: string;
-    existingProductName?: string;
-    message?: string;
-  }>({ checked: false, exists: false });
-  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
-
-  const defaultValues: Partial<ProductFormValues> = {
-    id: initialData?.id,
-    name: initialData?.name || "",
-    slug: initialData?.slug || "",
-    description: initialData?.description || "",
-    visible: initialData?.visible ?? true,
-    showInPos: initialData?.showInPos ?? true,
-    categoryId: primaryCatId || initialCategories[0]?.id || "",
-    categoryIds: selectedCategoryIds,
-    primaryCategoryId: primaryCatId,
-    primaryRibbon: initialData?.primaryRibbon || "",
-    brand: initialData?.brand || "",
-    tagIds: selectedTagIds,
-    price: initialData?.price ?? 450,
-    strikethroughPrice: initialData?.strikethroughPrice ?? 500,
-    costPrice: initialData?.costPrice ?? null,
-    showPricePerUnit: initialData?.showPricePerUnit ?? false,
-    baseUnit: initialData?.baseUnit ?? 100,
-    baseUnitMeasurement: initialData?.baseUnitMeasurement || "g",
-    totalUnits: initialData?.totalUnits ?? null,
-    totalUnitsMeasurement: initialData?.totalUnitsMeasurement || "g",
-    taxGroup: initialData?.taxGroup || "Products (default rate)",
-    images: initialData?.images || [],
-    options: initialData?.options || [],
-    variants: initialData?.variants || [],
-    infoSectionIds: selectedSectionIds,
-  };
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    getValues,
-    watch,
-    formState: { errors },
-  } = useForm<ProductFormValues>({
+  // Form Setup
+  const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema) as any,
-    defaultValues,
+    defaultValues: {
+      id: initialData?.id || undefined,
+      name: initialData?.name || "",
+      slug: initialData?.slug || "",
+      description: initialData?.description || "",
+      videoUrl: initialData?.videoUrl || "",
+      images: initialData?.images || [],
+
+      // 4. Custom Feature Cards (2 or 3 columns)
+      featureHighlights: initialData?.featureHighlights?.length
+        ? initialData.featureHighlights
+        : [
+            { label: "COST SAVING", value: "lubrication free" },
+            { label: "EASY INSTALLATION", value: "Replaceable" },
+            { label: "EXTENDED MAINTENANCE", value: "Up to 10000 KM" },
+          ],
+
+      // 5. Applications Tags
+      applications: initialData?.applications?.length
+        ? initialData.applications
+        : [
+            "Automation equipment",
+            "Industrial machine",
+            "Electronic machine",
+            "Medical equipment",
+            "Transportation",
+            "Construction",
+          ],
+
+      // 6. Technical Support Links
+      technicalSupportLinks: initialData?.technicalSupportLinks?.length
+        ? initialData.technicalSupportLinks
+        : [
+            {
+              title: "Full Specs",
+              url: "https://www.hiwinsupport.com/download_center.aspx?pid=BS",
+              icon: "specs",
+            },
+            {
+              title: "Product Selection",
+              url: "https://www.hiwinsupport.com/product_select/ballscrew.aspx",
+              icon: "selection",
+            },
+            {
+              title: "Life Calculation",
+              url: "https://www.hiwinsupport.com/life_Calculate/ballscrew.aspx",
+              icon: "calculation",
+            },
+            {
+              title: "CAD Download",
+              url: "https://www.hiwinsupport.com/cad_download/ballscrew.aspx",
+              icon: "cad",
+            },
+          ],
+
+      // 7. Custom Buyer Note (Toggle On/Off)
+      enableBuyerNote: initialData?.enableBuyerNote !== false,
+
+      // Sidebar Right Fields
+      visible: initialData?.visible !== false,
+      status: initialData?.status || "ACTIVE",
+      brand: initialData?.brand || "HIWIN",
+      categoryId: initialData?.categoryId || categories[0]?.id || "",
+      categoryIds: initialData?.categoryIds || (categories[0]?.id ? [categories[0].id] : []),
+      primaryCategoryId: initialData?.primaryCategoryId || categories[0]?.id || "",
+
+      // SEO
+      seoTitle: initialData?.seoTitle || "",
+      seoDesc: initialData?.seoDesc || "",
+
+      // Price
+      price: initialData?.price != null ? initialData.price : ("" as any),
+      strikethroughPrice: initialData?.strikethroughPrice != null ? initialData.strikethroughPrice : null,
+      primaryRibbon: "",
+      tagIds: [],
+      options: [],
+      variants: [],
+      infoSectionIds: [],
+    },
   });
 
-  const productName = watch("name") || "";
-  const slugValue = watch("slug") || "";
-  const basePrice = Number(watch("price") || 0);
-  const strikethroughPrice = Number(watch("strikethroughPrice") || 0);
-  const isVisible = watch("visible");
-  const isPosVisible = watch("showInPos");
-  const currentPrimaryRibbon = watch("primaryRibbon");
-  const brandValue = watch("brand") || "";
+  const { watch, setValue, handleSubmit, formState: { errors } } = form;
 
-  // Auto-generate slug from product name with database collision check if user hasn't manually customized it
-  useEffect(() => {
-    if (!isCustomSlug && productName.trim()) {
-      const timer = setTimeout(async () => {
-        const res = await checkAndGetUniqueProductSlug(productName.trim(), initialData?.id);
-        if (res.success && res.slug) {
-          setValue("slug", res.slug, { shouldDirty: true });
-        }
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [productName, isCustomSlug, initialData?.id, setValue]);
+  const currentName = watch("name");
+  const currentSlug = watch("slug");
+  const currentDescription = watch("description");
+  const currentImages = watch("images") || [];
+  const currentHighlights = watch("featureHighlights") || [];
+  const currentApplications = watch("applications") || [];
+  const currentSupportLinks = watch("technicalSupportLinks") || [];
+  const currentEnableBuyerNote = watch("enableBuyerNote");
+  const currentVisible = watch("visible");
+  const currentBrand = watch("brand");
+  const currentCategoryId = watch("categoryId");
+  const currentSeoTitle = watch("seoTitle");
+  const currentSeoDesc = watch("seoDesc");
 
-  // Real-time check if custom-entered slug is already in use by another product
-  useEffect(() => {
-    const trimmed = (slugValue || "").trim();
-    if (!trimmed) {
-      setSlugAvailability({ checked: false, exists: false });
-      return;
-    }
+  // User custom modification tracking
+  const [isSlugCustom, setIsSlugCustom] = useState(Boolean(initialData?.slug));
+  const [isTitleCustom, setIsTitleCustom] = useState(Boolean(initialData?.seoTitle));
+  const [isDescCustom, setIsDescCustom] = useState(Boolean(initialData?.seoDesc));
 
-    setIsCheckingSlug(true);
-    const timer = setTimeout(async () => {
-      try {
-        const res = await checkSlugAvailability(trimmed, initialData?.id);
-        if (res.exists) {
-          setSlugAvailability({
-            checked: true,
-            exists: true,
-            suggestedSlug: res.availableSlug,
-            existingProductName: res.existingProductName,
-            message: res.message,
-          });
-        } else {
-          setSlugAvailability({
-            checked: true,
-            exists: false,
-            suggestedSlug: res.availableSlug,
-          });
-        }
-      } finally {
-        setIsCheckingSlug(false);
-      }
-    }, 250);
-
-    return () => clearTimeout(timer);
-  }, [slugValue, initialData?.id]);
-
-  const handleResetSlug = async () => {
-    const nameToCheck = productName.trim();
-    if (!nameToCheck) {
-      addToast("warning", "Enter Name", "Please enter product name first.");
-      return;
-    }
-    const res = await checkAndGetUniqueProductSlug(nameToCheck, initialData?.id);
-    if (res.success && res.slug) {
-      setIsCustomSlug(false);
-      setValue("slug", res.slug, { shouldDirty: true });
-      addToast("success", "URL Reset", `Available unique URL assigned: /products/${res.slug}`);
-    }
-  };
-
-  // Prune invalid variant overrides if option choices are deleted
-  useEffect(() => {
-    if (options.length > 0 && variants.length > 0) {
-      const validOptionNames = new Set(options.map((o) => o.name));
-      const validChoicesMap = new Map<string, Set<string>>();
-      options.forEach((o) => {
-        validChoicesMap.set(o.name, new Set((o.choices || []).map((c: any) => c.name)));
-      });
-
-      const validVariants = variants.filter((v) => {
-        const attrs = v.attributes || {};
-        return Object.entries(attrs).every(([optName, optVal]) => {
-          if (!validOptionNames.has(optName)) return false;
-          const choiceSet = validChoicesMap.get(optName);
-          return choiceSet ? choiceSet.has(optVal) : false;
-        });
-      });
-
-      if (validVariants.length !== variants.length) {
-        setVariants(validVariants);
-        setValue("variants", validVariants as any, { shouldDirty: true });
-      }
-    }
-  }, [options]);
+  // Brand Dropdown & Suggestion State
+  const [isBrandDropdownOpen, setIsBrandDropdownOpen] = useState(false);
+  const brandDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setValue("options", options, { shouldDirty: true });
-  }, [options]);
-
-  useEffect(() => {
-    setValue("categoryIds", selectedCategoryIds, { shouldDirty: true });
-    setValue("categoryId", primaryCatId || selectedCategoryIds[0] || "cat2", { shouldDirty: true });
-    setValue("primaryCategoryId", primaryCatId || selectedCategoryIds[0] || "cat2", { shouldDirty: true });
-  }, [selectedCategoryIds, primaryCatId]);
-
-  useEffect(() => {
-    setValue("tagIds", selectedTagIds, { shouldDirty: true });
-  }, [selectedTagIds]);
-
-  useEffect(() => {
-    setValue("infoSectionIds", isInfoSectionsEnabled ? selectedSectionIds : [], { shouldDirty: true });
-  }, [selectedSectionIds, isInfoSectionsEnabled]);
-
-  // For new products: restore last saved info sections template from localStorage
-  useEffect(() => {
-    if (!isEdit && !initialData?.id && typeof window !== "undefined") {
-      try {
-        const savedLast = localStorage.getItem("admin_last_info_sections");
-        const savedLastEnabled = localStorage.getItem("admin_last_info_sections_enabled");
-        if (savedLast) {
-          const parsed = JSON.parse(savedLast);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const valid = parsed.filter((id) => allInfoSections.some((s) => s.id === id));
-            if (valid.length > 0) {
-              setSelectedSectionIds(valid);
-              setValue("infoSectionIds", valid, { shouldDirty: false });
-            }
-          }
-        }
-        if (savedLastEnabled !== null) {
-          setIsInfoSectionsEnabled(savedLastEnabled === "true");
-        }
-      } catch (e) {
-        console.error("Error reading last info sections:", e);
-      }
-    }
-  }, [isEdit, initialData?.id, allInfoSections, setValue]);
-
-  // For new products: restore last saved categories template from localStorage
-  useEffect(() => {
-    if (!isEdit && !initialData?.id && typeof window !== "undefined") {
-      try {
-        const savedLastCats = localStorage.getItem("admin_last_categories");
-        const savedLastPrimary = localStorage.getItem("admin_last_primary_category");
-        if (savedLastCats) {
-          const parsed = JSON.parse(savedLastCats);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const valid = parsed.filter((id) => categoriesList.some((c) => c.id === id));
-            if (valid.length > 0) {
-              setSelectedCategoryIds(valid);
-              setValue("categoryIds", valid, { shouldDirty: false });
-              const primary = savedLastPrimary && valid.includes(savedLastPrimary) ? savedLastPrimary : valid[0];
-              setPrimaryCatId(primary);
-              setValue("categoryId", primary, { shouldDirty: false });
-              setValue("primaryCategoryId", primary, { shouldDirty: false });
-            }
-          }
-        } else if (defaultCategoryIds && defaultCategoryIds.length > 0) {
-          const valid = defaultCategoryIds.filter((id) => categoriesList.some((c) => c.id === id));
-          if (valid.length > 0) {
-            setSelectedCategoryIds(valid);
-            setValue("categoryIds", valid, { shouldDirty: false });
-            const primary = defaultPrimaryCategoryId && valid.includes(defaultPrimaryCategoryId) ? defaultPrimaryCategoryId : valid[0];
-            setPrimaryCatId(primary);
-            setValue("categoryId", primary, { shouldDirty: false });
-            setValue("primaryCategoryId", primary, { shouldDirty: false });
-          }
-        }
-      } catch (e) {
-        console.error("Error reading last categories:", e);
-      }
-    }
-  }, [isEdit, initialData?.id, defaultCategoryIds, defaultPrimaryCategoryId, categoriesList, setValue]);
-
-  // Sync brands list if prop changes
-  useEffect(() => {
-    if (allBrands && allBrands.length > 0) {
-      setBrandsList(allBrands);
-    }
-  }, [allBrands]);
-
-  // Click outside to close brand dropdown
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (brandRef.current && !brandRef.current.contains(e.target as Node)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (brandDropdownRef.current && !brandDropdownRef.current.contains(event.target as Node)) {
         setIsBrandDropdownOpen(false);
       }
-    };
+    }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const currentBrandValue = watch("brand") || "";
-  const filteredBrands = brandsList.filter((b) =>
-    b.name.toLowerCase().includes(brandSearch.toLowerCase())
-  );
-  const hasExactBrandMatch = brandsList.some(
-    (b) => b.name.toLowerCase() === brandSearch.trim().toLowerCase()
-  );
+  const filteredBrandSuggestions = useMemo<BrandItem[]>(() => {
+    const query = (currentBrand || "").trim().toLowerCase();
+    if (!query) return allBrands;
+    return allBrands.filter(
+      (b: BrandItem) =>
+        b.name.toLowerCase().includes(query) ||
+        (b.country && b.country.toLowerCase().includes(query))
+    );
+  }, [allBrands, currentBrand]);
 
-  const handleSelectBrand = (brandName: string) => {
-    setValue("brand", brandName, { shouldDirty: true });
-    setBrandSearch("");
-    setIsBrandDropdownOpen(false);
+  // Auto-generate helper functions
+  const cleanHtmlToPlainText = (html: string): string => {
+    if (!html) return "";
+    let text = html;
+
+    // 1. Remove style, script, and HTML comments
+    text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+    text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "");
+    text = text.replace(/<!--[\s\S]*?-->/g, "");
+
+    // 2. Format list items cleanly
+    text = text.replace(/<\/li>/gi, ". ");
+    text = text.replace(/<li[^>]*>/gi, " • ");
+
+    // 3. Block elements & line breaks separate sentences/words
+    text = text.replace(/<\/(p|div|h[1-6]|blockquote|tr|table)>/gi, ". ");
+    text = text.replace(/<(br|hr)\s*\/?>/gi, " ");
+
+    // 4. Strip all remaining inline tags WITHOUT inserting spaces (e.g. <u>T</u><strong>hi</strong><em>s</em> -> This)
+    text = text.replace(/<[^>]+>/g, "");
+
+    // 5. Decode HTML entities (&nbsp;, &amp;, quotes, etc.)
+    text = text
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;|&apos;/gi, "'")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&bull;/gi, "•")
+      .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+      .replace(/&#x([a-f0-9]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+
+    // 6. Clean up spacing and punctuation from tag conversions
+    text = text
+      .replace(/\s+([.,;:!?])/g, "$1")
+      .replace(/\.{2,}/g, ".")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return text;
   };
 
-  const handleCreateNewBrand = async (brandNameToCreate: string) => {
-    const trimmed = brandNameToCreate.trim();
-    if (!trimmed) return;
-    setIsCreatingBrand(true);
+  const generateSlugFromText = (name: string): string => {
+    return (name || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+  };
+
+  const generateSeoTitleFromText = (name: string, brand?: string | null): string => {
+    if (!name) return "";
+    const brandStr = brand?.trim() || "HIWIN";
+    return `${name} | ${brandStr}`;
+  };
+
+  const generateSeoDescFromText = (name: string, desc?: string | null, brand?: string | null): string => {
+    const brandStr = brand?.trim() || "HIWIN";
+    const plain = cleanHtmlToPlainText(desc || "");
+    if (plain && plain.length > 20) {
+      if (plain.length <= 155) return plain;
+      const truncated = plain.slice(0, 152);
+      const lastSpace = truncated.lastIndexOf(" ");
+      return lastSpace > 100 ? `${truncated.slice(0, lastSpace)}...` : `${truncated}...`;
+    }
+    if (name) {
+      return `Buy ${name} by ${brandStr}. High-precision industrial automation components with verified specifications, CAD models, and fast regional dispatch.`;
+    }
+    return "";
+  };
+
+  // Real-time auto-sync for new products if user has not customized yet
+  useEffect(() => {
+    if (!isEdit && currentName) {
+      if (!isSlugCustom) {
+        setValue("slug", generateSlugFromText(currentName), { shouldDirty: true });
+      }
+      if (!isTitleCustom) {
+        setValue("seoTitle", generateSeoTitleFromText(currentName, currentBrand), { shouldDirty: true });
+      }
+      if (!isDescCustom) {
+        setValue("seoDesc", generateSeoDescFromText(currentName, currentDescription, currentBrand), { shouldDirty: true });
+      }
+    }
+  }, [currentName, currentBrand, currentDescription, isEdit, isSlugCustom, isTitleCustom, isDescCustom, setValue]);
+
+  // Individual and batch auto-generation handlers
+  const handleGenerateSlug = () => {
+    const newSlug = generateSlugFromText(currentName);
+    setValue("slug", newSlug, { shouldDirty: true, shouldValidate: true });
+    setIsSlugCustom(false);
+    addToast("info", "Slug Generated", `Generated: /product/${newSlug}`);
+  };
+
+  const handleGenerateSeoTitle = () => {
+    const newTitle = generateSeoTitleFromText(currentName, currentBrand);
+    setValue("seoTitle", newTitle, { shouldDirty: true, shouldValidate: true });
+    setIsTitleCustom(false);
+    addToast("info", "SEO Title Generated", "Generated title from name and brand.");
+  };
+
+  const handleGenerateSeoDesc = () => {
+    const newDesc = generateSeoDescFromText(currentName, currentDescription, currentBrand);
+    setValue("seoDesc", newDesc, { shouldDirty: true, shouldValidate: true });
+    setIsDescCustom(false);
+    addToast("info", "SEO Description Generated", "Generated description from product details.");
+  };
+
+  const handleAutoGenerateAll = () => {
+    const newSlug = generateSlugFromText(currentName);
+    const newTitle = generateSeoTitleFromText(currentName, currentBrand);
+    const newDesc = generateSeoDescFromText(currentName, currentDescription, currentBrand);
+
+    setValue("slug", newSlug, { shouldDirty: true, shouldValidate: true });
+    setValue("seoTitle", newTitle, { shouldDirty: true, shouldValidate: true });
+    setValue("seoDesc", newDesc, { shouldDirty: true, shouldValidate: true });
+
+    setIsSlugCustom(false);
+    setIsTitleCustom(false);
+    setIsDescCustom(false);
+
+    addToast("success", "URL & SEO Auto-Generated", "Auto-filled slug, SEO title, and description.");
+  };
+
+  // Validate Slug
+  const handleSlugBlur = async () => {
+    if (!currentSlug) return;
+    setSlugChecking(true);
     try {
-      const res = await (await import("@/app/actions/productManagement")).createBrand(trimmed);
-      if (res.success && res.id) {
-        const newBrand = { id: res.id, name: trimmed, productCount: 0 };
-        setBrandsList((prev) =>
-          [...prev.filter((b) => b.name.toLowerCase() !== trimmed.toLowerCase()), newBrand].sort((a, b) =>
-            a.name.localeCompare(b.name)
+      const res = await checkSlugAvailability(currentSlug, initialData?.id);
+      if (res.exists) {
+        setSlugWarning(res.message || `URL already in use. Suggested: ${res.availableSlug}`);
+        setValue("slug", res.availableSlug);
+      } else {
+        setSlugWarning(null);
+      }
+    } catch {
+      setSlugWarning(null);
+    } finally {
+      setSlugChecking(false);
+    }
+  };
+
+  // --- Feature Highlights Management ---
+  const handleAddHighlight = () => {
+    if (currentHighlights.length >= 6) {
+      addToast("warning", "Limit Reached", "You can add a maximum of 6 custom feature cards.");
+      return;
+    }
+    setValue(
+      "featureHighlights",
+      [...currentHighlights, { label: "NEW FEATURE", value: "Specification" }],
+      { shouldDirty: true, shouldValidate: true }
+    );
+  };
+
+  const handleUpdateHighlight = (index: number, field: "label" | "value", text: string) => {
+    const updated = currentHighlights.map((item, i) =>
+      i === index ? { ...item, [field]: text } : item
+    );
+    setValue("featureHighlights", updated, { shouldDirty: true, shouldValidate: true });
+  };
+
+  const handleRemoveHighlight = (index: number) => {
+    setValue(
+      "featureHighlights",
+      currentHighlights.filter((_, i) => i !== index),
+      { shouldDirty: true, shouldValidate: true }
+    );
+  };
+
+  const handleLoadHiwinHighlights = () => {
+    setValue(
+      "featureHighlights",
+      [
+        { label: "COST SAVING", value: "lubrication free" },
+        { label: "EASY INSTALLATION", value: "Replaceable" },
+        { label: "EXTENDED MAINTENANCE", value: "Up to 10000 KM" },
+      ],
+      { shouldDirty: true, shouldValidate: true }
+    );
+    addToast("info", "Preset Loaded", "Loaded 3 HIWIN standard feature cards.");
+  };
+
+  // --- Applications Management ---
+  const handleAddApplication = () => {
+    const trimmed = newAppInput.trim();
+    if (!trimmed) return;
+    if (currentApplications.length >= 20) {
+      addToast("warning", "Limit Reached", "You can add a maximum of 20 application tags.");
+      return;
+    }
+    if (currentApplications.includes(trimmed)) {
+      setNewAppInput("");
+      return;
+    }
+    setValue("applications", [...currentApplications, trimmed]);
+    setNewAppInput("");
+  };
+
+  const handleRemoveApplication = (appToRemove: string) => {
+    setValue(
+      "applications",
+      currentApplications.filter((app) => app !== appToRemove)
+    );
+  };
+
+  const handleLoadDefaultApplications = () => {
+    setValue("applications", [
+      "Automation equipment",
+      "Industrial machine",
+      "Electronic machine",
+      "Medical equipment",
+      "Transportation",
+      "Construction",
+    ]);
+    addToast("info", "Preset Loaded", "Loaded standard industrial automation applications.");
+  };
+
+  // --- Technical Support Links Management ---
+  const handleAddSupportLink = () => {
+    if (currentSupportLinks.length >= 6) {
+      addToast("warning", "Limit Reached", "You can add a maximum of 6 technical support links.");
+      return;
+    }
+    setValue("technicalSupportLinks", [
+      ...currentSupportLinks,
+      { title: "Technical Manual", url: "https://", icon: "specs" },
+    ]);
+  };
+
+  const handleUpdateSupportLink = (
+    index: number,
+    field: "title" | "url" | "icon",
+    val: any
+  ) => {
+    const updated = [...currentSupportLinks];
+    updated[index] = { ...updated[index], [field]: val };
+    setValue("technicalSupportLinks", updated);
+  };
+
+  const handleRemoveSupportLink = (index: number) => {
+    setValue(
+      "technicalSupportLinks",
+      currentSupportLinks.filter((_, i) => i !== index)
+    );
+  };
+
+  const handleLoadHiwinSupportLinks = () => {
+    setValue("technicalSupportLinks", [
+      {
+        title: "Full Specs",
+        url: "https://www.hiwinsupport.com/download_center.aspx?pid=BS",
+        icon: "specs",
+      },
+      {
+        title: "Product Selection",
+        url: "https://www.hiwinsupport.com/product_select/ballscrew.aspx",
+        icon: "selection",
+      },
+      {
+        title: "Life Calculation",
+        url: "https://www.hiwinsupport.com/life_Calculate/ballscrew.aspx",
+        icon: "calculation",
+      },
+      {
+        title: "CAD Download",
+        url: "https://www.hiwinsupport.com/cad_download/ballscrew.aspx",
+        icon: "cad",
+      },
+    ]);
+    addToast("info", "Preset Loaded", "Loaded 4 HIWIN support tools.");
+  };
+
+  // --- Image Upload & Management ---
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingImages(true);
+    const filesList = Array.from(files);
+
+    try {
+      const formData = new FormData();
+      filesList.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success && Array.isArray(data.urls) && data.urls.length > 0) {
+        const newImages = data.urls.map((url: string, index: number) => ({
+          url,
+          altText: currentName || "Product image",
+          isPrimary: currentImages.length === 0 && index === 0,
+          sortOrder: currentImages.length + index,
+        }));
+
+        setValue("images", [...currentImages, ...newImages], { shouldDirty: true });
+        addToast("success", "Uploaded", `${data.urls.length} image${data.urls.length > 1 ? "s" : ""} uploaded successfully.`);
+      } else {
+        throw new Error(data.error || "Server upload failed");
+      }
+    } catch (err: any) {
+      console.warn("Direct server upload failed, converting to local preview:", err);
+      // Fallback: convert to base64 Data URLs so user flow is never blocked
+      try {
+        const localUrls: string[] = await Promise.all(
+          filesList.map(
+            (file) =>
+              new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+              })
           )
         );
-        setValue("brand", trimmed, { shouldDirty: true });
-        setBrandSearch("");
-        setIsBrandDropdownOpen(false);
-        addToast("success", "Brand Created", `"${trimmed}" added and selected.`);
-      } else {
-        addToast("error", "Error", res.error || "Could not create brand.");
+
+        const newImages = localUrls.map((url: string, index: number) => ({
+          url,
+          altText: currentName || "Product image",
+          isPrimary: currentImages.length === 0 && index === 0,
+          sortOrder: currentImages.length + index,
+        }));
+
+        setValue("images", [...currentImages, ...newImages], { shouldDirty: true });
+        addToast("info", "Images Added", "Loaded image previews.");
+      } catch (localErr: any) {
+        addToast("error", "Upload Error", err.message || "Failed to process selected images.");
       }
     } finally {
-      setIsCreatingBrand(false);
-    }
-  };
-
-  const handleDeleteBrand = async (brand: BrandItem, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (confirm(`Are you sure you want to delete brand "${brand.name}"?`)) {
-      const res = await (await import("@/app/actions/productManagement")).deleteBrand(brand.id, brand.name);
-      if (res.success) {
-        setBrandsList((prev) => prev.filter((b) => b.id !== brand.id));
-        if (currentBrandValue.toLowerCase() === brand.name.toLowerCase()) {
-          setValue("brand", "", { shouldDirty: true });
-        }
-        addToast("success", "Brand Deleted", `"${brand.name}" deleted.`);
-      } else {
-        addToast("error", "Error", res.error || "Could not delete brand.");
+      setIsUploadingImages(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
     }
   };
 
-  // Tag input helpers & suggestions
-  const matchingTagSuggestions = useMemo(() => {
-    if (!tagInput.trim()) return [];
-    const query = tagInput.trim().toLowerCase();
-    return tagsList.filter(
-      (t) => t.name.toLowerCase().includes(query) && !selectedTagIds.includes(t.id)
-    );
-  }, [tagInput, tagsList, selectedTagIds]);
-
-  const hasExactTagMatch = useMemo(() => {
-    const query = tagInput.trim().toLowerCase();
-    return tagsList.some((t) => t.name.toLowerCase() === query);
-  }, [tagInput, tagsList]);
-
-  // Click outside to close tag suggestions
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (tagContainerRef.current && !tagContainerRef.current.contains(e.target as Node)) {
-        setIsTagSuggestOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleAssignTagById = (tagId: string) => {
-    if (!selectedTagIds.includes(tagId)) {
-      setSelectedTagIds((prev) => [...prev, tagId]);
-    }
-    setTagInput("");
-    setIsTagSuggestOpen(false);
-    setHighlightedTagIdx(-1);
-    tagInputRef.current?.focus();
-  };
-
-  const handleCreateAndAssignTag = async (rawName: string) => {
-    const trimmed = rawName.trim().replace(/^,+|,+$/g, "");
-    if (!trimmed) return;
-
-    // Check if tag already exists in tagsList
-    const existing = tagsList.find((t) => t.name.toLowerCase() === trimmed.toLowerCase());
-    if (existing) {
-      handleAssignTagById(existing.id);
-      return;
-    }
-
-    setIsCreatingTag(true);
-    try {
-      const res = await (await import("@/app/actions/productManagement")).createTag(trimmed);
-      if (res.success && res.id) {
-        const newTag = { id: res.id, name: res.name || trimmed };
-        setTagsList((prev) => [...prev.filter((t) => t.id !== newTag.id), newTag]);
-        setSelectedTagIds((prev) => (prev.includes(newTag.id) ? prev : [...prev, newTag.id]));
-        setTagInput("");
-        setIsTagSuggestOpen(false);
-        setHighlightedTagIdx(-1);
-        tagInputRef.current?.focus();
-      } else {
-        addToast("error", "Failed", res.error || "Could not create tag.");
-      }
-    } finally {
-      setIsCreatingTag(false);
-    }
-  };
-
-  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === "Tab" || e.key === ",") {
-      e.preventDefault();
-      if (
-        matchingTagSuggestions.length > 0 &&
-        highlightedTagIdx >= 0 &&
-        highlightedTagIdx < matchingTagSuggestions.length
-      ) {
-        handleAssignTagById(matchingTagSuggestions[highlightedTagIdx].id);
-      } else if (
-        matchingTagSuggestions.length > 0 &&
-        (e.key === "Tab" || (e.key === "Enter" && hasExactTagMatch))
-      ) {
-        handleAssignTagById(matchingTagSuggestions[0].id);
-      } else if (tagInput.trim()) {
-        handleCreateAndAssignTag(tagInput);
-      }
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (!isTagSuggestOpen) {
-        setIsTagSuggestOpen(true);
-      }
-      setHighlightedTagIdx((prev) =>
-        prev < matchingTagSuggestions.length - 1 ? prev + 1 : 0
-      );
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setHighlightedTagIdx((prev) =>
-        prev > 0 ? prev - 1 : matchingTagSuggestions.length - 1
-      );
-    } else if (e.key === "Backspace" && !tagInput && selectedTagIds.length > 0) {
-      setSelectedTagIds((prev) => prev.slice(0, -1));
-    } else if (e.key === "Escape") {
-      setIsTagSuggestOpen(false);
-    }
-  };
-
-  const handleGenerateAiDescription = () => {
-    if (!productName.trim()) {
-      addToast("warning", "Enter Name", "Please enter product name first.");
-      return;
-    }
-    setIsGeneratingAi(true);
-    setTimeout(() => {
-      const sampleText = `<p>High quality <strong>${productName.trim()}</strong> designed for precision, long lasting durability, and peak efficiency. Features ergonomic craftsmanship and verified quality standards.</p><ul><li>Premium grade construction</li><li>Fast and reliable performance</li><li>Certified standard compliance</li></ul>`;
-      setValue("description", sampleText, { shouldDirty: true });
-      setIsGeneratingAi(false);
-      addToast("success", "AI Generated", "Product description generated!");
-    }, 600);
-  };
-
-  const handleFormatText = (prefix: string, suffix = "") => {
-    const current = getValues("description") || "";
-    setValue("description", `${current}\n${prefix}Highlight${suffix}`, { shouldDirty: true });
-  };
-
-  // Option handlers
-  const handleSaveOption = (optData: any) => {
-    let updated: any[];
-    if (editingOptionIndex !== null && editingOptionIndex >= 0 && editingOptionIndex < options.length) {
-      // Direct update of the existing option at that index
-      updated = options.map((o, i) =>
-        i === editingOptionIndex
-          ? { ...o, ...optData, id: o.id || optData.id || `opt_${Date.now()}` }
-          : o
-      );
-    } else if (optData.id && options.some((o) => o.id === optData.id)) {
-      updated = options.map((o) => (o.id === optData.id ? { ...o, ...optData } : o));
-    } else {
-      // Check if option with same name already exists to prevent duplicate rows
-      const existingIdx = options.findIndex(
-        (o) => o.name.toLowerCase().trim() === optData.name.toLowerCase().trim()
-      );
-      if (existingIdx >= 0) {
-        updated = options.map((o, i) =>
-          i === existingIdx ? { ...o, ...optData, id: o.id || `opt_${Date.now()}` } : o
-        );
-      } else {
-        const newOpt = {
-          id: "opt_" + Date.now(),
-          ...optData,
-          sortOrder: options.length,
-        };
-        updated = [...options, newOpt];
-      }
-    }
-    setOptions(updated);
-    setValue("options", updated, { shouldDirty: true });
-    setEditingOption(null);
-    setEditingOptionIndex(null);
-    addToast("success", "Option Saved", `Updated ${optData.name}`);
-  };
-
-  const handleDeleteOption = (index: number) => {
-    const updated = options.filter((_, i) => i !== index);
-    setOptions(updated);
-    setValue("options", updated, { shouldDirty: true });
-    addToast("info", "Option Removed", "Option removed.");
-  };
-
-  // Option Drag and Drop Handlers
-  const handleOptionDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedOptionIdx(index);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", index.toString());
-  };
-
-  const handleOptionDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (dragOverOptionIdx !== index) {
-      setDragOverOptionIdx(index);
-    }
-  };
-
-  const handleOptionDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    if (draggedOptionIdx === null || draggedOptionIdx === targetIndex) {
-      setDraggedOptionIdx(null);
-      setDragOverOptionIdx(null);
-      return;
-    }
-
-    setOptions((prev) => {
-      const updated = [...prev];
-      const [draggedItem] = updated.splice(draggedOptionIdx, 1);
-      updated.splice(targetIndex, 0, draggedItem);
-      const reordered = updated.map((opt, idx) => ({ ...opt, sortOrder: idx }));
-      setValue("options", reordered, { shouldDirty: true });
-      return reordered;
-    });
-
-    setDraggedOptionIdx(null);
-    setDragOverOptionIdx(null);
-    addToast("info", "Reordered", "Product option order updated.");
-  };
-
-  const handleOptionDragEnd = () => {
-    setDraggedOptionIdx(null);
-    setDragOverOptionIdx(null);
-  };
-
-  // Section Drag and Drop Handlers
-  const handleSectionDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedSectionIdx(index);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", index.toString());
-  };
-
-  const handleSectionDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (dragOverSectionIdx !== index) {
-      setDragOverSectionIdx(index);
-    }
-  };
-
-  const handleSectionDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    if (draggedSectionIdx === null || draggedSectionIdx === targetIndex) {
-      setDraggedSectionIdx(null);
-      setDragOverSectionIdx(null);
-      return;
-    }
-
-    setSelectedSectionIds((prev) => {
-      const updated = [...prev];
-      const [draggedItem] = updated.splice(draggedSectionIdx, 1);
-      updated.splice(targetIndex, 0, draggedItem);
-      return updated;
-    });
-
-    setDraggedSectionIdx(null);
-    setDragOverSectionIdx(null);
-    addToast("info", "Reordered", "Info section order updated.");
-  };
-
-  const handleSectionDragEnd = () => {
-    setDraggedSectionIdx(null);
-    setDragOverSectionIdx(null);
-  };
-
-  const handleApplyOptionPreset = (
-    presetOptions: any[],
-    presetVariants?: any[],
-    includeVariants?: boolean
-  ) => {
-    setOptions(presetOptions);
-    setValue("options", presetOptions, { shouldDirty: true });
-
-    if (includeVariants && presetVariants && presetVariants.length > 0) {
-      setVariants(presetVariants);
-      setValue("variants", presetVariants as any, { shouldDirty: true });
-    }
-  };
-
-  // Image Upload handler (Limit of 10)
-  const handleImageUploaded = (result: any) => {
-    if (images.length >= 10) {
-      addToast("warning", "Limit Reached", "Max 10 images/videos allowed.");
-      return;
-    }
-    const newImg = {
-      id: "img_" + Date.now(),
-      url: result?.info?.secure_url || result?.info?.url,
-      altText: productName || "Product image",
-      isPrimary: images.length === 0,
-      sortOrder: images.length,
-    };
-    const updated = [...images, newImg];
-    setImages(updated);
-    setValue("images", updated, { shouldDirty: true });
-    addToast("success", "Image Added", "Uploaded new product image.");
-  };
-
-  const handleAddImagesFromMediaManager = (urls: string[]) => {
-    const remainingSlots = 10 - images.length;
-    const toAdd = urls.slice(0, remainingSlots).map((url, i) => ({
-      id: "img_" + Date.now() + "_" + i,
-      url,
-      altText: productName || "Product image",
-      isPrimary: images.length === 0 && i === 0,
-      sortOrder: images.length + i,
-    }));
-    const updated = [...images, ...toAdd];
-    setImages(updated);
-    setValue("images", updated, { shouldDirty: true });
-    addToast("success", "Media Added", `Added ${toAdd.length} image(s) to product.`);
-  };
-
-  const handleSetPrimaryImage = (index: number) => {
-    const updated = images.map((img, i) => ({
-      ...img,
-      isPrimary: i === index,
-    }));
-    setImages(updated);
-    setValue("images", updated, { shouldDirty: true });
+  const handleAddImageUrl = () => {
+    const url = newImageUrl.trim();
+    if (!url) return;
+    setValue("images", [
+      ...currentImages,
+      {
+        url,
+        altText: currentName || "Product image",
+        isPrimary: currentImages.length === 0,
+        sortOrder: currentImages.length,
+      },
+    ]);
+    setNewImageUrl("");
   };
 
   const handleRemoveImage = (index: number) => {
-    const updated = images.filter((_, i) => i !== index);
+    const updated = currentImages.filter((_, i) => i !== index);
     if (updated.length > 0 && !updated.some((img) => img.isPrimary)) {
       updated[0].isPrimary = true;
     }
-    setImages(updated);
-    setValue("images", updated, { shouldDirty: true });
+    setValue("images", updated);
   };
 
-  // Submit Handler
-  const onSubmit = async (data: ProductFormValues) => {
+  const handleSetPrimaryImage = (index: number) => {
+    const updated = currentImages.map((img, i) => ({
+      ...img,
+      isPrimary: i === index,
+    }));
+    setValue("images", updated);
+  };
+
+  // --- Form Submission ---
+  const onSubmit = async (values: ProductFormValues) => {
     setIsSubmitting(true);
     try {
-      const activePrimaryCat = primaryCatId || selectedCategoryIds[0] || initialCategories[0]?.id || "cat2";
-      const activeCategories = selectedCategoryIds.length > 0 ? selectedCategoryIds : [activePrimaryCat];
-
-      const cleanOptions = (options || []).map((o, idx) => ({
-        id: o.id || undefined,
-        globalOptionId: o.globalOptionId || null,
-        name: o.name,
-        fieldType: o.fieldType || "TEXT_CHOICES",
-        sortOrder: o.sortOrder ?? idx,
-        choices: (o.choices || []).map((c: any, cIdx: number) => ({
-          id: c.id || undefined,
-          name: c.name,
-          colorHex: c.colorHex || "",
-          sortOrder: c.sortOrder ?? cIdx,
-        })),
-      }));
-
-      const cleanVariants = (variants || []).map((v: any, vIdx: number) => ({
-        id: v.id || undefined,
-        sku: v.sku || `VAR-${vIdx + 1}`,
-        barcode: v.barcode || "",
-        price: Number(v.price ?? basePrice ?? 0),
-        strikethroughPrice: v.strikethroughPrice != null && String(v.strikethroughPrice).trim() !== "" ? Number(v.strikethroughPrice) : null,
-        cost: v.cost != null && String(v.cost).trim() !== "" ? Number(v.cost) : null,
-        trackQuantity: Boolean(v.trackQuantity),
-        stockQuantity: Number(v.stockQuantity ?? 100),
-        inventoryStatus: (v.inventoryStatus === "OUT_OF_STOCK" || (typeof v.inventoryStatus === "string" && v.inventoryStatus.toUpperCase().includes("OUT"))) ? "OUT_OF_STOCK" as const : "IN_STOCK" as const,
-        preOrderEnabled: Boolean(v.preOrderEnabled),
-        preOrderLimit: v.preOrderLimit != null && String(v.preOrderLimit).trim() !== "" ? Number(v.preOrderLimit) : null,
-        totalUnits: v.totalUnits != null && String(v.totalUnits).trim() !== "" ? Number(v.totalUnits) : null,
-        totalUnitsMeasurement: v.totalUnitsMeasurement || "g",
-        packageLength: v.packageLength != null && String(v.packageLength).trim() !== "" ? Number(v.packageLength) : null,
-        packageWidth: v.packageWidth != null && String(v.packageWidth).trim() !== "" ? Number(v.packageWidth) : null,
-        packageHeight: v.packageHeight != null && String(v.packageHeight).trim() !== "" ? Number(v.packageHeight) : null,
-        packageUnit: v.packageUnit || "cm",
-        mediaUrl: v.mediaUrl || "",
-        attributes: v.attributes || {},
-        displayName: v.displayName || "",
-      }));
-
+      // Ensure primary category
+      const primaryCat = values.categoryId || categories[0]?.id || "";
       const payload: ProductFormValues = {
-        ...data,
-        name: (data.name || productName).trim(),
-        categoryId: activePrimaryCat,
-        categoryIds: activeCategories,
-        primaryCategoryId: activePrimaryCat,
-        tagIds: selectedTagIds,
-        infoSectionIds: isInfoSectionsEnabled ? selectedSectionIds : [],
-        showPricePerUnit,
-        images,
-        options: cleanOptions,
-        variants: cleanVariants,
+        ...values,
+        categoryId: primaryCat,
+        primaryCategoryId: primaryCat,
+        categoryIds: [primaryCat],
+        status: values.visible ? "ACTIVE" : "DRAFT",
       };
 
-      const res = isEdit && initialData?.id
-        ? await updateProduct(initialData.id, payload)
-        : await createProduct(payload);
-
-      if (res.success) {
-        if (typeof window !== "undefined") {
-          try {
-            if (isInfoSectionsEnabled && selectedSectionIds.length > 0) {
-              localStorage.setItem("admin_last_info_sections", JSON.stringify(selectedSectionIds));
-              localStorage.setItem("admin_last_info_sections_enabled", "true");
-            } else {
-              localStorage.setItem("admin_last_info_sections_enabled", "false");
-            }
-
-            if (selectedCategoryIds.length > 0) {
-              localStorage.setItem("admin_last_categories", JSON.stringify(selectedCategoryIds));
-              if (primaryCatId) {
-                localStorage.setItem("admin_last_primary_category", primaryCatId);
-              }
-            }
-          } catch (e) {
-            console.error("Error saving last preferences:", e);
-          }
+      if (isEdit && initialData?.id) {
+        const res = await updateProduct(initialData.id, payload);
+        if (res.success) {
+          addToast("success", "Product Updated", `"${values.name}" saved successfully.`);
+          router.push("/admin/products");
+        } else {
+          addToast("error", "Update Failed", res.error || "Failed to update product.");
         }
-        addToast("success", isEdit ? "Product Updated" : "Product Created", "All changes saved successfully!");
-        router.push("/admin/products");
-        router.refresh();
       } else {
-        addToast("error", "Failed to Save", res.error || "Please check your inputs.");
+        const res = await createProduct(payload);
+        if (res.success) {
+          addToast("success", "Product Created", `"${values.name}" created successfully.`);
+          router.push("/admin/products");
+        } else {
+          addToast("error", "Creation Failed", res.error || "Failed to create product.");
+        }
       }
     } catch (err: any) {
-      console.error("Save submission error:", err);
+      console.error("Save error:", err);
       addToast("error", "Error", err.message || "An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const onInvalid = (formErrors: any) => {
-    console.warn("Form validation errors:", formErrors);
-    let errMsg = "Please check all required fields.";
-    const keys = Object.keys(formErrors);
-    if (keys.length > 0) {
-      const topErr = formErrors[keys[0]];
-      if (topErr?.message) errMsg = topErr.message;
-      else if (topErr?.root?.message) errMsg = topErr.root.message;
-      else if (Array.isArray(topErr) && topErr[0]?.message) errMsg = topErr[0].message;
-      else errMsg = `Please check the ${keys[0]} field.`;
+  const handleDelete = async () => {
+    if (!initialData?.id) return;
+    if (!confirm(`Are you sure you want to delete "${initialData.name}"? This action cannot be undone.`)) {
+      return;
     }
-    addToast("warning", "Required Field", errMsg);
-  };
 
-  const handleDecimalInput = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    field: "price" | "strikethroughPrice" | "costPrice" | "totalUnits" | "baseUnit"
-  ) => {
-    let val = e.target.value;
-    if (val.includes(".")) {
-      const [integer, decimal] = val.split(".");
-      if (decimal && decimal.length > 2) {
-        val = `${integer}.${decimal.slice(0, 2)}`;
-        e.target.value = val;
+    setIsDeleting(true);
+    try {
+      const res = await deleteProduct(initialData.id);
+      if (res.success) {
+        addToast("info", "Product Deleted", "Product removed successfully.");
+        router.push("/admin/products");
+      } else {
+        addToast("error", "Delete Failed", res.error || "Could not delete product.");
       }
+    } catch (err: any) {
+      addToast("error", "Error", err.message || "Failed to delete product.");
+    } finally {
+      setIsDeleting(false);
     }
-    const num = val === "" ? (field === "price" ? 0 : null) : parseFloat(val);
-    setValue(field as any, num, { shouldDirty: true });
   };
 
   return (
-    <div className="bg-[#f7f9fa] dark:bg-slate-950 min-h-screen pb-24 text-slate-800 dark:text-slate-100">
-      {/* Top Fixed Header */}
-      <div className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-3.5 flex items-center justify-between shadow-2xs">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 pb-24 max-w-7xl mx-auto">
+      {/* Top Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div className="flex items-center gap-3">
           <Link
             href="/admin/products"
-            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            title="Back to Products"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <Link href="/admin/products" className="hover:text-slate-800 dark:hover:text-slate-200">
-              Products
-            </Link>
-            <span>›</span>
-            <span className="text-slate-900 dark:text-white font-bold truncate max-w-[220px]">
-              {productName || "New Product"}
-            </span>
-            <span className="ml-2 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-[11px] font-semibold uppercase tracking-wider">
-              Physical Product
-            </span>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              {isEdit ? `Edit: ${initialData?.name || "Product"}` : "Create New Product"}
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Configure product specifications, feature cards, support links, and visibility.
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
+          {isEdit && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isDeleting || isSubmitting}
+              className="px-4 py-2 text-sm font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              <span>Delete</span>
+            </button>
+          )}
+
           <Link
             href="/admin/products"
-            className="px-4 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors"
           >
             Cancel
           </Link>
+
           <button
-            type="button"
+            type="submit"
             disabled={isSubmitting}
-            onClick={handleSubmit(onSubmit, onInvalid)}
-            className="px-6 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            className="px-6 py-2 text-sm font-bold text-white bg-[#00a651] hover:bg-[#008a41] rounded-lg shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
-            {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-            Save
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                <span>{isEdit ? "Update Product" : "Save & Publish"}</span>
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Main Form Content */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-12 gap-6 items-start">
-          {/* Left Column (8 cols): Main Cards */}
-          <div className="col-span-12 lg:col-span-8 space-y-6">
-            {/* 1. Basic Info Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-5">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Basic info</h2>
-
-              {/* Product Name */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  <span className="flex items-center gap-1">
-                    Name <span className="text-blue-600 dark:text-blue-400">*</span> <Info className="w-3.5 h-3.5 text-slate-400" />
-                  </span>
-                  <span className="text-slate-400 dark:text-slate-500 font-normal">{productName.length} / 80</span>
-                </div>
-                <input
-                  type="text"
-                  maxLength={80}
-                  {...register("name")}
-                  placeholder="e.g. Hello or Industrial Valve"
-                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-                />
-                {errors.name && (
-                  <p className="text-xs text-red-600 dark:text-red-400 font-medium">{errors.name.message}</p>
-                )}
-              </div>
-
-              {/* Description */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  <span className="flex items-center gap-1">
-                    Description <Info className="w-3.5 h-3.5 text-slate-400" />
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleGenerateAiDescription}
-                    disabled={isGeneratingAi}
-                    className="flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    {isGeneratingAi ? "Generating..." : "Generate AI Text"}
-                  </button>
-                </div>
-
-                <WixRichTextEditor
-                  value={watch("description") || ""}
-                  onChange={(html) => setValue("description", html, { shouldDirty: true })}
-                  placeholder="Enter detailed product description or instructions..."
-                  maxLength={1000}
-                />
-              </div>
-            </div>
-
-            {/* 2. Pricing Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-4">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Pricing</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Set up the pricing details that are not managed per variant.
-              </p>
-
-              {/* Price & Strikethrough Inputs (Base) */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Price (₹)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    {...register("price", { valueAsNumber: true })}
-                    onChange={(e) => handleDecimalInput(e, "price")}
-                    className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-semibold text-slate-900 dark:text-white"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Strikethrough Price (₹)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    {...register("strikethroughPrice", { valueAsNumber: true })}
-                    onChange={(e) => handleDecimalInput(e, "strikethroughPrice")}
-                    className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 text-slate-500 dark:text-slate-400"
-                  />
-                </div>
-              </div>
-
-              {/* Show price per unit toggle */}
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowPricePerUnit(!showPricePerUnit)}
-                    className={`w-10 h-5.5 rounded-full transition-colors relative cursor-pointer ${
-                      showPricePerUnit ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-700"
-                    }`}
-                  >
-                    <div
-                      className={`w-4.5 h-4.5 bg-white rounded-full absolute top-0.5 transition-transform shadow-xs ${
-                        showPricePerUnit ? "translate-x-5" : "translate-x-0.5"
-                      }`}
-                    />
-                  </button>
-                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                    Show price per unit <Info className="w-3.5 h-3.5 text-slate-400" />
-                  </span>
-                </div>
-
-                {showPricePerUnit && (
-                  <div className="pt-2 space-y-2">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Price per unit
-                    </label>
-                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                      {/* Price input */}
-                      <div className="relative flex-1 min-w-[120px]">
-                        <span className="absolute left-3 top-2 text-xs font-semibold text-slate-400">₹</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder={watch("price") ? String(watch("price")) : "200"}
-                          {...register("totalUnits", { valueAsNumber: true })}
-                          onChange={(e) => handleDecimalInput(e, "totalUnits")}
-                          className="w-full pl-7 pr-3 py-1.5 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900 dark:text-white"
-                        />
-                      </div>
-
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">per</span>
-
-                      {/* Unit Quantity input */}
-                      <div className="w-24">
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0.01"
-                          placeholder="1"
-                          {...register("baseUnit", { valueAsNumber: true })}
-                          onChange={(e) => handleDecimalInput(e, "baseUnit")}
-                          className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-center text-slate-900 dark:text-white"
-                        />
-                      </div>
-
-                      {/* Unit Measurement Dropdown */}
-                      <div className="w-32">
-                        <select
-                          {...register("baseUnitMeasurement")}
-                          className="w-full px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-950 focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-800 dark:text-slate-200"
-                        >
-                          <option value="kg">kg</option>
-                          <option value="g">g</option>
-                          <option value="l">l</option>
-                          <option value="ml">ml</option>
-                          <option value="m">m</option>
-                          <option value="cm">cm</option>
-                          <option value="piece">piece</option>
-                          <option value="unit">unit</option>
-                          <option value="item">item</option>
-                          <option value="pack">pack</option>
-                          <option value="box">box</option>
-                          <option value="set">set</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Preview on storefront: <span className="font-semibold text-slate-700 dark:text-slate-300">₹{Number(watch("totalUnits") || watch("price") || 200).toFixed(2)} per {watch("baseUnit") || 1} {watch("baseUnitMeasurement") || "kg"}</span>
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Note linking to Variants */}
-              {variants.length > 0 && (
-                <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 rounded-lg flex items-center gap-2 text-xs text-amber-900 dark:text-amber-300">
-                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Price, sale price, cost of goods and total units are managed separately for each variant.</span>
-                </div>
+      {/* Main Form Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: 1 to 6 (Main Product Content) */}
+        <div className="lg:col-span-8 space-y-6">
+          
+          {/* 1. Name & 2. Feature Description */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-5">
+            <div>
+              <label htmlFor="product-name" className="block text-sm font-bold text-slate-900 dark:text-white mb-1.5">
+                1) Product Name *
+              </label>
+              <input
+                id="product-name"
+                type="text"
+                {...form.register("name")}
+                placeholder="e.g., HIWIN EL Self Lubricating Ballscrew"
+                className={`w-full px-4 py-2.5 rounded-lg border text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-950 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                  errors.name
+                    ? "border-rose-400 focus:ring-rose-200 dark:border-rose-500"
+                    : "border-slate-300 dark:border-slate-700 focus:border-[#00a651] focus:ring-[#00a651]/20"
+                }`}
+              />
+              {errors.name && (
+                <p className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-medium">{errors.name.message}</p>
               )}
             </div>
 
-            {/* 3. Images and Videos Card (Limit 10) */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-4">
-              <div className="flex items-center justify-between">
+            <div>
+              <label className="block text-sm font-bold text-slate-900 dark:text-white mb-1.5">
+                2) Feature Description
+              </label>
+              <WixRichTextEditor
+                value={watch("description") || ""}
+                onChange={(html) => setValue("description", html, { shouldDirty: true, shouldValidate: true })}
+                placeholder="Enter detailed high-performance feature overview for this product..."
+              />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                Supports bold, italic, underline, text and background colors, links, bullet points, and numbered lists. Appears under the "Feature" heading on the product page.
+              </p>
+            </div>
+
+            {/* Simple Price Option */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+              <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-1.5">
+                <IndianRupee className="w-4 h-4 text-[#00a651]" />
+                <span>Price (₹)</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    Images and videos <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">({images.length} / 10)</span>
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Show customers what this product looks like.</p>
+                  <label htmlFor="product-price" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Selling Price (₹) *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">₹</span>
+                    <input
+                      id="product-price"
+                      type="number"
+                      step="any"
+                      min="0"
+                      {...form.register("price", {
+                        valueAsNumber: true,
+                        setValueAs: (v) => (v === "" || v === null || v === undefined || isNaN(Number(v)) ? 0 : Number(v)),
+                      })}
+                      onFocus={(e) => {
+                        if (e.target.value === "0" || e.target.value === "0.00") {
+                          e.target.select();
+                        }
+                      }}
+                      onClick={(e) => {
+                        if (e.currentTarget.value === "0" || e.currentTarget.value === "0.00") {
+                          e.currentTarget.select();
+                        }
+                      }}
+                      onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                        const val = e.currentTarget.value;
+                        if (val.length > 1 && val.startsWith("0") && val[1] !== ".") {
+                          const clean = val.replace(/^0+/, "");
+                          e.currentTarget.value = clean || "0";
+                          setValue("price", Number(e.currentTarget.value), { shouldValidate: true, shouldDirty: true });
+                        }
+                      }}
+                      placeholder="e.g., 2500"
+                      className={`w-full pl-8 pr-4 py-2.5 rounded-lg border text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-950 font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                        errors.price
+                          ? "border-rose-400 focus:ring-rose-200 dark:border-rose-500"
+                          : "border-slate-300 dark:border-slate-700 focus:border-[#00a651] focus:ring-[#00a651]/20"
+                      }`}
+                    />
+                  </div>
+                  {errors.price && (
+                    <p className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-medium">{errors.price.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="product-strikethrough-price" className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
+                    Original / Strikethrough Price (₹) <span className="font-normal text-slate-400 dark:text-slate-500">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-bold text-sm">₹</span>
+                    <input
+                      id="product-strikethrough-price"
+                      type="number"
+                      step="any"
+                      min="0"
+                      {...form.register("strikethroughPrice", {
+                        setValueAs: (v) => (v === "" || v === null || v === undefined ? null : Number(v)),
+                      })}
+                      onFocus={(e) => {
+                        if (e.target.value === "0" || e.target.value === "0.00") {
+                          e.target.select();
+                        }
+                      }}
+                      onClick={(e) => {
+                        if (e.currentTarget.value === "0" || e.currentTarget.value === "0.00") {
+                          e.currentTarget.select();
+                        }
+                      }}
+                      placeholder="Optional (e.g., 3000)"
+                      className="w-full pl-8 pr-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-[#00a651] focus:ring-2 focus:ring-[#00a651]/20 transition-all"
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                    Displays with strikethrough (e.g., <span className="line-through">₹3,000</span> ₹2,500)
+                  </p>
                 </div>
               </div>
+            </div>
+          </div>
 
-              {/* Media Upload Grid */}
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 pt-2">
-                {images.map((img, idx) => (
+          {/* 3. Images and Videos */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-[#00a651]" />
+                  <span>3) Images and Videos</span>
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Upload images from computer or paste image & video URLs.
+                </p>
+              </div>
+            </div>
+
+            {/* Direct Signed File Upload & URL Input */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                multiple
+                accept="image/*"
+                className="hidden"
+              />
+              <button
+                type="button"
+                disabled={isUploadingImages}
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2.5 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 disabled:bg-slate-600 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 shadow-xs border border-transparent dark:border-slate-700"
+              >
+                {isUploadingImages ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    <span>Upload from Computer</span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex-1 flex gap-2">
+                <input
+                  type="url"
+                  value={newImageUrl}
+                  onChange={(e) => setNewImageUrl(e.target.value)}
+                  placeholder="Or paste direct image URL (https://...)"
+                  className="flex-1 px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-[#00a651]"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddImageUrl}
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs rounded-lg border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shrink-0"
+                >
+                  Add URL
+                </button>
+              </div>
+            </div>
+
+            {/* Uploaded Images Grid */}
+            {currentImages.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 pt-2">
+                {currentImages.map((img, idx) => (
                   <div
-                    key={img.id || idx}
-                    className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-2xs"
+                    key={idx}
+                    className={`relative rounded-lg border p-2 bg-slate-50 dark:bg-slate-800/60 flex flex-col items-center justify-between group ${
+                      img.isPrimary
+                        ? "border-[#00a651] ring-2 ring-[#00a651]/20 bg-emerald-50/20 dark:bg-emerald-950/20"
+                        : "border-slate-200 dark:border-slate-700"
+                    }`}
                   >
-                    <img src={img.url} alt={img.altText} className="w-full h-full object-cover" />
-                    {img.isPrimary && (
-                      <span className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-emerald-700 text-white text-[10px] font-bold rounded shadow-xs uppercase tracking-wider">
-                        MAIN
-                      </span>
-                    )}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      {!img.isPrimary && (
+                    <div className="w-full h-24 flex items-center justify-center overflow-hidden rounded bg-white dark:bg-slate-950">
+                      <img src={img.url} alt={img.altText || ""} className="max-h-full max-w-full object-contain" />
+                    </div>
+
+                    <div className="w-full pt-2 flex items-center justify-between gap-1">
+                      {img.isPrimary ? (
+                        <span className="text-[10px] font-bold text-[#00a651] uppercase">Primary</span>
+                      ) : (
                         <button
                           type="button"
                           onClick={() => handleSetPrimaryImage(idx)}
-                          className="px-2 py-1 bg-white text-slate-900 rounded text-[10px] font-bold shadow-xs hover:bg-slate-100 cursor-pointer"
+                          className="text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium underline cursor-pointer"
                         >
-                          Set Main
+                          Make Primary
                         </button>
                       )}
                       <button
                         type="button"
                         onClick={() => handleRemoveImage(idx)}
-                        className="p-1.5 bg-red-600 text-white rounded-md shadow-xs hover:bg-red-700 cursor-pointer"
+                        className="text-slate-400 hover:text-rose-500 p-1 transition-colors cursor-pointer"
+                        title="Delete image"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                 ))}
-
-                {images.length < 10 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsMediaModalOpen(true)}
-                    className="aspect-square rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all flex flex-col items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
-                  >
-                    <Plus className="w-5 h-5" />
-                    <span className="text-xs font-semibold">Add Media</span>
-                  </button>
-                )}
               </div>
-            </div>
-
-            {/* 4. Product Options Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    Product options <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">({options.length} / 6)</span>
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Add, remove or reorder options to create your product variants.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {options.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setIsSavePresetOpen(true)}
-                      className="px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800 rounded-lg shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
-                    >
-                      <Bookmark className="w-3.5 h-3.5" />
-                      Save changes
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setIsApplyPresetOpen(true)}
-                    className="px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Layers className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-                    Apply setting
-                  </button>
-                </div>
+            ) : (
+              <div className="border border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                No images added yet. Upload an image or enter a URL above.
               </div>
+            )}
 
-              {/* Options Rows */}
-              <div className="space-y-3 pt-2">
-                {options.map((opt, idx) => {
-                  const isDraggingThis = draggedOptionIdx === idx;
-                  const isDragOverThis = dragOverOptionIdx === idx && draggedOptionIdx !== idx;
-
-                  return (
-                    <div
-                      key={opt.id || idx}
-                      draggable
-                      onDragStart={(e) => handleOptionDragStart(e, idx)}
-                      onDragOver={(e) => handleOptionDragOver(e, idx)}
-                      onDrop={(e) => handleOptionDrop(e, idx)}
-                      onDragEnd={handleOptionDragEnd}
-                      className={`p-3.5 rounded-xl border transition-all duration-150 flex items-center justify-between gap-4 select-none ${
-                        isDraggingThis
-                          ? "opacity-40 border-dashed border-blue-500 bg-blue-50/50 scale-[0.99]"
-                          : isDragOverThis
-                          ? "border-blue-500 bg-blue-50/40 ring-2 ring-blue-400 ring-offset-1 scale-[1.01]"
-                          : "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-950"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
-                          title="Drag to reorder option"
-                        >
-                          <GripVertical className="w-4 h-4" />
-                        </div>
-                        <span className="text-sm font-bold text-slate-900 dark:text-white w-24 truncate">
-                          {opt.name}
-                        </span>
-                      </div>
-
-                      {/* Choices preview */}
-                      <div className="flex items-center gap-2 flex-1 flex-wrap">
-                        {opt.fieldType === "SWATCH_CHOICES" ? (
-                          opt.choices?.map((ch: any, cIdx: number) => (
-                            <div
-                              key={cIdx}
-                              className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-medium text-slate-700 dark:text-slate-300"
-                            >
-                              <span
-                                className="w-3.5 h-3.5 rounded-full border border-slate-300 dark:border-slate-700"
-                                style={{ backgroundColor: ch.colorHex || "#3b82f6" }}
-                              />
-                              <span>{ch.name}</span>
-                            </div>
-                          ))
-                        ) : (
-                          opt.choices?.map((ch: any, cIdx: number) => (
-                            <span
-                              key={cIdx}
-                              className="px-2.5 py-1 bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-semibold text-slate-800 dark:text-slate-200"
-                            >
-                              {ch.name}
-                            </span>
-                          ))
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingOption(opt);
-                            setEditingOptionIndex(idx);
-                            setIsAddOptionOpen(true);
-                          }}
-                          className="px-3 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 shadow-2xs cursor-pointer transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteOption(idx)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {options.length < 6 ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingOption(null);
-                      setEditingOptionIndex(null);
-                      setIsAddOptionOpen(true);
-                    }}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 pt-1 cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" /> Add Another Option
-                  </button>
-                ) : (
-                  <span className="text-xs text-slate-400 dark:text-slate-500 font-medium italic block pt-1">
-                    Maximum 6 product options reached
-                  </span>
-                )}
-              </div>
-                      {/* 5. Custom Variant Pricing & Overrides Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-4 text-slate-900 dark:text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    Custom Variant Pricing <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">({variants.length} custom overrides)</span>
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {options.some((o) => o.choices && o.choices.length > 0)
-                      ? `All combinations dynamically use base price (₹${basePrice.toFixed(2)}) unless overridden here.`
-                      : "Add options above to create customizable variant combinations."}
-                  </p>
-                </div>
-                {options.some((o) => o.choices && o.choices.length > 0) && (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditVariantsModalOpen(true)}
-                    className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                    {variants.length > 0 ? "Manage Overrides" : "Customize Specific Variants"}
-                  </button>
-                )}
-              </div>
-
-              {/* Overrides Table or Clean Empty State */}
-              {variants.length === 0 ? (
-                <div className="p-6 bg-slate-50/70 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between gap-4">
-                  <div className="space-y-0.5">
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                      Standard pricing applied to all combinations
-                    </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Every customer choice combination will automatically sell for the base price of <strong>₹{basePrice.toFixed(2)}</strong>.
-                    </p>
-                  </div>
-                  {options.some((o) => o.choices && o.choices.length > 0) && (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditVariantsModalOpen(true)}
-                      className="px-3.5 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-900/30 rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
-                    >
-                      + Add Custom Price / SKU
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-xs divide-y divide-slate-200 dark:divide-slate-800">
-                    <thead className="bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider">
-                      <tr>
-                        <th className="px-4 py-2.5">Custom Variant Override</th>
-                        <th className="px-4 py-2.5">Custom Price (₹)</th>
-                        <th className="px-4 py-2.5">Inventory</th>
-                        <th className="px-4 py-2.5">SKU</th>
-                        <th className="px-4 py-2.5 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 font-medium text-slate-800 dark:text-slate-200">
-                      {variants.slice(0, 8).map((v, i) => (
-                        <tr key={v.id || i} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
-                          <td className="px-4 py-2.5 font-bold text-slate-900 dark:text-white text-xs">
-                            {v.displayName || Object.values(v.attributes || {}).join(" | ")}
-                          </td>
-                          <td className="px-4 py-2">
-                            <div className="relative w-28">
-                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">
-                                ₹
-                              </span>
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={v.price}
-                                onChange={(e) => {
-                                  const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
-                                  const updated = variants.map((item, idx) => (idx === i ? { ...item, price: val } : item));
-                                  setVariants(updated);
-                                  setValue("variants", updated as any, { shouldDirty: true });
-                                }}
-                                className="w-full pl-6 pr-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 rounded-lg text-xs font-bold text-slate-900 dark:text-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-                              />
-                            </div>
-                          </td>
-                          <td className="px-4 py-2">
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                v.inventoryStatus === "OUT_OF_STOCK"
-                                  ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"
-                                  : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                              }`}
-                            >
-                              {v.inventoryStatus === "OUT_OF_STOCK" ? "Out of stock" : "In stock"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2 font-mono text-slate-500 dark:text-slate-400 text-xs">
-                            {v.sku || "--"}
-                          </td>
-                          <td className="px-4 py-2 text-right">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updated = variants.filter((_, idx) => idx !== i);
-                                setVariants(updated);
-                                setValue("variants", updated as any, { shouldDirty: true });
-                              }}
-                              className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
-                              title="Delete override"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {variants.length > 8 && (
-                    <div className="p-2.5 bg-slate-50 dark:bg-slate-950 text-center text-xs font-medium text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800">
-                      + {variants.length - 8} more custom overrides
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* 6. Additional Info Sections Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-6 space-y-4 text-slate-900 dark:text-white">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    Additional info sections{" "}
-                    {isInfoSectionsEnabled && (
-                      <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
-                        ({selectedSectionIds.length} / 10)
-                      </span>
-                    )}
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Display more relevant info about the product, like a return policy or size chart.
-                  </p>
-                </div>
-
-                {/* Right-side Controls: Add / Select Button + On/Off Switch */}
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsSelectInfoSectionsOpen(true)}
-                    className="px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 rounded-xl shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                    Add / Select
-                  </button>
-
-                  <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
-
-                  {/* On/Off Toggle Switch */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={isInfoSectionsEnabled}
-                      onClick={() => setIsInfoSectionsEnabled(!isInfoSectionsEnabled)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                        isInfoSectionsEnabled ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-700"
-                      }`}
-                      title={isInfoSectionsEnabled ? "Turn off info sections" : "Turn on info sections"}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                          isInfoSectionsEnabled ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 min-w-7">
-                      {isInfoSectionsEnabled ? "On" : "Off"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Body */}
-              {!isInfoSectionsEnabled ? (
-                <div className="p-5 bg-slate-50/70 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between gap-4">
-                  <div className="space-y-0.5">
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                      Info sections are turned off
-                    </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Sections will not appear on the product page until you turn the switch on.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsInfoSectionsEnabled(true)}
-                    className="px-3.5 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 hover:bg-blue-50/50 dark:hover:bg-blue-900/30 rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
-                  >
-                    Turn On
-                  </button>
-                </div>
-              ) : selectedSectionIds.length === 0 ? (
-                <div className="p-6 bg-slate-50/70 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between gap-4">
-                  <div className="space-y-0.5">
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                      No info sections assigned
-                    </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Choose from your saved library of sections (e.g. Return Policy, Shipping Info).
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsSelectInfoSectionsOpen(true)}
-                    className="px-3.5 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Select Sections
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3 pt-1">
-                  {selectedSectionIds.map((secId, sIdx) => {
-                    const section = infoSectionsList.find((s) => s.id === secId) || {
-                      id: secId,
-                      title: "Section " + (sIdx + 1),
-                      internalName: "Section " + (sIdx + 1),
-                      content: "Information content...",
-                    };
-                    const isDraggingSec = draggedSectionIdx === sIdx;
-                    const isDragOverSec = dragOverSectionIdx === sIdx && draggedSectionIdx !== sIdx;
-
-                    return (
-                      <div
-                        key={secId}
-                        draggable
-                        onDragStart={(e) => handleSectionDragStart(e, sIdx)}
-                        onDragOver={(e) => handleSectionDragOver(e, sIdx)}
-                        onDrop={(e) => handleSectionDrop(e, sIdx)}
-                        onDragEnd={handleSectionDragEnd}
-                        className={`p-3.5 rounded-xl border transition-all duration-150 flex items-center justify-between gap-4 select-none ${
-                          isDraggingSec
-                            ? "opacity-40 border-dashed border-blue-500 bg-blue-50/50 scale-[0.99]"
-                            : isDragOverSec
-                            ? "border-blue-500 bg-blue-50/40 ring-2 ring-blue-400 ring-offset-1 scale-[1.01]"
-                            : "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-950"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div
-                            className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing p-1 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors shrink-0"
-                            title="Drag to reorder section"
-                          >
-                            <GripVertical className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                              {section.title}{" "}
-                              {section.internalName && section.internalName !== section.title && (
-                                <span className="text-slate-400 dark:text-slate-500 font-normal">
-                                  / {section.internalName}
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-sm mt-0.5">
-                              {section.content?.replace(/<[^>]*>?/gm, "") || "Content..."}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingSection(section);
-                              setIsEditInfoSectionOpen(true);
-                            }}
-                            className="px-3 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 shadow-2xs cursor-pointer transition-colors"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedSectionIds((prev) => prev.filter((id) => id !== secId))
-                            }
-                            className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer transition-colors"
-                            title="Remove from product"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {selectedSectionIds.length < 10 && (
-                    <button
-                      type="button"
-                      onClick={() => setIsSelectInfoSectionsOpen(true)}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 pt-1 cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4" /> Add Another Info Section
-                    </button>
-                  )}
-                </div>
-              )}
+            {/* Video URL Input */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+              <label htmlFor="product-video" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                <Video className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                <span>Product Video URL (Optional)</span>
+              </label>
+              <input
+                id="product-video"
+                type="url"
+                {...form.register("videoUrl")}
+                placeholder="e.g., https://www.youtube.com/watch?v=... or .mp4 video link"
+                className="w-full px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-[#00a651]"
+              />
             </div>
           </div>
 
-          {/* Right Column (4 cols): Visibility, Categories, Ribbons, Brand, Tags */}
-          <div className="col-span-12 lg:col-span-4 space-y-6">
-            {/* 7. Visibility Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-4 text-slate-900 dark:text-white">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Visibility</h2>
-
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Show in online store</span>
-                <button
-                  type="button"
-                  onClick={() => setValue("visible", !isVisible, { shouldDirty: true })}
-                  className={`w-10 h-5.5 rounded-full transition-colors relative cursor-pointer ${
-                    isVisible ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-700"
-                  }`}
-                >
-                  <div
-                    className={`w-4.5 h-4.5 bg-white rounded-full absolute top-0.5 transition-transform shadow-xs ${
-                      isVisible ? "translate-x-5" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Show in Point of Sale</span>
-                <button
-                  type="button"
-                  onClick={() => setValue("showInPos", !isPosVisible, { shouldDirty: true })}
-                  className={`w-10 h-5.5 rounded-full transition-colors relative cursor-pointer ${
-                    isPosVisible ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-700"
-                  }`}
-                >
-                  <div
-                    className={`w-4.5 h-4.5 bg-white rounded-full absolute top-0.5 transition-transform shadow-xs ${
-                      isPosVisible ? "translate-x-5" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* 8. Categories Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-3 text-slate-900 dark:text-white">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Categories</h2>
-                <button
-                  type="button"
-                  onClick={() => setIsAssignCategoriesOpen(true)}
-                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
-                >
-                  + Assign
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                {selectedCategoryIds.map((cId) => {
-                  const cat = categoriesList.find((c) => c.id === cId) || { id: cId, name: cId };
-                  const isPrimary = cId === primaryCatId;
-                  return (
-                    <div
-                      key={cId}
-                      className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-xs"
-                    >
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">{cat.name}</span>
-                      <div className="flex items-center gap-1.5">
-                        {isPrimary ? (
-                          <span
-                            title="Primary Category"
-                            className="p-1 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 rounded-md"
-                          >
-                            <Flag className="w-3.5 h-3.5 fill-blue-600 dark:fill-blue-400" />
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setPrimaryCatId(cId)}
-                            title="Set as Primary"
-                            className="p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-md cursor-pointer"
-                          >
-                            <Flag className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (selectedCategoryIds.length > 1) {
-                              const remaining = selectedCategoryIds.filter((id) => id !== cId);
-                              setSelectedCategoryIds(remaining);
-                              setValue("categoryIds", remaining, { shouldDirty: true });
-                              if (primaryCatId === cId) {
-                                const newPrimary = remaining[0];
-                                setPrimaryCatId(newPrimary);
-                                setValue("categoryId", newPrimary, { shouldDirty: true });
-                                setValue("primaryCategoryId", newPrimary, { shouldDirty: true });
-                              }
-                            } else {
-                              addToast("warning", "Required", "Product must belong to at least 1 category.");
-                            }
-                          }}
-                          className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
-                          title="Remove category"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 9. Ribbons Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-3 text-slate-900 dark:text-white">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1">
-                  Ribbons <Info className="w-3.5 h-3.5 text-slate-400" />
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setIsManageRibbonsOpen(true)}
-                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
-                >
-                  Manage All
-                </button>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Primary ribbon</label>
-                <select
-                  value={currentPrimaryRibbon || ""}
-                  onChange={(e) => setValue("primaryRibbon", e.target.value, { shouldDirty: true })}
-                  className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-800 dark:text-slate-200"
-                >
-                  <option value="">No Ribbon</option>
-                  {ribbonsList.map((r) => (
-                    <option key={r.id} value={r.name}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* 10. Brand Card */}
-            <div ref={brandRef} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-2 relative text-slate-900 dark:text-white">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
-                <span className="flex items-center gap-1">
-                  Brand <Info className="w-3.5 h-3.5 text-slate-400" />
-                </span>
-                <span className="text-slate-400 dark:text-slate-500 font-normal">{currentBrandValue.length} / 50</span>
-              </div>
-
-              <div className="relative">
-                <div className="relative flex items-center">
-                  <input
-                    type="text"
-                    maxLength={50}
-                    value={isBrandDropdownOpen ? brandSearch : currentBrandValue}
-                    onFocus={() => {
-                      setBrandSearch(currentBrandValue);
-                      setIsBrandDropdownOpen(true);
-                    }}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setBrandSearch(val);
-                      setValue("brand", val, { shouldDirty: true });
-                      if (!isBrandDropdownOpen) setIsBrandDropdownOpen(true);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (brandSearch.trim()) {
-                          if (filteredBrands.length > 0) {
-                            handleSelectBrand(filteredBrands[0].name);
-                          } else {
-                            handleCreateNewBrand(brandSearch.trim());
-                          }
-                        }
-                      } else if (e.key === "Escape") {
-                        setIsBrandDropdownOpen(false);
-                      }
-                    }}
-                    placeholder="Search or select a brand..."
-                    className="w-full pl-3.5 pr-8 py-2 text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!isBrandDropdownOpen) {
-                        setBrandSearch(currentBrandValue);
-                      }
-                      setIsBrandDropdownOpen(!isBrandDropdownOpen);
-                    }}
-                    className="absolute right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-pointer"
-                  >
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-150 ${isBrandDropdownOpen ? "rotate-180" : ""}`} />
-                  </button>
-                </div>
-
-                {/* Dropdown Menu */}
-                {isBrandDropdownOpen && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in zoom-in-95 duration-100">
-                    {/* Add new option button if query doesn't match */}
-                    {brandSearch.trim() && !hasExactBrandMatch && (
-                      <button
-                        type="button"
-                        onClick={() => handleCreateNewBrand(brandSearch.trim())}
-                        disabled={isCreatingBrand}
-                        className="w-full px-3.5 py-2 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-900/30 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        {isCreatingBrand ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                        <span>Add &quot;<strong>{brandSearch.trim()}</strong>&quot; as new brand</span>
-                      </button>
-                    )}
-
-                    {/* Filtered Brands */}
-                    {filteredBrands.length > 0 ? (
-                      filteredBrands.map((b) => {
-                        const isSelected = currentBrandValue.toLowerCase() === b.name.toLowerCase();
-                        return (
-                          <div
-                            key={b.id}
-                            onClick={() => handleSelectBrand(b.name)}
-                            className={`group px-3.5 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                              isSelected ? "bg-blue-50/90 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span>{b.name}</span>
-                              {isSelected && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
-                            </div>
-
-                            <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100">
-                              {b.productCount != null && b.productCount > 0 && (
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md font-normal">
-                                  {b.productCount} {b.productCount === 1 ? "product" : "products"}
-                                </span>
-                              )}
-                              <button
-                                type="button"
-                                onClick={(e) => handleDeleteBrand(b, e)}
-                                title={`Delete "${b.name}"`}
-                                className="p-1 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : !brandSearch.trim() ? (
-                      <div className="p-3 text-center text-xs text-slate-400 dark:text-slate-500 italic">
-                        No brands in database. Type a name to add.
-                      </div>
-                    ) : hasExactBrandMatch ? null : (
-                      <div className="p-2.5 text-center text-xs text-slate-400 dark:text-slate-500 italic">
-                        No matching brands. Click above to add.
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 11. Product Tags Card */}
-            <div ref={tagContainerRef} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-3 relative text-slate-900 dark:text-white">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  Product tags <Info className="w-3.5 h-3.5 text-slate-400" />
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setIsManageTagsOpen(true)}
-                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
-                >
-                  + Assign Tags
-                </button>
-              </div>
-
-              {/* Tag Input Box with Badges */}
-              <div
-                onClick={() => tagInputRef.current?.focus()}
-                className="w-full min-h-[42px] p-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 flex flex-wrap items-center gap-1.5 cursor-text transition-all"
-              >
-                {selectedTagIds.map((tId) => {
-                  const tag = tagsList.find((t) => t.id === tId) || { id: tId, name: tId };
-                  return (
-                    <span
-                      key={tId}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-xs font-semibold group transition-colors"
-                    >
-                      {tag.name}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedTagIds((prev) => prev.filter((id) => id !== tId));
-                        }}
-                        className="text-slate-400 hover:text-red-600 p-0.5 rounded-xs cursor-pointer"
-                        title="Remove tag"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  );
-                })}
-
-                <input
-                  ref={tagInputRef}
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => {
-                    setTagInput(e.target.value);
-                    setIsTagSuggestOpen(true);
-                    setHighlightedTagIdx(0);
-                  }}
-                  onFocus={() => {
-                    if (tagInput.trim()) setIsTagSuggestOpen(true);
-                  }}
-                  onKeyDown={handleTagInputKeyDown}
-                  placeholder={selectedTagIds.length === 0 ? "Type tag & press Enter..." : "Add more tags..."}
-                  className="flex-1 min-w-[140px] px-1 py-0.5 text-xs bg-transparent border-none outline-hidden focus:outline-hidden font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                />
-              </div>
-
-              {/* Autocomplete Suggestions Popup */}
-              {isTagSuggestOpen && tagInput.trim() && (
-                <div className="absolute left-5 right-5 top-[calc(100%-8px)] z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in zoom-in-95 duration-100">
-                  {/* Create New Tag Action */}
-                  {!hasExactTagMatch && (
-                    <button
-                      type="button"
-                      onClick={() => handleCreateAndAssignTag(tagInput)}
-                      disabled={isCreatingTag}
-                      className="w-full px-3.5 py-2 text-left text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 font-semibold flex items-center justify-between transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        {isCreatingTag ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                        <span>Add &quot;<strong>{tagInput.trim()}</strong>&quot; as new tag</span>
-                      </div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-mono">Press Enter</span>
-                    </button>
-                  )}
-
-                  {/* Matching Existing Tags */}
-                  {matchingTagSuggestions.map((tag, sIdx) => {
-                    const isHighlighted = sIdx === highlightedTagIdx;
-                    return (
-                      <div
-                        key={tag.id}
-                        onClick={() => handleAssignTagById(tag.id)}
-                        className={`px-3.5 py-2 text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                          isHighlighted ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <TagIcon className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{tag.name}</span>
-                        </div>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Tab / Enter</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                Type tag name and hit <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-600 dark:text-slate-300">Enter</kbd> or <kbd className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-mono text-slate-600 dark:text-slate-300">Tab</kbd> to add quickly.
-              </p>
-            </div>
-
-            {/* 12. Product URL & SEO Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-3 text-slate-900 dark:text-white">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  Product URL & SEO <Info className="w-3.5 h-3.5 text-slate-400" />
-                </h2>
+          {/* 4. Custom Feature Cards (2 or 3 columns) */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
                 <div className="flex items-center gap-2">
-                  {isCustomSlug && (
-                    <button
-                      type="button"
-                      onClick={handleResetSlug}
-                      className="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 cursor-pointer font-medium transition-colors"
-                      title="Regenerate unique URL from product name"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                      Reset
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingSlug(!isEditingSlug)}
-                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer transition-colors"
-                  >
-                    <Edit2 className="w-3 h-3" />
-                    {isEditingSlug ? "Done" : "Edit URL"}
-                  </button>
-                </div>
-              </div>
-
-              {/* URL Preview Box */}
-              <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg space-y-1.5">
-                <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  Storefront URL Preview
-                </div>
-                <div className="flex items-center justify-between gap-2 overflow-hidden">
-                  <span className="text-xs text-slate-700 dark:text-slate-300 font-mono truncate">
-                    <span className="text-slate-400 dark:text-slate-500 font-normal">/products/</span>
-                    <strong className="text-blue-600 dark:text-blue-400 font-semibold">{slugValue || "product-url-slug"}</strong>
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    4) Custom Feature Cards (2 or 3 columns)
+                  </h2>
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-semibold ${
+                    currentHighlights.length >= 6
+                      ? "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                  }`}>
+                    {currentHighlights.length}/6 max
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (typeof window !== "undefined") {
-                        const fullUrl = `${window.location.origin}/products/${slugValue || ""}`;
-                        navigator.clipboard.writeText(fullUrl);
-                        setIsCopiedSlug(true);
-                        setTimeout(() => setIsCopiedSlug(false), 2000);
-                        addToast("success", "Copied", "Product URL copied to clipboard!");
-                      }
-                    }}
-                    className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 rounded-md hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
-                    title="Copy full product URL"
-                  >
-                    {isCopiedSlug ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
                 </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Displays highlight cards with top gray text and bottom bold green text (maximum 6).
+                </p>
               </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleLoadHiwinHighlights}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-[#00a651] dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer"
+                >
+                  Load HIWIN 3-Card Preset
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddHighlight}
+                  disabled={currentHighlights.length >= 6}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                    currentHighlights.length >= 6
+                      ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                      : "bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer border border-transparent dark:border-slate-700"
+                  }`}
+                  title={currentHighlights.length >= 6 ? "Maximum 6 cards reached" : "Add new card"}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Card</span>
+                </button>
+              </div>
+            </div>
 
-              {/* Editable Slug Input */}
-              {isEditingSlug && (
-                <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    <div className="flex items-center gap-1.5">
-                      <span>Custom URL Handle</span>
-                      {isCheckingSlug ? (
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal flex items-center gap-1">
-                          <Loader2 className="w-2.5 h-2.5 animate-spin" /> Checking...
-                        </span>
-                      ) : slugAvailability.checked && slugValue.trim() ? (
-                        slugAvailability.exists ? (
-                          <span className="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 px-1.5 py-0.5 rounded-sm flex items-center gap-1">
-                            <AlertCircle className="w-2.5 h-2.5" /> Already Exists
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 rounded-sm flex items-center gap-1">
-                            <Check className="w-2.5 h-2.5" /> Available
-                          </span>
-                        )
-                      ) : null}
-                    </div>
-                    <span className="text-slate-400 dark:text-slate-500 font-normal font-mono">{slugValue.length} / 80</span>
-                  </div>
+            {/* List of Highlight Cards */}
+            <div className="space-y-3 pt-2">
+              {currentHighlights.map((card, idx) => (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
+                >
+                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 w-6 shrink-0">
+                    #{idx + 1}
+                  </span>
 
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3 text-xs text-slate-400 dark:text-slate-500 font-mono select-none">
-                      /products/
-                    </span>
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                      Top Label (Gray Text)
+                    </label>
                     <input
                       type="text"
-                      maxLength={80}
-                      value={slugValue}
-                      onChange={(e) => {
-                        const clean = e.target.value
-                          .toLowerCase()
-                          .replace(/\s+/g, "-")
-                          .replace(/[^a-z0-9-]/g, "");
-                        setIsCustomSlug(true);
-                        setValue("slug", clean, { shouldDirty: true });
-                      }}
-                      placeholder="e.g. schneider-electric-relay"
-                      className={`w-full pl-20 pr-3.5 py-2 text-xs bg-white dark:bg-slate-950 border rounded-lg focus:outline-hidden focus:ring-2 font-mono text-slate-900 dark:text-white font-medium transition-colors ${
-                        slugAvailability.exists
-                          ? "border-red-400 focus:ring-red-500 bg-red-50/20 text-red-900 dark:text-red-300"
-                          : slugAvailability.checked && slugValue.trim()
-                          ? "border-emerald-400 focus:ring-emerald-500"
-                          : "border-slate-200 dark:border-slate-800 focus:ring-blue-500"
-                      }`}
+                      value={card.label}
+                      onChange={(e) => handleUpdateHighlight(idx, "label", e.target.value)}
+                      placeholder="e.g., COST SAVING"
+                      className="w-full px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase focus:outline-none focus:border-[#00a651]"
                     />
                   </div>
 
-                  {/* Warning message if slug already exists */}
-                  {slugAvailability.exists && (
-                    <div className="p-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg flex flex-col gap-1 text-xs text-red-700 dark:text-red-400 animate-in fade-in duration-150">
-                      <div className="flex items-center gap-1.5 font-semibold">
-                        <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
-                        <span>This URL is already taken!</span>
-                      </div>
-                      {slugAvailability.existingProductName && (
-                        <p className="text-[11px] text-red-600 dark:text-red-400">
-                          Used by: <strong>&quot;{slugAvailability.existingProductName}&quot;</strong>
-                        </p>
-                      )}
-                      {slugAvailability.suggestedSlug && (
-                        <div className="flex items-center justify-between pt-1 border-t border-red-200/60 dark:border-red-800/60 mt-0.5">
-                          <span className="text-[11px] text-slate-600 dark:text-slate-300">
-                            Available: <strong className="font-mono text-blue-700 dark:text-blue-400 font-bold">{slugAvailability.suggestedSlug}</strong>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setValue("slug", slugAvailability.suggestedSlug!, { shouldDirty: true });
-                            }}
-                            className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline cursor-pointer"
-                          >
-                            Use Suggested
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1">
+                      Bottom Value (Green Bold Text)
+                    </label>
+                    <input
+                      type="text"
+                      value={card.value}
+                      onChange={(e) => handleUpdateHighlight(idx, "value", e.target.value)}
+                      placeholder="e.g., lubrication free"
+                      className="w-full px-3 py-1.5 rounded-md border border-emerald-300 dark:border-emerald-700/60 bg-white dark:bg-slate-900 text-xs font-bold text-[#00a651] dark:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-[#00a651]"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveHighlight(idx)}
+                    className="p-2 text-slate-400 hover:text-rose-500 rounded hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors self-end sm:self-center cursor-pointer"
+                    title="Remove card"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+
+              {currentHighlights.length === 0 && (
+                <div className="text-center py-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-400 dark:text-slate-500">
+                  No feature cards added. Click "Add Card" or "Load HIWIN 3-Card Preset" above.
                 </div>
               )}
-
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                SEO-friendly web address for Google and direct customer visits.
-              </p>
             </div>
           </div>
+
+          {/* 5. Applications (add / remove) */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">5) Applications (Tags)</h2>
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-semibold ${
+                    currentApplications.length >= 20
+                      ? "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                  }`}>
+                    {currentApplications.length}/20 max
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Industrial machinery and automation application areas (maximum 20 tags).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleLoadDefaultApplications}
+                className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer self-start sm:self-auto"
+              >
+                Load Default Applications
+              </button>
+            </div>
+
+            {/* Current Tags */}
+            <div className="flex flex-wrap gap-2 pt-1 min-h-[40px]">
+              {currentApplications.map((app, idx) => (
+                <span
+                  key={idx}
+                  className="bg-[#4a4a4a] dark:bg-slate-800 text-white text-xs font-medium px-3 py-1.5 rounded-md border border-transparent dark:border-slate-700 flex items-center gap-2 group"
+                >
+                  <span>{app}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveApplication(app)}
+                    className="text-slate-300 hover:text-rose-300 cursor-pointer"
+                    title="Remove tag"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              ))}
+
+              {currentApplications.length === 0 && (
+                <p className="text-xs text-slate-400 dark:text-slate-500 italic">No applications added yet.</p>
+              )}
+            </div>
+
+            {/* Add New Tag Input */}
+            <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <input
+                type="text"
+                value={newAppInput}
+                disabled={currentApplications.length >= 20}
+                onChange={(e) => setNewAppInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddApplication();
+                  }
+                }}
+                placeholder={
+                  currentApplications.length >= 20
+                    ? "Maximum 20 application tags reached"
+                    : "Type application name (e.g. Semiconductor Equipment) and press Enter"
+                }
+                className="flex-1 px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-[#00a651] disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-400"
+              />
+              <button
+                type="button"
+                onClick={handleAddApplication}
+                disabled={currentApplications.length >= 20}
+                className={`px-4 py-2 font-semibold text-xs rounded-lg transition-colors shrink-0 ${
+                  currentApplications.length >= 20
+                    ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                    : "bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white border border-transparent dark:border-slate-700 cursor-pointer"
+                }`}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          {/* 6. Brand Technical Support (add / remove text, URL) */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    6) Brand Technical Support Links
+                  </h2>
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-semibold ${
+                    currentSupportLinks.length >= 6
+                      ? "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                  }`}>
+                    {currentSupportLinks.length}/6 max
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Redirecting buttons (maximum 6 links, e.g. Full Specs, Selection, Life Calculation, CAD Download).
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleLoadHiwinSupportLinks}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-[#00a651] dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer"
+                >
+                  Load HIWIN 4-Tool Links
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddSupportLink}
+                  disabled={currentSupportLinks.length >= 6}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                    currentSupportLinks.length >= 6
+                      ? "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
+                      : "bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer border border-transparent dark:border-slate-700"
+                  }`}
+                  title={currentSupportLinks.length >= 6 ? "Maximum 6 links reached" : "Add new link"}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Link</span>
+                </button>
+              </div>
+            </div>
+
+            {/* List of Support Links */}
+            <div className="space-y-3 pt-2">
+              {currentSupportLinks.map((link, idx) => (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
+                >
+                  <div className="w-full sm:w-1/4">
+                    <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      Button Title
+                    </label>
+                    <input
+                      type="text"
+                      value={link.title}
+                      onChange={(e) => handleUpdateSupportLink(idx, "title", e.target.value)}
+                      placeholder="e.g. Full Specs"
+                      className="w-full px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#00a651]"
+                    />
+                  </div>
+
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      Redirect URL
+                    </label>
+                    <input
+                      type="url"
+                      value={link.url}
+                      onChange={(e) => handleUpdateSupportLink(idx, "url", e.target.value)}
+                      placeholder="https://..."
+                      className="w-full px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#00a651]"
+                    />
+                  </div>
+
+                  <div className="w-full sm:w-28">
+                    <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                      Icon Type
+                    </label>
+                    <select
+                      value={link.icon || "specs"}
+                      onChange={(e) => handleUpdateSupportLink(idx, "icon", e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#00a651]"
+                    >
+                      <option value="specs">Specs</option>
+                      <option value="selection">Selection</option>
+                      <option value="calculation">Calculation</option>
+                      <option value="cad">CAD</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSupportLink(idx)}
+                    className="p-2 text-slate-400 hover:text-rose-500 rounded hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors self-end sm:self-center cursor-pointer"
+                    title="Remove link"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+
+              {currentSupportLinks.length === 0 && (
+                <div className="text-center py-6 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-400 dark:text-slate-500">
+                  No support links added. Click "Add Link" or "Load HIWIN 4-Tool Links" above.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 7. Custom Field for Buyer Note (On / Off Toggle) */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  7) Custom Field for Buyer Note
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Enables a dedicated text field for buyers to enter preferred model numbers, custom lengths, or order instructions.
+                </p>
+              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={currentEnableBuyerNote}
+                  onChange={(e) => setValue("enableBuyerNote", e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00a651]"></div>
+                <span className="ml-3 text-xs font-bold text-slate-800 dark:text-slate-200">
+                  {currentEnableBuyerNote ? "ON" : "OFF"}
+                </span>
+              </label>
+            </div>
+
+            <div className="mt-4 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
+              {currentEnableBuyerNote ? (
+                <span className="text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+                  <Check className="w-4 h-4 text-[#00a651]" />
+                  Buyer Note Field is <strong>ENABLED</strong> on product page.
+                </span>
+              ) : (
+                <span className="text-slate-500 dark:text-slate-400">
+                  Buyer Note Field is <strong>DISABLED</strong> on product page.
+                </span>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Right Column: 8 to 11 (Sidebar Attributes) */}
+        <div className="lg:col-span-4 space-y-6">
+          
+          {/* 8. Visibility */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">8) Visibility</h2>
+              <span
+                className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full ${
+                  currentVisible
+                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400"
+                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                }`}
+              >
+                {currentVisible ? "Active" : "Draft"}
+              </span>
+            </div>
+
+            <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors bg-white dark:bg-slate-950">
+              <input
+                type="checkbox"
+                checked={currentVisible}
+                onChange={(e) => setValue("visible", e.target.checked)}
+                className="w-4 h-4 rounded text-[#00a651] focus:ring-[#00a651] border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+              />
+              <div className="text-xs">
+                <span className="font-bold text-slate-900 dark:text-white block">Visible in Storefront</span>
+                <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+                  When active, customers can browse and order this item online.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          {/* 9. Brand */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <label htmlFor="product-brand" className="block text-sm font-bold text-slate-900 dark:text-white">
+                9) Brand
+              </label>
+              {allBrands.length > 0 && (
+                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                  {allBrands.length} brands registered
+                </span>
+              )}
+            </div>
+
+            <div className="relative" ref={brandDropdownRef}>
+              <div className="relative flex items-center">
+                <input
+                  id="product-brand"
+                  type="text"
+                  value={currentBrand || ""}
+                  onChange={(e) => {
+                    setValue("brand", e.target.value, { shouldDirty: true, shouldValidate: true });
+                    setIsBrandDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsBrandDropdownOpen(true)}
+                  placeholder="Type or select a brand (e.g., HIWIN, THK, Rexroth)"
+                  className="w-full pl-3.5 pr-10 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-[#00a651] focus:ring-2 focus:ring-[#00a651]/20 bg-white dark:bg-slate-950"
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsBrandDropdownOpen((prev) => !prev)}
+                  className="absolute right-2 p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-md transition-colors cursor-pointer"
+                  title="Toggle brand suggestions"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isBrandDropdownOpen ? 'rotate-180 text-[#00a651]' : ''}`} />
+                </button>
+              </div>
+
+              {/* Suggestions Dropdown */}
+              {isBrandDropdownOpen && (
+                <div className="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 scrollbar-thin">
+                  {filteredBrandSuggestions.length > 0 ? (
+                    <div className="p-1.5 space-y-0.5">
+                      <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                        Existing Brands
+                      </div>
+                      {filteredBrandSuggestions.map((b) => {
+                        const isSelected = (currentBrand || "").trim().toLowerCase() === b.name.toLowerCase();
+                        return (
+                          <button
+                            key={b.id || b.name}
+                            type="button"
+                            onClick={() => {
+                              setValue("brand", b.name, { shouldDirty: true, shouldValidate: true });
+                              setIsBrandDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                              isSelected
+                                ? "bg-emerald-50 dark:bg-emerald-950/50 text-[#00a651] dark:text-emerald-400"
+                                : "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <span className="truncate">{b.name}</span>
+                              {b.country && (
+                                <span className="text-[10px] font-normal text-slate-400 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded shrink-0">
+                                  {b.country}
+                                </span>
+                              )}
+                            </div>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#00a651] dark:text-emerald-400 shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-3 text-center">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        No matching existing brand for "{currentBrand}".
+                      </p>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        Keep typing to use "{currentBrand}" as a custom brand.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="p-2 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 rounded-b-xl">
+                    <Link
+                      href="/admin/categories"
+                      target="_blank"
+                      className="text-[#00a651] dark:text-emerald-400 hover:underline flex items-center gap-1 font-semibold"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      <span>Manage Brands & Logos</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setIsBrandDropdownOpen(false)}
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-medium cursor-pointer"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Used in "{currentBrand || 'HIWIN'} Technical Support" and storefront filters.
+            </p>
+          </div>
+
+          {/* 10. Category */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-3">
+            <label htmlFor="product-category" className="block text-sm font-bold text-slate-900 dark:text-white">
+              10) Category
+            </label>
+            <select
+              id="product-category"
+              {...form.register("categoryId")}
+              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00a651] focus:ring-2 focus:ring-[#00a651]/20 bg-white dark:bg-slate-950"
+            >
+              <option value="" className="dark:bg-slate-900 dark:text-white">Select a Category</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id} className="dark:bg-slate-900 dark:text-white">
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Organizes the product under the appropriate catalog collection and breadcrumbs.
+            </p>
+          </div>
+
+          {/* 11. Product URL & SEO */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Globe className="w-4 h-4 text-[#00a651]" />
+                <span>11) Product URL & SEO</span>
+              </h2>
+              <button
+                type="button"
+                onClick={handleAutoGenerateAll}
+                className="px-2.5 py-1 text-xs font-semibold text-[#00a651] dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800/60 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0"
+                title="Auto-generate Slug, SEO Title, and Description from product name and details"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#00a651]" />
+                <span>Auto-Generate All</span>
+              </button>
+            </div>
+
+            {/* Slug */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="product-slug" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Product URL Slug *
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGenerateSlug}
+                  className="text-[11px] font-semibold text-[#00a651] dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  title="Auto-generate clean slug from product name"
+                >
+                  <Sparkles className="w-3 h-3" /> Auto-Generate
+                </button>
+              </div>
+              <div className="flex items-center rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 overflow-hidden focus-within:border-[#00a651] focus-within:ring-2 focus-within:ring-[#00a651]/20">
+                <span className="px-2.5 py-2 text-xs text-slate-400 dark:text-slate-500 font-mono border-r border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 select-none">
+                  /product/
+                </span>
+                <input
+                  id="product-slug"
+                  type="text"
+                  {...form.register("slug")}
+                  onChange={(e) => {
+                    setValue("slug", e.target.value, { shouldDirty: true });
+                    setIsSlugCustom(true);
+                  }}
+                  onBlur={handleSlugBlur}
+                  placeholder="hiwin-el-ballscrew"
+                  className="flex-1 px-3 py-2 text-xs text-slate-900 dark:text-white bg-white dark:bg-slate-950 font-mono focus:outline-none"
+                />
+              </div>
+              {slugChecking && (
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Checking slug availability...</p>
+              )}
+              {slugWarning && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 font-medium">{slugWarning}</p>
+              )}
+            </div>
+
+            {/* SEO Meta Title */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="seo-title" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  SEO Meta Title
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-mono ${
+                    (currentSeoTitle?.length || 0) > 60 ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-slate-400 dark:text-slate-500"
+                  }`}>
+                    {currentSeoTitle?.length || 0} / 60
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleGenerateSeoTitle}
+                    className="text-[11px] font-semibold text-[#00a651] dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    title="Auto-generate title from product name and brand"
+                  >
+                    <Sparkles className="w-3 h-3" /> Auto-Generate
+                  </button>
+                </div>
+              </div>
+              <input
+                id="seo-title"
+                type="text"
+                {...form.register("seoTitle")}
+                onChange={(e) => {
+                  setValue("seoTitle", e.target.value, { shouldDirty: true });
+                  setIsTitleCustom(true);
+                }}
+                placeholder={currentName ? `${currentName} | ${currentBrand || "HIWIN"}` : "Product Title | Brand"}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-[#00a651] focus:ring-2 focus:ring-[#00a651]/20 bg-white dark:bg-slate-950"
+              />
+            </div>
+
+            {/* SEO Meta Description */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="seo-desc" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  SEO Meta Description
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-mono ${
+                    (currentSeoDesc?.length || 0) > 160 ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-slate-400 dark:text-slate-500"
+                  }`}>
+                    {currentSeoDesc?.length || 0} / 160
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleGenerateSeoDesc}
+                    className="text-[11px] font-semibold text-[#00a651] dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    title="Auto-generate description from feature description"
+                  >
+                    <Sparkles className="w-3 h-3" /> Auto-Generate
+                  </button>
+                </div>
+              </div>
+              <textarea
+                id="seo-desc"
+                rows={3}
+                {...form.register("seoDesc")}
+                onChange={(e) => {
+                  setValue("seoDesc", e.target.value, { shouldDirty: true });
+                  setIsDescCustom(true);
+                }}
+                placeholder="Brief search engine overview of the product specifications and advantages..."
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-[#00a651] focus:ring-2 focus:ring-[#00a651]/20 resize-none bg-white dark:bg-slate-950"
+              />
+            </div>
+
+            {/* Search Preview */}
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">
+                Google Search Preview
+              </span>
+              <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 text-xs space-y-1">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  https://yourdomain.com/product/{currentSlug || "product-slug"}
+                </div>
+                <div className="text-sm font-bold text-blue-700 dark:text-blue-400 hover:underline cursor-pointer truncate">
+                  {currentSeoTitle || currentName || "Product Name"}
+                </div>
+                <div className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                  {currentSeoDesc || "Reliable and high-performance industrial equipment engineered for superior performance."}
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
-      </div>
-
-      {/* Global Modals */}
-      <AssignCategoriesModal
-        isOpen={isAssignCategoriesOpen}
-        onClose={() => setIsAssignCategoriesOpen(false)}
-        categories={categoriesList}
-        selectedCategoryIds={selectedCategoryIds}
-        primaryCategoryId={primaryCatId}
-        onApply={(ids, primary) => {
-          setSelectedCategoryIds(ids);
-          setPrimaryCatId(primary);
-          setValue("categoryIds", ids, { shouldDirty: true });
-          setValue("categoryId", primary, { shouldDirty: true });
-        }}
-      />
-
-      <ManageRibbonsModal
-        isOpen={isManageRibbonsOpen}
-        onClose={() => setIsManageRibbonsOpen(false)}
-        onRibbonsUpdated={async () => {
-          const res = await (await import("@/app/actions/productManagement")).getGlobalRibbons();
-          if (res.success) setRibbonsList(res.ribbons || []);
-        }}
-      />
-
-      <ManageTagsModal
-        isOpen={isManageTagsOpen}
-        onClose={() => setIsManageTagsOpen(false)}
-        selectedTagIds={selectedTagIds}
-        onToggleTag={(tId) => {
-          setSelectedTagIds((prev) =>
-            prev.includes(tId) ? prev.filter((id) => id !== tId) : [...prev, tId]
-          );
-        }}
-        onTagsUpdated={async () => {
-          const res = await (await import("@/app/actions/productManagement")).getGlobalTags();
-          if (res.success) setTagsList(res.tags || []);
-        }}
-      />
-
-      <SelectInfoSectionsModal
-        isOpen={isSelectInfoSectionsOpen}
-        onClose={() => setIsSelectInfoSectionsOpen(false)}
-        selectedIds={selectedSectionIds}
-        initialSections={infoSectionsList}
-        onApply={(newSelectedIds, updatedList) => {
-          setSelectedSectionIds(newSelectedIds);
-          setInfoSectionsList(updatedList);
-          setIsInfoSectionsEnabled(newSelectedIds.length > 0);
-          setValue("infoSectionIds", newSelectedIds, { shouldDirty: true });
-        }}
-        onOpenCreateSection={() => {
-          setEditingSection(null);
-          setIsEditInfoSectionOpen(true);
-        }}
-        onOpenEditSection={(sec) => {
-          setEditingSection(sec);
-          setIsEditInfoSectionOpen(true);
-        }}
-      />
-
-      <EditInfoSectionModal
-        isOpen={isEditInfoSectionOpen}
-        onClose={() => {
-          setIsEditInfoSectionOpen(false);
-          setEditingSection(null);
-        }}
-        section={editingSection}
-        onSaved={(saved) => {
-          setInfoSectionsList((prev) => {
-            const exists = prev.some((s) => s.id === saved.id);
-            return exists ? prev.map((s) => (s.id === saved.id ? { ...s, ...saved } : s)) : [...prev, saved];
-          });
-          if (!selectedSectionIds.includes(saved.id)) {
-            setSelectedSectionIds((prev) => [...prev, saved.id]);
-          }
-          setIsInfoSectionsEnabled(true);
-        }}
-      />
-
-      <ManageGlobalOptionsModal
-        isOpen={isManageOptionsOpen}
-        onClose={() => setIsManageOptionsOpen(false)}
-      />
-
-      <AddProductOptionModal
-        isOpen={isAddOptionOpen}
-        onClose={() => {
-          setIsAddOptionOpen(false);
-          setEditingOption(null);
-          setEditingOptionIndex(null);
-        }}
-        existingOptions={options}
-        editingIndex={editingOptionIndex}
-        initialOption={editingOption}
-        onSave={handleSaveOption}
-      />
-
-      <ProductMediaManagerModal
-        isOpen={isMediaModalOpen}
-        onClose={() => setIsMediaModalOpen(false)}
-        onAddImages={handleAddImagesFromMediaManager}
-        maxSelectable={10 - images.length}
-      />
-
-      <SaveOptionPresetModal
-        isOpen={isSavePresetOpen}
-        onClose={() => setIsSavePresetOpen(false)}
-        options={options}
-        variants={variants}
-      />
-
-      <ApplyOptionPresetModal
-        isOpen={isApplyPresetOpen}
-        onClose={() => setIsApplyPresetOpen(false)}
-        onApplyPreset={handleApplyOptionPreset}
-      />
-
-      <VariantMatrixEditorModal
-        isOpen={isEditVariantsModalOpen}
-        onClose={() => setIsEditVariantsModalOpen(false)}
-        productName={productName}
-        basePrice={basePrice}
-        options={options}
-        initialVariants={variants}
-        onApplyVariants={(updatedVariants) => {
-          setVariants(updatedVariants);
-          setValue("variants", updatedVariants as any, { shouldDirty: true });
-        }}
-      />
-    </div>
+    </form>
   );
 }

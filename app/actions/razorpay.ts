@@ -230,8 +230,8 @@ export async function verifyAndCreatePrepaidOrderAction(input: CreatePrepaidOrde
 
         await client.query(
           `
-          INSERT INTO "OrderItem" ("id", "orderId", "productId", "variantId", "name", "sku", "price", "quantity", "createdAt")
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+          INSERT INTO "OrderItem" ("id", "orderId", "productId", "variantId", "name", "sku", "price", "quantity", "buyerNote", "createdAt")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
         `,
           [
             generateOrderItemId(),
@@ -242,6 +242,7 @@ export async function verifyAndCreatePrepaidOrderAction(input: CreatePrepaidOrde
             item.sku || `SKU-${validProductId || "ITEM"}`,
             item.price,
             item.quantity,
+            (item as any).buyerNote || null,
           ]
         );
 

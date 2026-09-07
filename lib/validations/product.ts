@@ -72,9 +72,20 @@ export const productVariantSchema = z.object({
   displayName: z.string().nullish().default(""),
 });
 
+export const featureHighlightSchema = z.object({
+  label: z.string().min(1, "Label is required"),
+  value: z.string().min(1, "Value is required"),
+});
+
+export const technicalSupportLinkSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  url: z.string().min(1, "URL is required"),
+  icon: z.enum(["specs", "selection", "calculation", "cad"]).nullish().default("specs"),
+});
+
 export const productFormSchema = z.object({
   id: z.string().nullish(),
-  name: z.string().min(1, "Product name is required").max(80, "Product name cannot exceed 80 characters"),
+  name: z.string().min(1, "Product name is required").max(100, "Product name cannot exceed 100 characters"),
   slug: z.string().nullish().default(""),
   description: z.string().nullish().default(""),
   
@@ -86,32 +97,43 @@ export const productFormSchema = z.object({
   // Categorization & Hierarchy
   categoryId: z.string().default(""),
   categoryIds: z.array(z.string()).default([]),
-  primaryCategoryId: z.string().default(""),
+  primaryCategoryId: z.string().nullish().default(""),
 
-  // Ribbons, Brand, Tags
+  // Brand
+  brand: z.string().max(80, "Brand cannot exceed 80 characters").nullish().default(""),
   primaryRibbon: z.string().nullish().default(""),
-  brand: z.string().max(50, "Brand cannot exceed 50 characters").nullish().default(""),
   tagIds: z.array(z.string()).default([]),
 
-  // Pricing
-  price: toRequiredNumber,
-  strikethroughPrice: toNullableNumber,
-  costPrice: toNullableNumber,
+  // Media (Images & Videos)
+  images: z.array(productMediaSchema).max(15, "Maximum 15 images allowed").default([]),
+  videoUrl: z.string().nullish().default(""),
+
+  // Competitor Benchmark Feature Elements
+  featureHighlights: z.array(featureHighlightSchema).max(6, "Maximum 6 custom feature cards allowed").default([]),
+  applications: z.array(z.string()).max(20, "Maximum 20 application tags allowed").default([]),
+  technicalSupportLinks: z.array(technicalSupportLinkSchema).max(6, "Maximum 6 technical support links allowed").default([]),
+  enableBuyerNote: z.boolean().default(true),
+
+  // SEO & URL
+  seoTitle: z.string().nullish().default(""),
+  seoDesc: z.string().nullish().default(""),
+
+  // Pricing (optional, default 0)
+  price: toRequiredNumber.default(0),
+  strikethroughPrice: toNullableNumber.default(null),
+  costPrice: toNullableNumber.default(null),
   showPricePerUnit: z.boolean().default(false),
   baseUnit: toRequiredNumber.default(100),
   baseUnitMeasurement: z.string().default("g"),
-  totalUnits: toNullableNumber,
+  totalUnits: toNullableNumber.default(null),
   totalUnitsMeasurement: z.string().default("g"),
   taxGroup: z.string().nullish().default(""),
 
-  // Media (Limit of 10)
-  images: z.array(productMediaSchema).max(10, "Maximum 10 images/videos allowed").default([]),
+  // Options & Variants (optional backwards-compat)
+  options: z.array(productOptionSchema).default([]),
+  variants: z.array(productVariantSchema).default([]),
 
-  // Options & Variants
-  options: z.array(productOptionSchema).max(6, "Maximum 6 options allowed").default([]),
-  variants: z.array(productVariantSchema).max(1000, "Maximum 1,000 variants allowed").default([]),
-
-  // Additional Info Sections
+  // Additional Info Sections (optional backwards-compat)
   infoSectionIds: z.array(z.string()).default([]),
 });
 

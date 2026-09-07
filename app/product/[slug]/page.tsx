@@ -20,11 +20,21 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     return notFound();
   }
 
-  // Related products
+  // Related products from same category or brand
   const allDbProducts = await getActiveProducts();
-  const relatedProducts = (allDbProducts.length > 0 ? allDbProducts : PRODUCTS)
-    .filter((p) => p.id !== product.id)
-    .slice(0, 4);
+  const allProducts = allDbProducts.length > 0 ? allDbProducts : PRODUCTS;
+  
+  let relatedProducts = allProducts.filter(
+    (p) => p.id !== product.id && (
+      (product.categoryId && (p.categoryId === product.categoryId || (p as any).categoryIds?.includes(product.categoryId))) ||
+      (product.brand && p.brand === product.brand)
+    )
+  );
+
+  if (relatedProducts.length === 0) {
+    relatedProducts = allProducts.filter((p) => p.id !== product.id);
+  }
+  relatedProducts = relatedProducts.slice(0, 4);
 
   return <ProductDetailClient product={product} relatedProducts={relatedProducts} />;
 }
