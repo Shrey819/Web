@@ -3,6 +3,7 @@
 import { query } from "@/lib/db";
 import { DEFAULT_HERO_SLIDES, DEFAULT_CATEGORY_SHOWCASES } from "@/lib/homepage";
 import { v2 as cloudinary } from "cloudinary";
+import { requireAdmin } from "@/lib/auth-checks";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -12,6 +13,7 @@ cloudinary.config({
 });
 
 export async function getAdminMediaLibrary(): Promise<string[]> {
+  await requireAdmin();
   const imagesSet = new Set<string>();
 
   // 1. Fetch newest uploaded assets directly from Cloudinary (Newest first)

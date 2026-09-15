@@ -3,6 +3,7 @@
 import { transaction, query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
+import { requireAdmin } from "@/lib/auth-checks";
 
 const generateId = () => "cl" + crypto.randomBytes(12).toString("hex");
 
@@ -100,6 +101,7 @@ async function getOrCreateCategory(categoryName: string): Promise<string> {
  * Bulk Create Products Action
  */
 export async function bulkCreateProducts(products: BulkProductRowInput[]): Promise<BulkCreateResult> {
+  await requireAdmin();
   if (!products || products.length === 0) {
     return {
       success: false,

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { requireCustomer } from "@/lib/auth-checks";
 import { getOrderByIdAction } from "@/app/actions/order";
 import { CustomerOrderTracking } from "@/components/orders/CustomerOrderTracking";
 import { ChevronRight, CheckCircle2, Truck, Package, Clock, ShieldCheck, Building2, MapPin, CreditCard } from "lucide-react";
@@ -11,11 +12,23 @@ interface OrderDetailPageProps {
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
   const { id } = await params;
+
+  // Unauthenticated visitors are redirected to login with callbackUrl
+  let user;
+  try {
+    user = await requireCustomer();
+  } catch {
+    redirect(`/login?callbackUrl=${encodeURIComponent(`/orders/${id}`)}`);
+  }
+
+  // Authenticated customer/admin: getOrderByIdAction enforces ownership.
+  // Returns null for non-existent order or cross-customer access -> 404 notFound (zero existence leakage).
   const order = await getOrderByIdAction(id);
 
   if (!order) {
     return notFound();
   }
+
 
   const isDelivered = order.status === "DELIVERED";
   const isShipped = order.status === "SHIPPED" || isDelivered;
@@ -62,8 +75,8 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             </div>
             <CustomerOrderTracking
               orderId={order.id}
-              invoiceUrl={order.invoiceUrl}
-              awbCode={order.awbCode}
+              invoiceUrl={order.invoiceUrl || undefined}
+              awbCode={order.awbCode || undefined}
               carrier={order.carrier}
               trackingData={order.trackingData}
               status={order.status}

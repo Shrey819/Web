@@ -48,8 +48,7 @@ An enterprise-grade B2B/B2C Industrial Automation E-Commerce & Management Platfo
 - **RFQ / Quote Management**: Review, prioritize, price, and respond to custom industrial quotations.
 - **Live Visitor Tracker**: Real-time traffic analytics, active user sessions, page-view telemetry, and visitor deduplication.
 - **Dynamic Homepage CMS**: Visual builder to configure hero banners, promotional rails, category showcases, and featured collections without redeploying code.
-- **Inquiry & Form Hub**: Centralized inbox for customer support requests, contact inquiries, and custom requirements.
-- **Role-Based Access Control**: Granular permissions across `SUPER_ADMIN`, `ADMIN`, `CATALOG_MANAGER`, and `CUSTOMER`.
+- **Role-Based Access Control**: Strict two-role architecture enforcing access across `ADMIN` and `CUSTOMER`.
 
 ---
 

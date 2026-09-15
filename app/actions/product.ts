@@ -4,6 +4,7 @@ import { transaction, query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { productFormSchema, type ProductFormValues } from "@/lib/validations/product";
+import { requireAdmin } from "@/lib/auth-checks";
 
 const generateId = (prefix = "prd_") => prefix + crypto.randomBytes(8).toString("hex");
 
@@ -121,6 +122,7 @@ function safeRevalidate(path: string) {
  */
 export async function createProduct(input: ProductFormValues) {
   try {
+    await requireAdmin();
     const validated = productFormSchema.parse(input);
     const productId = validated.id || generateId("prd_");
     const slug = await generateUniqueSlug(validated.slug?.trim() || validated.name);
@@ -294,6 +296,7 @@ export async function createProduct(input: ProductFormValues) {
  */
 export async function updateProduct(productId: string, input: ProductFormValues) {
   try {
+    await requireAdmin();
     const validated = productFormSchema.parse(input);
     const slug = await generateUniqueSlug(validated.slug?.trim() || validated.name, productId);
 
@@ -465,6 +468,7 @@ export async function updateProduct(productId: string, input: ProductFormValues)
  */
 export async function getProductForEdit(productId: string) {
   try {
+    await requireAdmin();
     const prodRes = await query(`SELECT * FROM "Product" WHERE "id" = $1 LIMIT 1`, [productId]);
     if (prodRes.rows.length === 0) return null;
     const p = prodRes.rows[0];
@@ -584,6 +588,7 @@ export async function getProductForEdit(productId: string) {
  */
 export async function getAdminProductsList(params?: { search?: string; category?: string; status?: string }) {
   try {
+    await requireAdmin();
     let whereClause = `WHERE 1=1`;
     const queryParams: any[] = [];
 
@@ -663,6 +668,7 @@ export async function getAdminProductsList(params?: { search?: string; category?
  */
 export async function toggleProductVisibility(productId: string, currentVisible: boolean) {
   try {
+    await requireAdmin();
     const nextVisible = !currentVisible;
     await query(`
       UPDATE "Product" 
@@ -684,6 +690,7 @@ export async function toggleProductVisibility(productId: string, currentVisible:
  */
 export async function duplicateProduct(productId: string) {
   try {
+    await requireAdmin();
     const original = await getProductForEdit(productId);
     if (!original) return { success: false, error: "Product not found" };
 
@@ -715,6 +722,7 @@ export async function duplicateProduct(productId: string) {
  */
 export async function deleteProduct(productId: string) {
   try {
+    await requireAdmin();
     await query(`DELETE FROM "Product" WHERE "id" = $1`, [productId]);
     safeRevalidate("/admin/products");
     safeRevalidate("/products");

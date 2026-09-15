@@ -1,3 +1,4 @@
+import "server-only";
 import { query } from "@/lib/db";
 
 export interface SystemSettings {
@@ -28,6 +29,34 @@ export interface SystemSettings {
   shiprocket_default_breadth: number;
   shiprocket_default_height: number;
   shiprocket_auto_sync: boolean;
+  shiprocket_webhook_secret?: string;
+}
+
+/**
+ * Strictly allowlisted public settings DTO.
+ * Guaranteed to NEVER contain Shiprocket credentials, API secrets, tokens, or passwords.
+ */
+export interface PublicSettings {
+  store_name: string;
+  support_email: string;
+  support_phone: string;
+  sub_contact_1_name: string;
+  sub_contact_1_phone: string;
+  sub_contact_2_name: string;
+  sub_contact_2_phone: string;
+  sub_contact_3_name: string;
+  sub_contact_3_phone: string;
+  sub_email_1: string;
+  sub_email_2: string;
+  currency_symbol: string;
+  gst_number: string;
+  min_order_value: number;
+  tax_rate: number;
+  cod_enabled: boolean;
+  maintenance_mode: boolean;
+  shiprocket_enabled: boolean;
+  shiprocket_pickup_pincode: string;
+  shiprocket_default_weight: number;
 }
 
 export const DEFAULT_SETTINGS: SystemSettings = {
@@ -58,9 +87,15 @@ export const DEFAULT_SETTINGS: SystemSettings = {
   shiprocket_default_breadth: 10,
   shiprocket_default_height: 10,
   shiprocket_auto_sync: false,
+  shiprocket_webhook_secret: "",
 };
 
-export async function getSystemSettings(): Promise<SystemSettings> {
+/**
+ * Server-only: retrieves full settings from database and environment variables.
+ * Contains private credentials (shiprocket_email, shiprocket_password).
+ * Must NEVER be sent to the browser or serialized in client props.
+ */
+export async function getPrivateSystemSettings(): Promise<SystemSettings> {
   try {
     const res = await query(`SELECT key, value FROM "SystemSetting"`);
     const settings: Record<string, string> = {};
@@ -99,9 +134,46 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       shiprocket_default_breadth: Number(settings.shiprocket_default_breadth ?? DEFAULT_SETTINGS.shiprocket_default_breadth),
       shiprocket_default_height: Number(settings.shiprocket_default_height ?? DEFAULT_SETTINGS.shiprocket_default_height),
       shiprocket_auto_sync: settings.shiprocket_auto_sync === "true",
+      shiprocket_webhook_secret: settings.shiprocket_webhook_secret || process.env.SHIPROCKET_WEBHOOK_SECRET || DEFAULT_SETTINGS.shiprocket_webhook_secret,
     };
   } catch (error) {
     console.error("Failed to fetch system settings:", error);
     return DEFAULT_SETTINGS;
   }
 }
+
+/**
+ * Returns strictly allowlisted, browser-safe public settings.
+ * Uses an explicit allowlist to prevent any accidental credential leakage.
+ */
+export async function getPublicSettings(): Promise<PublicSettings> {
+  const full = await getPrivateSystemSettings();
+  return {
+    store_name: full.store_name,
+    support_email: full.support_email,
+    support_phone: full.support_phone,
+    sub_contact_1_name: full.sub_contact_1_name,
+    sub_contact_1_phone: full.sub_contact_1_phone,
+    sub_contact_2_name: full.sub_contact_2_name,
+    sub_contact_2_phone: full.sub_contact_2_phone,
+    sub_contact_3_name: full.sub_contact_3_name,
+    sub_contact_3_phone: full.sub_contact_3_phone,
+    sub_email_1: full.sub_email_1,
+    sub_email_2: full.sub_email_2,
+    currency_symbol: full.currency_symbol,
+    gst_number: full.gst_number,
+    min_order_value: full.min_order_value,
+    tax_rate: full.tax_rate,
+    cod_enabled: full.cod_enabled,
+    maintenance_mode: full.maintenance_mode,
+    shiprocket_enabled: full.shiprocket_enabled,
+    shiprocket_pickup_pincode: full.shiprocket_pickup_pincode,
+    shiprocket_default_weight: full.shiprocket_default_weight,
+  };
+}
+
+/**
+ * Backwards compatibility alias for server-side services (shiprocket, order processing).
+ */
+export const getSystemSettings = getPrivateSystemSettings;
+

@@ -2,6 +2,7 @@
 
 import { query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth-checks";
 import crypto from "crypto";
 
 const generateId = () => "sub_" + crypto.randomBytes(8).toString("hex");
@@ -40,6 +41,9 @@ export interface FormSubmissionRecord {
   createdAt: string;
 }
 
+import { inquiryFormSchema, newsletterSchema } from "@/lib/validations/forms";
+import { idSchema } from "@/lib/validations/common";
+
 /**
  * SUBMIT INQUIRY FORM (Form 1: "Drop us an email")
  */
@@ -50,17 +54,12 @@ export async function submitInquiryFormAction(data: {
   message: string;
 }) {
   try {
-    await ensureTableExists();
+    const parsed = inquiryFormSchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Invalid inquiry data." };
+    }
 
-    if (!data.name || data.name.trim().length < 2) {
-      return { success: false, error: "Please enter your full name." };
-    }
-    if (!data.email || !data.email.includes("@")) {
-      return { success: false, error: "Please enter a valid email address." };
-    }
-    if (!data.message || data.message.trim().length < 5) {
-      return { success: false, error: "Please enter your message details." };
-    }
+    await ensureTableExists();
 
     const id = generateId();
 
@@ -71,10 +70,10 @@ export async function submitInquiryFormAction(data: {
     `,
       [
         id,
-        data.name.trim(),
-        data.email.trim().toLowerCase(),
-        data.category?.trim() || "General Inquiry",
-        data.message.trim(),
+        parsed.data.name,
+        parsed.data.email,
+        parsed.data.category || "General Inquiry",
+        parsed.data.message,
       ]
     );
 
@@ -94,13 +93,14 @@ export async function submitInquiryFormAction(data: {
  */
 export async function submitPromotionalNewsletterAction(email: string) {
   try {
-    await ensureTableExists();
-
-    if (!email || !email.includes("@")) {
-      return { success: false, error: "Please enter a valid email address." };
+    const parsed = newsletterSchema.safeParse({ email });
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Please enter a valid email address." };
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    await ensureTableExists();
+
+    const cleanEmail = parsed.data.email;
     const id = generateId();
 
     await query(
@@ -128,6 +128,7 @@ export async function submitPromotionalNewsletterAction(email: string) {
 export async function getFormSubmissionsAction(
   type: "inquiry" | "promotional" = "inquiry"
 ): Promise<{ success: boolean; submissions: FormSubmissionRecord[] }> {
+  await requireAdmin();
   try {
     await ensureTableExists();
 
@@ -169,6 +170,7 @@ export async function updateFormSubmissionAction(
   field: "name" | "email" | "category" | "message" | "status",
   value: string
 ) {
+  await requireAdmin();
   try {
     await ensureTableExists();
 
@@ -198,6 +200,7 @@ export async function updateFormSubmissionAction(
  * DELETE FORM SUBMISSION ROW
  */
 export async function deleteFormSubmissionAction(id: string) {
+  await requireAdmin();
   try {
     await ensureTableExists();
 

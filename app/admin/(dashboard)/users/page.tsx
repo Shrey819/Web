@@ -36,7 +36,6 @@ export default async function AdminUsersPage({
     total: 0,
     googleUsers: 0,
     admins: 0,
-    catalogManagers: 0,
     customers: 0,
     verified: 0,
   };
@@ -52,12 +51,11 @@ export default async function AdminUsersPage({
 
     if (roleFilter) {
       if (roleFilter === "ADMIN") {
-        whereClauses.push(`role IN ('ADMIN'::"Role", 'SUPER_ADMIN'::"Role")`);
+        whereClauses.push(`role = 'ADMIN'::"Role"`);
+      } else if (roleFilter === "CUSTOMER") {
+        whereClauses.push(`role = 'CUSTOMER'::"Role"`);
       } else if (roleFilter === "GOOGLE") {
         whereClauses.push(`"google_sub" IS NOT NULL`);
-      } else {
-        sqlParams.push(roleFilter);
-        whereClauses.push(`role = $${sqlParams.length}::"Role"`);
       }
     }
 
@@ -89,15 +87,13 @@ export default async function AdminUsersPage({
       total: number;
       googleUsers: number;
       admins: number;
-      catalogManagers: number;
       customers: number;
       verified: number;
     }>(`
       SELECT 
         COUNT(*)::int as total,
         COUNT(CASE WHEN "google_sub" IS NOT NULL THEN 1 END)::int as "googleUsers",
-        COUNT(CASE WHEN role IN ('ADMIN', 'SUPER_ADMIN') THEN 1 END)::int as admins,
-        COUNT(CASE WHEN role = 'CATALOG_MANAGER' THEN 1 END)::int as "catalogManagers",
+        COUNT(CASE WHEN role = 'ADMIN' THEN 1 END)::int as admins,
         COUNT(CASE WHEN role = 'CUSTOMER' THEN 1 END)::int as customers,
         COUNT(CASE WHEN "emailVerified" IS NOT NULL THEN 1 END)::int as verified
       FROM "User"
@@ -111,12 +107,9 @@ export default async function AdminUsersPage({
 
   const getRoleBadgeStyle = (role: string) => {
     switch (role) {
-      case "SUPER_ADMIN":
-        return "bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/30";
       case "ADMIN":
         return "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30";
-      case "CATALOG_MANAGER":
-        return "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30";
+      case "CUSTOMER":
       default:
         return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700";
     }
@@ -186,12 +179,12 @@ export default async function AdminUsersPage({
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center gap-4 shadow-2xs">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <ShieldAlert className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+            <Users className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-xs font-mono text-slate-500 dark:text-slate-400 font-bold uppercase">Managers</span>
-            <div className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono">{stats.catalogManagers}</div>
+            <span className="text-xs font-mono text-slate-500 dark:text-slate-400 font-bold uppercase">Customers</span>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono">{stats.customers}</div>
           </div>
         </div>
 
@@ -247,14 +240,6 @@ export default async function AdminUsersPage({
             }`}
           >
             Admins ({stats.admins})
-          </Link>
-          <Link
-            href={`/admin/users?role=CATALOG_MANAGER${search ? `&search=${search}` : ""}`}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
-              roleFilter === "CATALOG_MANAGER" ? "bg-blue-600 text-white border-blue-600 shadow-xs" : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
-            }`}
-          >
-            Managers ({stats.catalogManagers})
           </Link>
           <Link
             href={`/admin/users?role=CUSTOMER${search ? `&search=${search}` : ""}`}

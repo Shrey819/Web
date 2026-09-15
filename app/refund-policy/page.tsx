@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Metadata } from "next";
 import { ChevronRight, Receipt, RotateCcw, Percent, CheckCircle2 } from "lucide-react";
-import { getSystemSettings } from "@/lib/settings";
+import { getPublicSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Refund Policy | OM AUTOMATION",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RefundPage() {
-  const settings = await getSystemSettings();
+  const settings = await getPublicSettings();
   const supportEmail = settings.support_email || "omautomation2012@gmail.com";
   const storeName = settings.store_name || "OM Automation";
 

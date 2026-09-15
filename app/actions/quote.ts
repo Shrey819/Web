@@ -2,7 +2,9 @@
 
 import { transaction, query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth-checks";
 import crypto from "crypto";
+import { createQuoteInputSchema, quoteStatusUpdateSchema } from "@/lib/validations/forms";
 
 const generateId = () => "rfq_" + crypto.randomBytes(8).toString("hex");
 const generateQuoteItemId = () => "qti_" + crypto.randomBytes(8).toString("hex");
@@ -29,9 +31,11 @@ export interface CreateQuoteInput {
  */
 export async function createQuoteAction(input: CreateQuoteInput) {
   try {
-    if (!input.company || !input.email || !input.phone) {
-      return { success: false, error: "Company name, email, and phone number are required." };
+    const parsed = createQuoteInputSchema.safeParse(input);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Invalid quote request data." };
     }
+    const validatedInput = parsed.data;
 
     const quoteId = "RFQ-" + Math.floor(100000 + Math.random() * 900000);
 
@@ -42,16 +46,16 @@ export async function createQuoteAction(input: CreateQuoteInput) {
         VALUES ($1, $2, $3, $4, $5, 'pending', $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       `, [
         quoteId,
-        input.company.trim(),
-        input.name.trim(),
-        input.email.trim(),
-        input.phone.trim(),
-        input.notes?.trim() || null
+        validatedInput.company,
+        validatedInput.name,
+        validatedInput.email,
+        validatedInput.phone,
+        validatedInput.notes || null
       ]);
 
       // 2. Insert Quote Items
-      if (input.items && input.items.length > 0) {
-        for (const item of input.items) {
+      if (validatedInput.items && validatedInput.items.length > 0) {
+        for (const item of validatedInput.items) {
           await client.query(`
             INSERT INTO "QuoteItem" ("id", "quoteId", "productId", "quantity", "notes")
             VALUES ($1, $2, $3, $4, $5)
@@ -80,10 +84,11 @@ export async function createQuoteAction(input: CreateQuoteInput) {
  * FETCH ALL QUOTE REQUESTS FOR ADMIN
  */
 export async function getAllQuotesAdminAction() {
+  await requireAdmin();
   try {
     const res = await query(`
       SELECT 
-        q.*,
+        q."id", q."company", q."name", q."email", q."phone", q."status", q."notes", q."createdAt",
         COUNT(qi."id")::int as "itemCount",
         COALESCE(
           json_agg(
@@ -129,12 +134,20 @@ export async function getAllQuotesAdminAction() {
  * UPDATE QUOTE STATUS (ADMIN)
  */
 export async function updateQuoteStatusAction(quoteId: string, status: string, notes?: string) {
+  await requireAdmin();
   try {
+    const parsed = quoteStatusUpdateSchema.safeParse({ quoteId, status });
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Invalid quote status." };
+    }
+
+    const cleanNotes = notes ? String(notes).trim().slice(0, 2000) : null;
+
     await query(`
       UPDATE "QuoteRequest" 
       SET "status" = $1, "notes" = COALESCE($2, "notes"), "updatedAt" = CURRENT_TIMESTAMP 
       WHERE "id" = $3
-    `, [status, notes || null, quoteId]);
+    `, [parsed.data.status, cleanNotes, parsed.data.quoteId]);
 
     revalidatePath("/admin/quotes");
     revalidatePath("/admin");

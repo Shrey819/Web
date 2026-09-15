@@ -15,7 +15,7 @@ async function seed() {
     console.log("Seeding admin user...");
     await pool.query(
       `INSERT INTO "User" ("id", "email", "name", "password", "role", "createdAt", "updatedAt") 
-       VALUES (gen_random_uuid(), $1, $2, $3, 'SUPER_ADMIN', NOW(), NOW())
+       VALUES (gen_random_uuid(), $1, $2, $3, 'ADMIN', NOW(), NOW())
        ON CONFLICT ("email") DO NOTHING`,
       [email, name, hashedPassword]
     );

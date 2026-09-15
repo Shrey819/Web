@@ -1,135 +1,90 @@
 "use server";
 
 import { query, transaction } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth-checks";
 import crypto from "crypto";
+import {
+  type UserAction,
+  type PageVisit,
+  type SafeActiveSessionDTO,
+  type ActiveSession,
+  ALLOWED_ACTION_TYPES,
+  isSensitivePath,
+  sanitizePath,
+  anonymizeIp,
+  maskEmail,
+  sanitizeActionDetails,
+} from "@/lib/tracker-utils";
 
-export interface UserAction {
-  id: string;
-  sessionId: string;
-  actionType: string;
-  details: string;
-  createdAt: string;
-}
-
-export interface ActiveSession {
-  sessionId: string;
-  ipAddress: string;
+interface CoarseLocation {
   city: string;
   region: string;
   country: string;
   countryCode: string;
-  latitude: number;
-  longitude: number;
-  deviceType: "Desktop" | "Mobile" | "Tablet";
-  browser: string;
-  os: string;
-  currentPage: string;
-  currentPageStartedAt: string;
-  lastActiveAt: string;
-  secondsOnCurrentPage: number;
-  totalSessionSeconds: number;
-  userName?: string;
-  userEmail?: string;
-  userId?: string;
-  clientTimezone?: string;
-  primarySource?: "IP" | "TIMEZONE";
-  isVpn?: boolean;
+  primarySource: "IP" | "TIMEZONE";
+  isVpn: boolean;
   secondaryCountry?: string;
-  visitHistory?: PageVisit[];
-  actionLogs?: UserAction[];
 }
 
-export interface PageVisit {
-  id: string;
-  sessionId: string;
-  pagePath: string;
-  durationSeconds: number;
-  visitedAt: string;
-}
-
-interface GeoCacheItem {
-  ip: string;
-  city: string;
-  region: string;
-  country: string;
-  countryCode: string;
-  lat: number;
-  lng: number;
-  source: "IP" | "TIMEZONE";
-  timestamp: number;
-}
-
-const geoCache = new Map<string, GeoCacheItem>();
+const geoCache = new Map<string, { data: CoarseLocation; timestamp: number }>();
 
 function generateId(prefix: string = "id_"): string {
   return prefix + crypto.randomBytes(12).toString("hex");
 }
 
-// Fallback Timezone-to-Country Mapping (2nd Priority)
-function mapTimezoneToGeo(tz: string): { country: string; countryCode: string; city: string; lat: number; lng: number } {
+function mapTimezoneToGeo(tz: string): { country: string; countryCode: string; city: string } {
   const cleanTz = (tz || "").trim().toLowerCase();
   if (cleanTz.includes("calcutta") || cleanTz.includes("kolkata") || cleanTz.includes("asia/kabul") || cleanTz.includes("ist")) {
-    return { country: "India", countryCode: "IN", city: "Mumbai", lat: 19.076, lng: 72.8777 };
+    return { country: "India", countryCode: "IN", city: "Mumbai" };
   }
   if (cleanTz.includes("new_york") || cleanTz.includes("chicago") || cleanTz.includes("los_angeles") || cleanTz.includes("america/")) {
-    return { country: "United States", countryCode: "US", city: "New York", lat: 40.7128, lng: -74.006 };
+    return { country: "United States", countryCode: "US", city: "New York" };
   }
   if (cleanTz.includes("london") || cleanTz.includes("europe/london")) {
-    return { country: "United Kingdom", countryCode: "GB", city: "London", lat: 51.5074, lng: -0.1278 };
+    return { country: "United Kingdom", countryCode: "GB", city: "London" };
   }
   if (cleanTz.includes("berlin") || cleanTz.includes("paris") || cleanTz.includes("rome") || cleanTz.includes("europe/")) {
-    return { country: "Germany", countryCode: "DE", city: "Berlin", lat: 52.52, lng: 13.405 };
+    return { country: "Germany", countryCode: "DE", city: "Berlin" };
   }
   if (cleanTz.includes("tokyo") || cleanTz.includes("asia/tokyo")) {
-    return { country: "Japan", countryCode: "JP", city: "Tokyo", lat: 35.6762, lng: 139.6503 };
+    return { country: "Japan", countryCode: "JP", city: "Tokyo" };
   }
   if (cleanTz.includes("sydney") || cleanTz.includes("australia/")) {
-    return { country: "Australia", countryCode: "AU", city: "Sydney", lat: -33.8688, lng: 151.2093 };
+    return { country: "Australia", countryCode: "AU", city: "Sydney" };
   }
-  return { country: "India", countryCode: "IN", city: "Jaipur", lat: 26.9124, lng: 75.7873 };
+  return { country: "India", countryCode: "IN", city: "Jaipur" };
 }
 
 /**
- * HYBRID LOCATION RESOLUTION (1st Priority IP, 2nd Priority Timezone)
+ * HYBRID COARSE LOCATION RESOLUTION (1st Priority Subnet IP, 2nd Priority Timezone)
+ * NEVER returns exact latitude/longitude or raw host IP.
  */
-async function resolveHybridLocation(ip: string, clientTimezone?: string): Promise<{
-  ip: string;
-  city: string;
-  region: string;
-  country: string;
-  countryCode: string;
-  lat: number;
-  lng: number;
-  primarySource: "IP" | "TIMEZONE";
-  isVpn: boolean;
-  secondaryCountry?: string;
-}> {
-  const cleanIp = (ip || "").trim();
+async function resolveHybridLocation(ip: string, clientTimezone?: string): Promise<CoarseLocation> {
+  const maskedIp = anonymizeIp(ip);
   const isLocal =
-    !cleanIp ||
-    cleanIp === "::1" ||
-    cleanIp === "127.0.0.1" ||
-    cleanIp.startsWith("192.168.") ||
-    cleanIp.startsWith("10.") ||
-    cleanIp.startsWith("::ffff:127.0.0.1");
+    !ip ||
+    ip === "::1" ||
+    ip === "127.0.0.1" ||
+    ip.startsWith("192.168.") ||
+    ip.startsWith("10.") ||
+    ip.startsWith("::ffff:127.0.0.1");
 
-  const cacheKey = isLocal ? `local_${cleanIp}` : cleanIp;
+  const cacheKey = isLocal ? "local_subnet" : maskedIp;
   const cached = geoCache.get(cacheKey);
 
   if (cached && Date.now() - cached.timestamp < 3600000) {
     const tzGeo = mapTimezoneToGeo(clientTimezone || "");
-    const isVpn = cached.countryCode !== tzGeo.countryCode && !isLocal;
+    const isVpn = cached.data.countryCode !== tzGeo.countryCode && !isLocal;
     return {
-      ...cached,
-      primarySource: cached.source,
+      ...cached.data,
       isVpn,
       secondaryCountry: isVpn ? tzGeo.country : undefined,
     };
   }
 
-  // 1st PRIORITY: IP GEOLOCATION API
+  // 1st PRIORITY: IP GEOLOCATION API (using coarse/truncated IP)
   try {
-    const endpoint = isLocal ? "https://ipwho.is/" : `https://ipwho.is/${cleanIp}`;
+    const endpoint = isLocal ? "https://ipwho.is/" : `https://ipwho.is/${maskedIp}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3500);
 
@@ -142,28 +97,22 @@ async function resolveHybridLocation(ip: string, clientTimezone?: string): Promi
     if (response.ok) {
       const data = await response.json();
       if (data && data.success) {
-        const ipGeo: GeoCacheItem = {
-          ip: data.ip || (isLocal ? "103.21.124.5" : cleanIp),
+        const tzGeo = mapTimezoneToGeo(clientTimezone || "");
+        const countryCode = data.country_code || "IN";
+        const isVpn = countryCode !== tzGeo.countryCode && !isLocal;
+
+        const coarseData: CoarseLocation = {
           city: data.city || "Unknown City",
           region: data.region || "Unknown Region",
           country: data.country || "India",
-          countryCode: data.country_code || "IN",
-          lat: typeof data.latitude === "number" ? data.latitude : parseFloat(data.latitude) || 20.5937,
-          lng: typeof data.longitude === "number" ? data.longitude : parseFloat(data.longitude) || 78.9629,
-          source: "IP",
-          timestamp: Date.now(),
-        };
-        geoCache.set(cacheKey, ipGeo);
-
-        const tzGeo = mapTimezoneToGeo(clientTimezone || "");
-        const isVpn = ipGeo.countryCode !== tzGeo.countryCode && !isLocal;
-
-        return {
-          ...ipGeo,
+          countryCode,
           primarySource: "IP",
           isVpn,
           secondaryCountry: isVpn ? tzGeo.country : undefined,
         };
+
+        geoCache.set(cacheKey, { data: coarseData, timestamp: Date.now() });
+        return coarseData;
       }
     }
   } catch (err) {
@@ -172,30 +121,36 @@ async function resolveHybridLocation(ip: string, clientTimezone?: string): Promi
 
   // 2nd PRIORITY FALLBACK: CLIENT TIMEZONE
   const tzGeo = mapTimezoneToGeo(clientTimezone || "");
-  const fallbackResult = {
-    ip: isLocal ? "103.21.124.5" : cleanIp,
+  const fallbackResult: CoarseLocation = {
     city: tzGeo.city,
     region: tzGeo.country,
     country: tzGeo.country,
     countryCode: tzGeo.countryCode,
-    lat: tzGeo.lat,
-    lng: tzGeo.lng,
-    primarySource: "TIMEZONE" as const,
+    primarySource: "TIMEZONE",
     isVpn: false,
   };
 
-  geoCache.set(cacheKey, { ...fallbackResult, source: "TIMEZONE", timestamp: Date.now() });
+  geoCache.set(cacheKey, { data: fallbackResult, timestamp: Date.now() });
   return fallbackResult;
 }
 
+/**
+ * Purge sessions inactive for 15 minutes, and prune logs older than 7 days.
+ */
 export async function purgeExpiredSessions(): Promise<number> {
   try {
-    const res = await query(
-      `DELETE FROM "UserSession" WHERE "lastActiveAt" < NOW() - INTERVAL '30 minutes'`
+    const sessionRes = await query(
+      `DELETE FROM "UserSession" WHERE "lastActiveAt" < NOW() - INTERVAL '15 minutes'`
     );
-    return res.rowCount || 0;
+    await query(
+      `DELETE FROM "UserActionLog" WHERE "createdAt" < NOW() - INTERVAL '7 days'`
+    );
+    await query(
+      `DELETE FROM "PageVisitLog" WHERE "visitedAt" < NOW() - INTERVAL '7 days'`
+    );
+    return sessionRes.rowCount || 0;
   } catch (error) {
-    console.error("Failed to purge expired sessions:", error);
+    console.error("Failed to purge expired sessions and prune logs:", error);
     return 0;
   }
 }
@@ -224,11 +179,20 @@ export async function recordUserHeartbeat(params: {
     os = "Unknown OS",
     userName,
     userEmail,
-    userId,
     clientTimezone,
     previousPage,
     previousPageDuration = 0,
   } = params;
+
+  // 1. Exclude sensitive routes from tracking
+  const cleanCurrentPage = sanitizePath(currentPage);
+  if (isSensitivePath(cleanCurrentPage)) {
+    return { success: true, ignored: true };
+  }
+
+  // 2. Anonymize IP to subnet and mask email
+  const maskedIp = anonymizeIp(ipAddress);
+  const maskedUserEmail = userEmail ? maskEmail(userEmail) : null;
 
   try {
     await purgeExpiredSessions();
@@ -236,7 +200,7 @@ export async function recordUserHeartbeat(params: {
 
     await transaction(async (client) => {
       const existing = await client.query(
-        `SELECT * FROM "UserSession" WHERE "sessionId" = $1 LIMIT 1`,
+        `SELECT "sessionId", "currentPage" FROM "UserSession" WHERE "sessionId" = $1 LIMIT 1`,
         [sessionId]
       );
 
@@ -247,24 +211,21 @@ export async function recordUserHeartbeat(params: {
             "latitude", "longitude", "deviceType", "browser", "os", "currentPage",
             "userName", "userEmail", "userId", "clientTimezone", "primarySource", "isVpn", "secondaryCountry",
             "currentPageStartedAt", "lastActiveAt", "createdAt"
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          ) VALUES ($1, $2, $3, $4, $5, $6, NULL, NULL, $7, $8, $9, $10, $11, $12, NULL, $13, $14, $15, $16, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
           [
             sessionId,
-            geo.ip,
+            maskedIp,
             geo.city,
             geo.region,
             geo.country,
             geo.countryCode,
-            geo.lat,
-            geo.lng,
             deviceType,
-            browser,
-            os,
-            currentPage,
-            userName || null,
-            userEmail || null,
-            userId || null,
-            clientTimezone || null,
+            browser.slice(0, 50),
+            os.slice(0, 50),
+            cleanCurrentPage,
+            userName ? userName.slice(0, 100) : null,
+            maskedUserEmail,
+            clientTimezone ? clientTimezone.slice(0, 100) : null,
             geo.primarySource,
             geo.isVpn,
             geo.secondaryCountry || null,
@@ -272,14 +233,14 @@ export async function recordUserHeartbeat(params: {
         );
       } else {
         const currentSession = existing.rows[0];
-        const pageChanged = currentSession.currentPage !== currentPage;
+        const pageChanged = currentSession.currentPage !== cleanCurrentPage;
 
         if (pageChanged) {
-          if (currentSession.currentPage && previousPageDuration > 0) {
+          if (currentSession.currentPage && previousPageDuration > 0 && !isSensitivePath(currentSession.currentPage)) {
             await client.query(
               `INSERT INTO "PageVisitLog" ("id", "sessionId", "pagePath", "durationSeconds", "visitedAt")
                VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)`,
-              [generateId("pvl_"), sessionId, currentSession.currentPage, previousPageDuration]
+              [generateId("pvl_"), sessionId, sanitizePath(currentSession.currentPage), previousPageDuration]
             );
           }
 
@@ -291,33 +252,29 @@ export async function recordUserHeartbeat(params: {
               "deviceType" = $2,
               "userName" = COALESCE($3, "userName"),
               "userEmail" = COALESCE($4, "userEmail"),
-              "userId" = COALESCE($5, "userId"),
-              "clientTimezone" = COALESCE($6, "clientTimezone"),
-              "ipAddress" = $7,
-              "city" = $8,
-              "region" = $9,
-              "country" = $10,
-              "countryCode" = $11,
-              "latitude" = $12,
-              "longitude" = $13,
-              "primarySource" = $14,
-              "isVpn" = $15,
-              "secondaryCountry" = $16
-             WHERE "sessionId" = $17`,
+              "clientTimezone" = COALESCE($5, "clientTimezone"),
+              "ipAddress" = $6,
+              "city" = $7,
+              "region" = $8,
+              "country" = $9,
+              "countryCode" = $10,
+              "latitude" = NULL,
+              "longitude" = NULL,
+              "primarySource" = $11,
+              "isVpn" = $12,
+              "secondaryCountry" = $13
+             WHERE "sessionId" = $14`,
             [
-              currentPage,
+              cleanCurrentPage,
               deviceType,
-              userName || null,
-              userEmail || null,
-              userId || null,
-              clientTimezone || null,
-              geo.ip,
+              userName ? userName.slice(0, 100) : null,
+              maskedUserEmail,
+              clientTimezone ? clientTimezone.slice(0, 100) : null,
+              maskedIp,
               geo.city,
               geo.region,
               geo.country,
               geo.countryCode,
-              geo.lat,
-              geo.lng,
               geo.primarySource,
               geo.isVpn,
               geo.secondaryCountry || null,
@@ -331,32 +288,28 @@ export async function recordUserHeartbeat(params: {
               "deviceType" = $1,
               "userName" = COALESCE($2, "userName"),
               "userEmail" = COALESCE($3, "userEmail"),
-              "userId" = COALESCE($4, "userId"),
-              "clientTimezone" = COALESCE($5, "clientTimezone"),
-              "ipAddress" = $6,
-              "city" = $7,
-              "region" = $8,
-              "country" = $9,
-              "countryCode" = $10,
-              "latitude" = $11,
-              "longitude" = $12,
-              "primarySource" = $13,
-              "isVpn" = $14,
-              "secondaryCountry" = $15
-             WHERE "sessionId" = $16`,
+              "clientTimezone" = COALESCE($4, "clientTimezone"),
+              "ipAddress" = $5,
+              "city" = $6,
+              "region" = $7,
+              "country" = $8,
+              "countryCode" = $9,
+              "latitude" = NULL,
+              "longitude" = NULL,
+              "primarySource" = $10,
+              "isVpn" = $11,
+              "secondaryCountry" = $12
+             WHERE "sessionId" = $13`,
             [
               deviceType,
-              userName || null,
-              userEmail || null,
-              userId || null,
-              clientTimezone || null,
-              geo.ip,
+              userName ? userName.slice(0, 100) : null,
+              maskedUserEmail,
+              clientTimezone ? clientTimezone.slice(0, 100) : null,
+              maskedIp,
               geo.city,
               geo.region,
               geo.country,
               geo.countryCode,
-              geo.lat,
-              geo.lng,
               geo.primarySource,
               geo.isVpn,
               geo.secondaryCountry || null,
@@ -383,13 +336,22 @@ export async function recordUserAction(params: {
 }) {
   const { sessionId, actionType, details, userName, userEmail } = params;
 
+  // Validate actionType against whitelist
+  if (!ALLOWED_ACTION_TYPES.has(actionType)) {
+    return { success: false, error: "Invalid or unsupported action type" };
+  }
+
+  // Sanitize details and mask email
+  const sanitizedDetails = sanitizeActionDetails(details);
+  const maskedUserEmail = userEmail ? maskEmail(userEmail) : null;
+
   try {
     const actionId = generateId("act_");
     await transaction(async (client) => {
       await client.query(
         `INSERT INTO "UserActionLog" ("id", "sessionId", "actionType", "details", "createdAt")
          VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)`,
-        [actionId, sessionId, actionType, details]
+        [actionId, sessionId, actionType, sanitizedDetails]
       );
 
       await client.query(
@@ -398,7 +360,7 @@ export async function recordUserAction(params: {
              "userName" = COALESCE($1, "userName"),
              "userEmail" = COALESCE($2, "userEmail")
          WHERE "sessionId" = $3`,
-        [userName || null, userEmail || null, sessionId]
+        [userName ? userName.slice(0, 100) : null, maskedUserEmail, sessionId]
       );
     });
 
@@ -410,7 +372,7 @@ export async function recordUserAction(params: {
 }
 
 export async function getActiveUserSessions(): Promise<{
-  sessions: ActiveSession[];
+  sessions: SafeActiveSessionDTO[];
   totalActive: number;
   desktopCount: number;
   mobileCount: number;
@@ -418,16 +380,20 @@ export async function getActiveUserSessions(): Promise<{
   topPages: { path: string; count: number }[];
   recentActions: UserAction[];
 }> {
+  await requireAdmin();
   try {
     await purgeExpiredSessions();
 
     const res = await query(
       `SELECT 
-        s.*,
+        s."sessionId", s."ipAddress", s."city", s."region", s."country", s."countryCode",
+        s."deviceType", s."browser", s."os", s."currentPage", s."userName", s."userEmail",
+        s."clientTimezone", s."primarySource", s."isVpn", s."secondaryCountry",
+        s."currentPageStartedAt", s."lastActiveAt", s."createdAt",
         EXTRACT(EPOCH FROM (NOW() - s."currentPageStartedAt"))::INT as "secondsOnCurrentPage",
         EXTRACT(EPOCH FROM (NOW() - s."createdAt"))::INT as "totalSessionSeconds"
        FROM "UserSession" s
-       WHERE s."lastActiveAt" >= NOW() - INTERVAL '30 minutes'
+       WHERE s."lastActiveAt" >= NOW() - INTERVAL '15 minutes'
        ORDER BY s."lastActiveAt" DESC`
     );
 
@@ -439,16 +405,16 @@ export async function getActiveUserSessions(): Promise<{
     if (sessionIds.length > 0) {
       const [historyRes, actionsRes] = await Promise.all([
         query(
-          `SELECT * FROM "PageVisitLog" 
+          `SELECT "id", "sessionId", "pagePath", "durationSeconds", "visitedAt" FROM "PageVisitLog" 
            WHERE "sessionId" = ANY($1::text[]) 
            ORDER BY "visitedAt" DESC 
            LIMIT 300`,
           [sessionIds]
         ),
         query(
-          `SELECT * FROM "UserActionLog"
-           WHERE "sessionId" = ANY($1::text[])
-           ORDER BY "createdAt" DESC
+          `SELECT "id", "sessionId", "actionType", "details", "createdAt" FROM "UserActionLog" 
+           WHERE "sessionId" = ANY($1::text[]) 
+           ORDER BY "createdAt" DESC 
            LIMIT 300`,
           [sessionIds]
         ),
@@ -479,15 +445,13 @@ export async function getActiveUserSessions(): Promise<{
       });
     }
 
-    const sessions: ActiveSession[] = res.rows.map((r) => ({
+    // Map rows into SafeActiveSessionDTO (NEVER return raw IP or exact coordinates)
+    const sessions: SafeActiveSessionDTO[] = res.rows.map((r) => ({
       sessionId: r.sessionId,
-      ipAddress: r.ipAddress,
-      city: r.city,
-      region: r.region,
-      country: r.country,
-      countryCode: r.countryCode,
-      latitude: parseFloat(r.latitude) || 0,
-      longitude: parseFloat(r.longitude) || 0,
+      city: r.city || "Unknown City",
+      region: r.region || "Unknown Region",
+      country: r.country || "India",
+      countryCode: r.countryCode || "IN",
       deviceType: r.deviceType || "Desktop",
       browser: r.browser || "Unknown",
       os: r.os || "Unknown",
@@ -496,9 +460,8 @@ export async function getActiveUserSessions(): Promise<{
       lastActiveAt: new Date(r.lastActiveAt).toISOString(),
       secondsOnCurrentPage: Math.max(0, parseInt(r.secondsOnCurrentPage) || 0),
       totalSessionSeconds: Math.max(0, parseInt(r.totalSessionSeconds) || 0),
-      userName: r.userName || undefined,
-      userEmail: r.userEmail || undefined,
-      userId: r.userId || undefined,
+      userName: r.userName || "Guest Visitor",
+      maskedEmail: r.userEmail ? maskEmail(r.userEmail) : undefined,
       clientTimezone: r.clientTimezone || undefined,
       primarySource: r.primarySource || "IP",
       isVpn: !!r.isVpn,

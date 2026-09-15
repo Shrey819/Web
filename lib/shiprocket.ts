@@ -1,3 +1,4 @@
+import "server-only";
 import { getSystemSettings } from "@/lib/settings";
 import { query } from "@/lib/db";
 

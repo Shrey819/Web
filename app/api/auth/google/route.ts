@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyGoogleIdToken } from "@/lib/google-auth";
 import { createSession } from "@/lib/session";
 import { query } from "@/lib/db";
+import { sanitizeCallbackUrl } from "@/lib/utils";
 import crypto from "crypto";
 
 const generateId = (prefix: string) => prefix + "_" + crypto.randomBytes(8).toString("hex");
@@ -194,7 +195,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       user: safeUser,
-      returnUrl: returnUrl || "/profile",
+      returnUrl: sanitizeCallbackUrl(returnUrl, "/profile"),
       message: "Successfully authenticated with Google.",
     });
   } catch (error) {

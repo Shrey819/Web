@@ -1,3 +1,4 @@
+import "server-only";
 import { Pool, neonConfig, QueryResultRow, PoolClient } from '@neondatabase/serverless';
 import ws from 'ws';
 

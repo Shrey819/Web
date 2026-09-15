@@ -33,8 +33,8 @@ import { formatCurrency, formatDisplayPhone } from "@/lib/utils";
 import { createOrderAction } from "@/app/actions/order";
 import { createRazorpayOrderAction, verifyAndCreatePrepaidOrderAction } from "@/app/actions/razorpay";
 import { checkPincodeServiceabilityAction } from "@/app/actions/shiprocket";
-import { getUserAddressesAction, deleteAddressAction, AddressItem } from "@/app/actions/address";
-import { SystemSettings } from "@/lib/settings";
+import { getUserAddressesAction, deleteAddressAction } from "@/app/actions/address";
+import type { AddressItem } from "@/types";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { AddressLocationSelector } from "@/components/ui/AddressLocationSelector";
 import { validatePincodeWithState } from "@/lib/indiaLocations";
@@ -61,8 +61,14 @@ function loadRazorpayCheckoutScript(): Promise<boolean> {
   });
 }
 
+export interface PublicCheckoutSettings {
+  cod_enabled: boolean;
+  min_order_value: number;
+  maintenance_mode: boolean;
+}
+
 interface CheckoutClientProps {
-  settings: SystemSettings;
+  settings: PublicCheckoutSettings;
 }
 
 const ADDRESS_TYPES = [
@@ -73,7 +79,7 @@ const ADDRESS_TYPES = [
 ] as const;
 
 export function CheckoutClient({ settings }: CheckoutClientProps) {
-  const { items, getSubtotal, getDiscountAmount, getTotal, clearCart, syncLivePrices } = useCartStore();
+  const { items, getSubtotal, getDiscountAmount, getTotal, clearCart, syncLivePrices, appliedCoupon } = useCartStore();
   const { addToast } = useToastStore();
   const { user } = useUserStore();
 
@@ -154,7 +160,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
 
         // 1. Fetch from database if user or email exists
         if (user?.id || user?.email) {
-          const res = await getUserAddressesAction(user?.id, user?.email);
+          const res = await getUserAddressesAction();
           if (res.success && res.addresses && res.addresses.length > 0) {
             combined = [...res.addresses];
           }
@@ -542,7 +548,8 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
         }
 
         const rzpOrderRes = await createRazorpayOrderAction({
-          amount: total,
+          items: sanitizedItems,
+          couponCode: appliedCoupon || undefined,
           currency: "INR",
           notes: {
             customerName: formData.fullName,
@@ -593,6 +600,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                 addressType: formData.addressType,
                 saveAddress: formData.saveAddress,
                 items: sanitizedItems,
+                couponCode: appliedCoupon || undefined,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
@@ -659,6 +667,7 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
         poNumber: formData.poNumber,
         cardNumber: formData.cardNumber,
         items: sanitizedItems,
+        couponCode: appliedCoupon || undefined,
       });
 
       if (res.success && res.orderId) {

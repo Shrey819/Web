@@ -3,9 +3,29 @@
 import { transaction, query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getSystemSettings } from "@/lib/settings";
+import { calculateServerCheckout } from "@/lib/pricing";
 import { createShiprocketAdhocOrder, calculateDeliveryDateRange, DeliveryRangeResult } from "@/lib/shiprocket";
 import { saveAddressFromCheckoutAction } from "@/app/actions/address";
+import { requireAdmin, requireCustomer, getOptionalAuthenticatedUser } from "@/lib/auth-checks";
+import {
+  getOrdersForCustomer,
+  getOrderForCustomer,
+  getOrderForAdmin,
+  getAllOrdersForAdmin,
+  cancelOrderForCustomer,
+  updateOrderStatusForAdmin,
+  updateOrderPaymentMethodForAdmin,
+  updateOrderItemNoteForAdmin,
+} from "@/lib/dal/order";
 import crypto from "crypto";
+import {
+  createOrderInputSchema,
+  orderStatusUpdateSchema,
+  orderItemNoteUpdateSchema,
+  cancelOrderInputSchema,
+} from "@/lib/validations/order";
+import { idSchema } from "@/lib/validations/common";
+import { z } from "zod";
 
 const generateId = () => "ord_" + crypto.randomBytes(8).toString("hex");
 const generateOrderItemId = () => "ori_" + crypto.randomBytes(8).toString("hex");
@@ -13,9 +33,9 @@ const generatePaymentId = () => "pay_" + crypto.randomBytes(8).toString("hex");
 
 export interface CreateOrderItemInput {
   productId: string;
-  name: string;
-  sku: string;
-  price: number;
+  name?: string;
+  sku?: string;
+  price?: number;
   quantity: number;
   variantId?: string;
   buyerNote?: string;
@@ -39,6 +59,7 @@ export interface CreateOrderInput {
   addressType?: string;
   saveAddress?: boolean;
   items: CreateOrderItemInput[];
+  couponCode?: string;
 }
 
 /**
@@ -46,51 +67,56 @@ export interface CreateOrderInput {
  */
 export async function createOrderAction(input: CreateOrderInput) {
   try {
-    if (!input.items || input.items.length === 0) {
-      return { success: false, error: "Cannot place order: Cart is empty." };
+    const parsed = createOrderInputSchema.safeParse(input);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Invalid order input." };
     }
+    const validatedInput = parsed.data;
+
+    const settings = await getSystemSettings();
+    if (settings.maintenance_mode) {
+      return { success: false, error: "Store is currently in maintenance mode. Orders cannot be placed." };
+    }
+    if (validatedInput.paymentMethod === "cod" && !settings.cod_enabled) {
+      return { success: false, error: "Cash on Delivery is currently disabled." };
+    }
+
+    // Authoritatively calculate order totals and verify items against database (Task #2 preserved)
+    const pricing = await calculateServerCheckout(validatedInput.items, validatedInput.couponCode);
 
     const orderId = "ORD-" + Math.floor(100000 + Math.random() * 900000);
     const dbOrderId = generateId();
 
-    // Compute Subtotal, Tax (18% GST), Shipping, Total in Rupees (₹)
-    const subtotal = input.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const tax = Math.round(subtotal * 0.18);
-    const shippingCost = 0; // Free Standard Shipping
-    const total = subtotal; // Total matches Cart & Checkout exactly (Inclusive of taxes/free shipping)
+    // Server-verified amounts in Rupees (₹)
+    const subtotal = pricing.subtotal;
+    const tax = pricing.tax;
+    const shippingCost = pricing.shippingCost;
+    const total = pricing.total;
 
     const paymentMethodLabel = 
-      input.paymentMethod === "cod" ? "Cash on Delivery (COD)" :
-      input.paymentMethod === "prepaid" ? "Prepaid (Online Payment)" :
-      input.paymentMethod === "po" ? `Net-30 Purchase Order (${input.poNumber || 'N/A'})` :
+      validatedInput.paymentMethod === "cod" ? "Cash on Delivery (COD)" :
+      validatedInput.paymentMethod === "prepaid" ? "Prepaid (Online Payment)" :
+      validatedInput.paymentMethod === "po" ? `Net-30 Purchase Order (${validatedInput.poNumber || 'N/A'})` :
       "Corporate Credit Card";
 
     const paymentReference = 
-      input.paymentReference ? input.paymentReference :
-      input.paymentMethod === "prepaid" ? `PREPAID-${orderId}` :
-      input.paymentMethod === "po" ? (input.poNumber || `PO-${orderId}`) :
-      input.paymentMethod === "cod" ? `COD-${orderId}` :
-      `CARD-${input.cardNumber?.slice(-4) || '4242'}`;
+      validatedInput.paymentReference ? validatedInput.paymentReference :
+      validatedInput.paymentMethod === "prepaid" ? `PREPAID-${orderId}` :
+      validatedInput.paymentMethod === "po" ? (validatedInput.poNumber || `PO-${orderId}`) :
+      validatedInput.paymentMethod === "cod" ? `COD-${orderId}` :
+      `CARD-${validatedInput.cardNumber?.slice(-4) || '4242'}`;
 
-    // Verify valid userId against PostgreSQL "User" table to satisfy foreign key constraint
+    // Authoritatively resolve customer identity from server session.
+    // Client-supplied input.userId or input.email is NEVER trusted for account binding.
     let validUserId: string | null = null;
-    if (input.userId) {
-      const userRes = await query(`SELECT id FROM "User" WHERE id = $1 LIMIT 1`, [input.userId]);
-      if (userRes.rows.length > 0) {
-        validUserId = input.userId;
-      }
-    }
-
-    if (!validUserId && input.email) {
-      const emailRes = await query(`SELECT id FROM "User" WHERE email = $1 LIMIT 1`, [input.email.trim().toLowerCase()]);
-      if (emailRes.rows.length > 0) {
-        validUserId = emailRes.rows[0].id;
-      }
+    const authUser = await getOptionalAuthenticatedUser();
+    if (authUser) {
+      validUserId = authUser.id;
     }
 
     // Calculate estimated delivery window (+2 days free time / range buffer)
-    const deliveryRange = calculateDeliveryDateRange(null, input.zip);
-    const initialCarrier = input.zip.startsWith("36") || input.zip.startsWith("38") || input.zip.startsWith("39")
+    const deliveryRange = calculateDeliveryDateRange(null, validatedInput.zip);
+    const initialCarrier = validatedInput.zip.startsWith("36") || validatedInput.zip.startsWith("38") || validatedInput.zip.startsWith("39")
       ? "Express Regional Logistics"
       : "Express Surface Freight";
 
@@ -116,66 +142,42 @@ export async function createOrderAction(input: CreateOrderInput) {
         tax,
         shippingCost,
         total,
-        input.fullName,
-        input.companyName || null,
-        input.street,
-        input.city,
-        input.state,
-        input.zip,
-        input.country || "India",
-        input.phone || null
+        validatedInput.fullName,
+        validatedInput.companyName || null,
+        validatedInput.street,
+        validatedInput.city,
+        validatedInput.state,
+        validatedInput.zip,
+        validatedInput.country || "India",
+        validatedInput.phone || null
       ]);
 
-      // 2. Insert Order Items & Deduct Inventory Stock
-      for (const item of input.items) {
-        // Validate productId against PostgreSQL "Product" table to avoid foreign key errors
-        let validProductId: string | null = null;
-        if (item.productId && typeof item.productId === "string" && item.productId !== "undefined" && item.productId !== "null") {
-          const prodCheck = await client.query(`SELECT id FROM "Product" WHERE id = $1 LIMIT 1`, [item.productId]);
-          if (prodCheck.rows.length > 0) {
-            validProductId = item.productId;
-          }
-        }
-
-        // Validate variantId against PostgreSQL "ProductVariant" table to avoid foreign key errors
-        let validVariantId: string | null = null;
-        if (item.variantId && typeof item.variantId === "string" && item.variantId !== "undefined" && item.variantId !== "null") {
-          const varCheck = await client.query(`SELECT id FROM "ProductVariant" WHERE id = $1 LIMIT 1`, [item.variantId]);
-          if (varCheck.rows.length > 0) {
-            validVariantId = item.variantId;
-          }
-        }
-
-        // Sanitize clean item name (strip any accidental " - undefined" or "(undefined)")
-        const cleanName = (item.name || "Industrial Component")
-          .replace(/\s*-\s*undefined/gi, "")
-          .replace(/\s*\(undefined\)/gi, "")
-          .trim();
-
+      // 2. Insert Order Items (using authoritative database prices) & Deduct Inventory Stock
+      for (const item of pricing.items) {
         await client.query(`
           INSERT INTO "OrderItem" ("id", "orderId", "productId", "variantId", "name", "sku", "price", "quantity", "buyerNote", "createdAt")
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
         `, [
           generateOrderItemId(),
           orderId,
-          validProductId,
-          validVariantId,
-          cleanName,
-          item.sku || `SKU-${validProductId || 'ITEM'}`,
-          item.price,
+          item.productId,
+          item.variantId,
+          item.name,
+          item.sku,
+          item.unitPrice, // Authoritative price in Rupees
           item.quantity,
           item.buyerNote || null,
         ]);
 
-        // Deduct Inventory stock if product ID is valid
-        if (validProductId) {
+        // Deduct Inventory stock if product ID is present
+        if (item.productId) {
           await client.query(`
             UPDATE "Inventory" 
             SET "quantity" = GREATEST(0, "quantity" - $1),
                 "status" = CASE WHEN ("quantity" - $1) <= 0 THEN 'OUT_OF_STOCK'::"StockStatus" ELSE 'IN_STOCK'::"StockStatus" END,
                 "updatedAt" = CURRENT_TIMESTAMP
             WHERE "productId" = $2
-          `, [item.quantity, validProductId]);
+          `, [item.quantity, item.productId]);
         }
       }
 
@@ -189,7 +191,7 @@ export async function createOrderAction(input: CreateOrderInput) {
         orderId,
         paymentMethodLabel,
         paymentMethodLabel,
-        input.paymentMethod === "cod" ? "pending_cod" : input.paymentMethod === "prepaid" ? "paid" : "authorized",
+        validatedInput.paymentMethod === "cod" ? "pending_cod" : validatedInput.paymentMethod === "prepaid" ? "paid" : "authorized",
         total,
         paymentReference
       ]);
@@ -203,20 +205,20 @@ export async function createOrderAction(input: CreateOrderInput) {
 
     // 5. Automatically save address to User profile so they never need to retype
     try {
-      const targetUserId = validUserId || (input.phone ? `user_${input.phone.replace(/[^\d]/g, "").slice(-10)}` : undefined);
-      if (targetUserId && input.saveAddress !== false) {
+      const targetUserId = validUserId || (validatedInput.phone ? `user_${validatedInput.phone.replace(/[^\d]/g, "").slice(-10)}` : undefined);
+      if (targetUserId && validatedInput.saveAddress !== false) {
         await saveAddressFromCheckoutAction({
           userId: targetUserId,
-          email: input.email,
-          fullName: input.fullName,
-          companyName: input.companyName,
-          phone: input.phone,
-          street: input.street,
-          city: input.city,
-          state: input.state,
-          zip: input.zip,
-          country: input.country || "India",
-          type: input.addressType || "Home",
+          email: validatedInput.email,
+          fullName: validatedInput.fullName,
+          companyName: validatedInput.companyName,
+          phone: validatedInput.phone,
+          street: validatedInput.street,
+          city: validatedInput.city,
+          state: validatedInput.state,
+          zip: validatedInput.zip,
+          country: validatedInput.country || "India",
+          type: validatedInput.addressType || "Home",
           saveAsDefault: true,
         });
       }
@@ -234,10 +236,10 @@ export async function createOrderAction(input: CreateOrderInput) {
           .slice(0, 19)
           .replace("T", " ");
 
-        const fullNameParts = (input.fullName || "Valued Customer").trim().split(" ");
+        const fullNameParts = (validatedInput.fullName || "Valued Customer").trim().split(" ");
         const firstName = fullNameParts[0] || "Valued";
         const lastName = fullNameParts.slice(1).join(" ") || "";
-        const cleanPhone = (input.phone || "9876543210").replace(/[^\d]/g, "").slice(-10);
+        const cleanPhone = (validatedInput.phone || "9876543210").replace(/[^\d]/g, "").slice(-10);
 
         const srPayload = {
           order_id: orderId,
@@ -245,23 +247,23 @@ export async function createOrderAction(input: CreateOrderInput) {
           pickup_location: settings.shiprocket_pickup_location || "Primary",
           billing_customer_name: firstName,
           billing_last_name: lastName,
-          billing_address: input.street || "Main Street",
-          billing_city: input.city || "City",
-          billing_pincode: String(input.zip || "360001"),
-          billing_state: input.state || "Gujarat",
-          billing_country: input.country || "India",
-          billing_email: input.email || "customer@omautomation.com",
+          billing_address: validatedInput.street || "Main Street",
+          billing_city: validatedInput.city || "City",
+          billing_pincode: String(validatedInput.zip || "360001"),
+          billing_state: validatedInput.state || "Gujarat",
+          billing_country: validatedInput.country || "India",
+          billing_email: validatedInput.email || "customer@omautomation.com",
           billing_phone: cleanPhone.length === 10 ? cleanPhone : "9876543210",
           shipping_is_billing: true,
-          order_items: input.items.map((it) => ({
+          order_items: pricing.items.map((it) => ({
             name: it.name,
             sku: it.sku || `SKU-${it.productId}`,
             units: Number(it.quantity || 1),
-            selling_price: Math.round(Number(it.price || 0)),
+            selling_price: it.unitPrice,
             discount: 0,
             tax: 18,
           })),
-          payment_method: (input.paymentMethod === "cod" ? "COD" : "Prepaid") as "Prepaid" | "COD",
+          payment_method: (validatedInput.paymentMethod === "cod" ? "COD" : "Prepaid") as "Prepaid" | "COD",
           sub_total: Math.round(Number(total || 0)),
           length: settings.shiprocket_default_length || 10,
           breadth: settings.shiprocket_default_breadth || 10,
@@ -299,6 +301,7 @@ export async function createOrderAction(input: CreateOrderInput) {
       orderId,
       total,
       subtotal,
+      discount: pricing.discount,
       tax,
       shippingCost,
       paymentMethodLabel,
@@ -314,86 +317,21 @@ export async function createOrderAction(input: CreateOrderInput) {
 }
 
 /**
- * FETCH USER ORDERS (Strictly isolated to logged-in user or session placed orders)
+ * FETCH USER ORDERS (Strictly isolated to authenticated session user)
+ * Client-supplied userId and userEmail are safely ignored to prevent IDOR/BOLA.
  */
 export async function getUserOrdersAction(userId?: string, userEmail?: string, placedOrderIds?: string[]) {
   try {
-    const hasUserId = Boolean(userId && userId.trim() !== "");
-    const hasEmail = Boolean(userEmail && userEmail.trim() !== "");
-    const hasOrderIds = Boolean(placedOrderIds && placedOrderIds.length > 0);
-
-    // If no user identity and no placed order IDs in session, return empty orders (never show all DB orders to regular users!)
-    if (!hasUserId && !hasEmail && !hasOrderIds) {
+    let sessionUser;
+    try {
+      sessionUser = await requireCustomer();
+    } catch {
+      // Unauthenticated caller returns empty list
       return { success: true, orders: [] };
     }
 
-    let sql = `
-      SELECT 
-        o."id",
-        o."status"::text as status,
-        o."subtotal",
-        o."tax",
-        o."shippingCost",
-        o."total",
-        o."shippingFullName",
-        o."shippingCompany",
-        o."createdAt",
-        p."method" as "paymentMethod",
-        p."reference" as "paymentReference",
-        s."carrier",
-        s."courierName",
-        s."trackingNumber",
-        s."etd",
-        COUNT(oi."id")::int as "itemCount"
-      FROM "Order" o
-      LEFT JOIN "Payment" p ON o."id" = p."orderId"
-      LEFT JOIN "Shipment" s ON o."id" = s."orderId"
-      LEFT JOIN "OrderItem" oi ON o."id" = oi."orderId"
-    `;
-
-    const whereClauses: string[] = [];
-    const params: any[] = [];
-
-    if (hasUserId) {
-      params.push(userId);
-      whereClauses.push(`o."userId" = $${params.length}`);
-    }
-
-    if (hasEmail) {
-      params.push(userEmail);
-      whereClauses.push(`o."shippingCompany" ILIKE $${params.length}`);
-    }
-
-    if (hasOrderIds) {
-      params.push(placedOrderIds);
-      whereClauses.push(`o."id" = ANY($${params.length})`);
-    }
-
-    if (whereClauses.length > 0) {
-      sql += ` WHERE (${whereClauses.join(" OR ")})`;
-    }
-
-    sql += ` GROUP BY o."id", p."id", s."id" ORDER BY o."createdAt" DESC`;
-
-    const res = await query(sql, params);
-    return {
-      success: true,
-      orders: res.rows.map((r: any) => ({
-        id: r.id,
-        date: new Date(r.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
-        status: r.status,
-        subtotal: Number(r.subtotal || 0),
-        tax: Number(r.tax || 0),
-        shippingCost: Number(r.shippingCost || 0),
-        total: Number(r.total || 0),
-        itemCount: Number(r.itemCount || 0),
-        paymentMethod: r.paymentMethod || "Cash on Delivery",
-        paymentReference: r.paymentReference || "N/A",
-        carrier: r.courierName || r.carrier || "Express Regional Logistics",
-        trackingNumber: r.trackingNumber || `TRK-${r.id}`,
-        etd: r.etd || null,
-      })),
-    };
+    const orders = await getOrdersForCustomer(sessionUser.id);
+    return { success: true, orders };
   } catch (error) {
     console.error("Failed to query user orders:", error);
     return { success: false, orders: [] };
@@ -401,103 +339,30 @@ export async function getUserOrdersAction(userId?: string, userEmail?: string, p
 }
 
 /**
- * FETCH SINGLE ORDER BY ID
+ * FETCH SINGLE ORDER BY ID (Strict IDOR / Ownership Protection)
+ * - ADMIN: Can view any order (includes admin fulfillment tokens/links)
+ * - CUSTOMER: Can ONLY view order if o."userId" = customer.id (filtered DTO)
+ * - Unauthenticated / Wrong owner: Returns null (Safe 404, zero existence leakage)
  */
 export async function getOrderByIdAction(orderId: string) {
   try {
-    const orderRes = await query(`
-      SELECT 
-        o.*,
-        p."method" as "paymentMethod",
-        p."reference" as "paymentReference",
-        p."status" as "paymentStatus",
-        s."carrier",
-        s."trackingNumber",
-        s."status" as "shipmentStatus",
-        s."shiprocketOrderId",
-        s."shiprocketShipmentId",
-        s."awbCode",
-        s."courierName",
-        s."labelUrl",
-        s."invoiceUrl",
-        s."manifestUrl",
-        s."pickupTokenNumber",
-        s."pickupScheduledDate",
-        s."etd",
-        s."currentStatus" as "shipmentCurrentStatus",
-        s."trackingData"
-      FROM "Order" o
-      LEFT JOIN "Payment" p ON o."id" = p."orderId"
-      LEFT JOIN "Shipment" s ON o."id" = s."orderId"
-      WHERE o."id" = $1
-      LIMIT 1
-    `, [orderId]);
+    if (!orderId || typeof orderId !== "string" || orderId.length > 64) {
+      return null;
+    }
 
-    if (orderRes.rows.length === 0) return null;
+    let callerUser;
+    try {
+      callerUser = await requireCustomer();
+    } catch {
+      return null;
+    }
 
-    const order = orderRes.rows[0];
+    if (callerUser.role === "ADMIN") {
+      return await getOrderForAdmin(orderId);
+    }
 
-    const itemsRes = await query(`
-      SELECT 
-        oi.*,
-        (
-          SELECT COALESCE(
-            json_agg(json_build_object('name', va."name", 'value', va."value")),
-            '[]'::json
-          )
-          FROM "VariantAttribute" va
-          WHERE va."variantId" = oi."variantId"
-        ) as "attributes"
-      FROM "OrderItem" oi 
-      WHERE oi."orderId" = $1 
-      ORDER BY oi."createdAt" ASC
-    `, [orderId]);
-
-    return {
-      id: order.id,
-      status: order.status,
-      subtotal: Number(order.subtotal),
-      tax: Number(order.tax),
-      shippingCost: Number(order.shippingCost),
-      total: Number(order.total),
-      shippingFullName: order.shippingFullName,
-      shippingCompany: order.shippingCompany,
-      shippingStreet: order.shippingStreet,
-      shippingCity: order.shippingCity,
-      shippingState: order.shippingState,
-      shippingZip: order.shippingZip,
-      shippingCountry: order.shippingCountry,
-      shippingPhone: order.shippingPhone || "+91 9876543210",
-      paymentMethod: order.paymentMethod || "Cash on Delivery",
-      paymentReference: order.paymentReference || "N/A",
-      paymentStatus: order.paymentStatus || "pending",
-      carrier: order.courierName || order.carrier || "Express Freight",
-      trackingNumber: order.awbCode || order.trackingNumber || `TRK-${order.id}`,
-      shiprocketOrderId: order.shiprocketOrderId,
-      shiprocketShipmentId: order.shiprocketShipmentId,
-      awbCode: order.awbCode,
-      courierName: order.courierName,
-      labelUrl: order.labelUrl,
-      invoiceUrl: order.invoiceUrl,
-      manifestUrl: order.manifestUrl,
-      pickupTokenNumber: order.pickupTokenNumber,
-      pickupScheduledDate: order.pickupScheduledDate ? new Date(order.pickupScheduledDate).toISOString() : null,
-      etd: order.etd,
-      shipmentCurrentStatus: order.shipmentCurrentStatus,
-      trackingData: order.trackingData,
-      createdAt: order.createdAt ? new Date(order.createdAt).toISOString() : new Date().toISOString(),
-      items: itemsRes.rows.map((r: any) => ({
-        id: r.id,
-        productId: r.productId,
-        variantId: r.variantId,
-        name: r.name,
-        sku: r.sku,
-        price: Number(r.price),
-        quantity: r.quantity,
-        attributes: r.attributes || [],
-        buyerNote: r.buyerNote || null,
-      })),
-    };
+    // Customer path: enforce ownership & safe DTO
+    return await getOrderForCustomer(orderId, callerUser.id);
   } catch (error) {
     console.error("Failed to fetch order details:", error);
     return null;
@@ -505,121 +370,48 @@ export async function getOrderByIdAction(orderId: string) {
 }
 
 /**
+ * FETCH SINGLE ORDER BY ID (ADMIN DASHBOARD ONLY)
+ */
+export async function getOrderByIdAdmin(orderId: string) {
+  await requireAdmin();
+  return await getOrderForAdmin(orderId);
+}
+
+/**
+ * CANCEL MY ORDER (CUSTOMER - Only if owned by caller and in PROCESSING status)
+ */
+export async function cancelMyOrderAction(orderId: string) {
+  try {
+    const user = await requireCustomer();
+    const parsed = cancelOrderInputSchema.safeParse({ orderId });
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Invalid order ID." };
+    }
+
+    const res = await cancelOrderForCustomer(parsed.data.orderId, user.id);
+    if (!res.success) {
+      return res;
+    }
+
+    revalidatePath("/orders");
+    revalidatePath(`/orders/${parsed.data.orderId}`);
+    revalidatePath("/admin/orders");
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to cancel order:", error);
+    return { success: false, error: error?.message || "Failed to cancel order" };
+  }
+}
+
+/**
  * FETCH ALL ORDERS FOR ADMIN DASHBOARD
  */
 export async function getAllOrdersAdminAction() {
+  await requireAdmin();
   try {
-    await query(`ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "originalMethod" TEXT`);
-    const res = await query(`
-      SELECT 
-        o."id",
-        o."status"::text as status,
-        o."subtotal",
-        o."tax",
-        o."shippingCost",
-        o."total",
-        o."shippingFullName",
-        o."shippingCompany",
-        o."shippingStreet",
-        o."shippingCity",
-        o."shippingState",
-        o."shippingZip",
-        o."shippingCountry",
-        o."shippingPhone",
-        o."createdAt",
-        p."method" as "paymentMethod",
-        COALESCE(p."originalMethod", p."method", CASE WHEN p."reference" LIKE 'COD-%' THEN 'Cash on Delivery (COD)' ELSE 'Prepaid (Online Payment)' END) as "originalPaymentMethod",
-        p."reference" as "paymentReference",
-        p."status" as "paymentStatus",
-        s."carrier",
-        s."trackingNumber",
-        s."shiprocketOrderId",
-        s."shiprocketShipmentId",
-        s."awbCode",
-        s."courierName",
-        s."labelUrl",
-        s."invoiceUrl",
-        s."manifestUrl",
-        s."pickupTokenNumber",
-        s."pickupScheduledDate",
-        s."etd",
-        s."currentStatus" as "shipmentCurrentStatus",
-        s."trackingData",
-        COUNT(oi."id")::int as "itemCount",
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', oi."id",
-              'name', oi."name",
-              'sku', oi."sku",
-              'price', oi."price",
-              'quantity', oi."quantity",
-              'variantId', oi."variantId",
-              'buyerNote', oi."buyerNote",
-              'attributes', (
-                SELECT COALESCE(
-                  json_agg(json_build_object('name', va."name", 'value', va."value")),
-                  '[]'::json
-                )
-                FROM "VariantAttribute" va
-                WHERE va."variantId" = oi."variantId"
-              )
-            )
-          ) FILTER (WHERE oi."id" IS NOT NULL),
-          '[]'::json
-        ) as "items"
-      FROM "Order" o
-      LEFT JOIN "Payment" p ON o."id" = p."orderId"
-      LEFT JOIN "Shipment" s ON o."id" = s."orderId"
-      LEFT JOIN "OrderItem" oi ON o."id" = oi."orderId"
-      GROUP BY o."id", p."id", s."id"
-      ORDER BY o."createdAt" DESC
-    `);
-
-    return {
-      success: true,
-      orders: res.rows.map((r: any) => ({
-        id: r.id,
-        status: r.status,
-        subtotal: Number(r.subtotal || 0),
-        tax: Number(r.tax || 0),
-        shippingCost: Number(r.shippingCost || 0),
-        total: Number(r.total || 0),
-        shippingFullName: r.shippingFullName,
-        shippingCompany: r.shippingCompany,
-        shippingStreet: r.shippingStreet,
-        shippingCity: r.shippingCity,
-        shippingState: r.shippingState,
-        shippingZip: r.shippingZip,
-        shippingCountry: r.shippingCountry,
-        shippingPhone: r.shippingPhone || "+91 9876543210",
-        createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
-        paymentMethod: r.paymentMethod || "Prepaid (Online Payment)",
-        originalPaymentMethod: r.originalPaymentMethod || r.paymentMethod || "Prepaid (Online Payment)",
-        paymentReference: r.paymentReference || "N/A",
-        paymentStatus: r.paymentStatus || "pending",
-        carrier: r.courierName || r.carrier || "Express Freight",
-        trackingNumber: r.awbCode || r.trackingNumber || `TRK-${r.id}`,
-        shiprocketOrderId: r.shiprocketOrderId,
-        shiprocketShipmentId: r.shiprocketShipmentId,
-        awbCode: r.awbCode,
-        courierName: r.courierName,
-        labelUrl: r.labelUrl,
-        invoiceUrl: r.invoiceUrl,
-        manifestUrl: r.manifestUrl,
-        pickupTokenNumber: r.pickupTokenNumber,
-        pickupScheduledDate: r.pickupScheduledDate ? new Date(r.pickupScheduledDate).toISOString() : null,
-        etd: r.etd,
-        shipmentCurrentStatus: r.shipmentCurrentStatus,
-        trackingData: r.trackingData,
-        itemCount: Number(r.itemCount || 0),
-        items: Array.isArray(r.items) ? r.items.map((i: any) => ({
-          ...i,
-          price: Number(i.price || 0),
-          quantity: Number(i.quantity || 1)
-        })) : [],
-      })),
-    };
+    const orders = await getAllOrdersForAdmin();
+    return { success: true, orders };
   } catch (error) {
     console.error("Failed to fetch admin orders:", error);
     return { success: false, orders: [], error: String(error) };
@@ -630,38 +422,20 @@ export async function getAllOrdersAdminAction() {
  * UPDATE ORDER STATUS (ADMIN)
  */
 export async function updateOrderStatusAction(orderId: string, status: string, carrier?: string, trackingNumber?: string) {
+  await requireAdmin();
   try {
-    await transaction(async (client) => {
-      // 1. Update Order Status
-      await client.query(`
-        UPDATE "Order" 
-        SET "status" = $1::"OrderStatus", "updatedAt" = CURRENT_TIMESTAMP
-        WHERE "id" = $2
-      `, [status, orderId]);
+    const parsed = orderStatusUpdateSchema.safeParse({ orderId, status });
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Invalid order status value." };
+    }
 
-      // 2. Update Payment status if delivered
-      if (status === "DELIVERED") {
-        await client.query(`
-          UPDATE "Payment" SET "status" = 'paid', "updatedAt" = CURRENT_TIMESTAMP WHERE "orderId" = $1
-        `, [orderId]);
-      }
+    const cleanCarrier = carrier ? String(carrier).trim().slice(0, 100) : undefined;
+    const cleanTracking = trackingNumber ? String(trackingNumber).trim().slice(0, 100) : undefined;
 
-      // 3. Update Shipment info
-      if (carrier || trackingNumber) {
-        await client.query(`
-          UPDATE "Shipment" 
-          SET "carrier" = COALESCE($1, "carrier"),
-              "trackingNumber" = COALESCE($2, "trackingNumber"),
-              "status" = CASE WHEN $3 = 'DELIVERED' THEN 'delivered' ELSE 'in_transit' END,
-              "shippedAt" = CASE WHEN "shippedAt" IS NULL THEN CURRENT_TIMESTAMP ELSE "shippedAt" END,
-              "updatedAt" = CURRENT_TIMESTAMP
-          WHERE "orderId" = $4
-        `, [carrier || null, trackingNumber || null, status, orderId]);
-      }
-    });
+    await updateOrderStatusForAdmin(parsed.data.orderId, parsed.data.status, cleanCarrier, cleanTracking);
 
     revalidatePath("/orders");
-    revalidatePath(`/orders/${orderId}`);
+    revalidatePath(`/orders/${parsed.data.orderId}`);
     revalidatePath("/admin/orders");
     revalidatePath("/admin");
     return { success: true };
@@ -675,36 +449,28 @@ export async function updateOrderStatusAction(orderId: string, status: string, c
 /**
  * UPDATE ORDER PAYMENT METHOD (ADMIN - Toggle between COD and Prepaid)
  */
-export async function updateOrderPaymentMethodAction(orderId: string, newMethod: "cod" | "prepaid") {
+export async function updateOrderPaymentMethodAction(
+  orderId: string,
+  newMethod: "cod" | "prepaid"
+): Promise<{ success: boolean; paymentMethod?: string; paymentStatus?: string; error?: string }> {
+  await requireAdmin();
   try {
-    const isCod = newMethod === "cod";
-    const paymentMethodLabel = isCod ? "Cash on Delivery (COD)" : "Prepaid (Online Payment)";
-    const paymentStatus = isCod ? "pending_cod" : "paid";
-    const paymentReference = isCod ? `COD-${orderId}` : `PREPAID-${orderId}`;
+    const parsedId = idSchema.safeParse(orderId);
+    if (!parsedId.success) {
+      return { success: false, error: "Invalid order ID." };
+    }
+    if (newMethod !== "cod" && newMethod !== "prepaid") {
+      return { success: false, error: "Invalid payment method. Only 'cod' or 'prepaid' allowed." };
+    }
 
-    await query(`
-      UPDATE "Payment"
-      SET "method" = $1,
-          "status" = $2,
-          "reference" = CASE 
-            WHEN "reference" IS NULL OR "reference" LIKE 'COD-%' OR "reference" LIKE 'PREPAID-%' OR "reference" LIKE 'CARD-%' OR "reference" LIKE 'PO-%' 
-            THEN $3 
-            ELSE "reference" 
-          END,
-          "updatedAt" = CURRENT_TIMESTAMP
-      WHERE "orderId" = $4
-    `, [paymentMethodLabel, paymentStatus, paymentReference, orderId]);
+    const res = await updateOrderPaymentMethodForAdmin(parsedId.data, newMethod);
 
     revalidatePath("/orders");
-    revalidatePath(`/orders/${orderId}`);
+    revalidatePath(`/orders/${parsedId.data}`);
     revalidatePath("/admin/orders");
     revalidatePath("/admin");
 
-    return { 
-      success: true, 
-      paymentMethod: paymentMethodLabel,
-      paymentStatus: paymentStatus 
-    };
+    return res;
   } catch (error) {
     console.error("Failed to update order payment method:", error);
     const message = error instanceof Error ? error.message : "Failed to update payment method";
@@ -713,24 +479,25 @@ export async function updateOrderPaymentMethodAction(orderId: string, newMethod:
 }
 
 /**
- * UPDATE ORDER ITEM BUYER NOTE DIRECTLY
+ * UPDATE ORDER ITEM BUYER NOTE DIRECTLY (ADMIN)
  */
 export async function updateOrderItemNoteAction(orderItemId: string, buyerNote: string) {
+  await requireAdmin();
   try {
-    const cleanNote = buyerNote.trim();
-    const res = await query(
-      `UPDATE "OrderItem" SET "buyerNote" = $1 WHERE "id" = $2 RETURNING *`,
-      [cleanNote || null, orderItemId]
-    );
+    const parsed = orderItemNoteUpdateSchema.safeParse({ orderItemId, note: buyerNote });
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Invalid order item note." };
+    }
 
-    if (res.rows.length === 0) {
-      return { success: false, error: "Order item record not found." };
+    const res = await updateOrderItemNoteForAdmin(parsed.data.orderItemId, parsed.data.note);
+    if (!res.success) {
+      return res;
     }
 
     revalidatePath("/admin/orders");
     revalidatePath("/orders");
 
-    return { success: true, item: res.rows[0] };
+    return res;
   } catch (error) {
     console.error("Failed to update order item buyer note:", error);
     const message = error instanceof Error ? error.message : "Failed to update buyer note";

@@ -12,7 +12,7 @@ import {
   HelpCircle,
   PackageSearch,
 } from "lucide-react";
-import { getSystemSettings } from "@/lib/settings";
+import { getPublicSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Delivery & Shipping Fee | OM AUTOMATION",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DeliveryPage() {
-  const settings = await getSystemSettings();
+  const settings = await getPublicSettings();
   return (
     <div className="bg-white text-slate-900 min-h-screen">
       {/* Main Delivery Page Content */}

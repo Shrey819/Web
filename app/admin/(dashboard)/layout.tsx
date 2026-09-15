@@ -1,6 +1,5 @@
-import { auth } from "@/auth";
+import { requireAdmin, AuthError } from "@/lib/auth-checks";
 import { redirect } from "next/navigation";
-import { logoutAction } from "../actions";
 import { AdminThemeProvider } from "@/components/admin/AdminThemeProvider";
 
 export default async function AdminDashboardLayout({
@@ -8,14 +7,20 @@ export default async function AdminDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-  if (!session) redirect("/admin/login");
+  let admin;
+  try {
+    admin = await requireAdmin();
+  } catch (err: any) {
+    if (err instanceof AuthError && err.statusCode === 403) {
+      redirect("/admin/login?error=AccessDenied");
+    }
+    redirect("/admin/login");
+  }
 
   return (
     <AdminThemeProvider
-      userEmail={session.user?.email}
-      userName={session.user?.name}
-      logoutAction={logoutAction}
+      userEmail={admin.email}
+      userName={admin.name}
     >
       {children}
     </AdminThemeProvider>

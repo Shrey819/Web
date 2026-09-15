@@ -1,78 +1,35 @@
 "use server";
 
-import { query, transaction } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { formatDisplayPhone } from "@/lib/utils";
-import crypto from "crypto";
-
-export interface AddressItem {
-  id: string;
-  userId: string;
-  fullName: string;
-  companyName?: string | null;
-  email?: string | null;
-  phone: string;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-  country: string;
-  type: "Home" | "Office" | "Work" | "Other" | string;
-  isDefault: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface AddressInput {
-  userId?: string;
-  fullName: string;
-  companyName?: string;
-  email?: string;
-  phone: string;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-  country?: string;
-  type?: "Home" | "Office" | "Work" | "Other" | string;
-  isDefault?: boolean;
-}
+import { requireCustomer } from "@/lib/auth-checks";
+import type { CustomerAddressDTO, AddressInput } from "@/lib/dal/types";
+import {
+  getAddressesForUser,
+  getAddressByIdForUser,
+  createAddressForUser,
+  updateAddressForUser,
+  deleteAddressForUser,
+  setDefaultAddressForUser,
+  saveAddressFromCheckoutForUser,
+} from "@/lib/dal/address";
+import { addressCreateSchema } from "@/lib/validations/address";
+import { idSchema } from "@/lib/validations/common";
 
 /**
- * Get all saved addresses for a user
+ * Get all saved addresses for the authenticated customer.
+ * Client parameters (userId, userEmail) are safely ignored; identity is derived from the server session.
  */
 export async function getUserAddressesAction(userId?: string | null, userEmail?: string | null) {
   try {
-    if (!userId && !userEmail) {
+    let sessionUser;
+    try {
+      sessionUser = await requireCustomer();
+    } catch {
+      // Unauthenticated caller returns empty addresses
       return { success: true, addresses: [] };
     }
 
-    const res = await query(
-      `SELECT * FROM "Address" 
-       WHERE "userId" = $1 OR ("email" = $2 AND $2 IS NOT NULL AND $2 != '')
-       ORDER BY "isDefault" DESC, "updatedAt" DESC, "createdAt" DESC
-       LIMIT 4`,
-      [userId || "", userEmail || ""]
-    );
-
-    const addresses: AddressItem[] = res.rows.map((r: any) => ({
-      id: r.id,
-      userId: r.userId,
-      fullName: r.fullName,
-      companyName: r.companyName || "",
-      email: r.email || "",
-      phone: r.phone ? formatDisplayPhone(r.phone) : "",
-      street: r.street,
-      city: r.city,
-      state: r.state,
-      zip: r.zip,
-      country: r.country || "India",
-      type: r.type || "Home",
-      isDefault: Boolean(r.isDefault),
-      createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : undefined,
-      updatedAt: r.updatedAt ? new Date(r.updatedAt).toISOString() : undefined,
-    }));
-
+    const addresses = await getAddressesForUser(sessionUser.id);
     return { success: true, addresses };
   } catch (error: any) {
     console.error("Failed to fetch user addresses:", error);
@@ -81,59 +38,38 @@ export async function getUserAddressesAction(userId?: string | null, userEmail?:
 }
 
 /**
- * Create a new address
+ * Get single address by ID (Strict ownership check).
+ * Returns null if not found or belongs to another user (zero existence leakage).
+ */
+export async function getAddressByIdAction(id: string): Promise<CustomerAddressDTO | null> {
+  try {
+    if (!id || typeof id !== "string") return null;
+    const sessionUser = await requireCustomer();
+    return await getAddressByIdForUser(id, sessionUser.id);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Create a new address for the authenticated customer.
+ * Ignores any client-submitted userId to prevent user spoofing.
  */
 export async function createAddressAction(data: AddressInput) {
   try {
-    if (!data.fullName || !data.street || !data.city || !data.state || !data.zip || !data.phone) {
-      return { success: false, error: "Please fill in all required address fields." };
+    const sessionUser = await requireCustomer();
+
+    const parsed = addressCreateSchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Invalid address data." };
     }
 
-    const id = `addr_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
-    const userId = data.userId || `user_${data.phone.replace(/[^\d]/g, "").slice(-10)}`;
-    const isDefault = Boolean(data.isDefault);
-
-    // Limit to max 4 saved addresses per user
-    const countRes = await query(
-      `SELECT count(*) as count FROM "Address" WHERE "userId" = $1`,
-      [userId]
-    );
-    const existingCount = parseInt(countRes.rows[0]?.count || "0", 10);
-    if (existingCount >= 4) {
-      return { success: false, error: "Maximum 4 saved addresses allowed. Please delete an existing address." };
-    }
-
-    if (isDefault && data.userId) {
-      await query(`UPDATE "Address" SET "isDefault" = false WHERE "userId" = $1`, [data.userId]);
-    }
-
-    const res = await query(
-      `INSERT INTO "Address" (
-        "id", "userId", "fullName", "companyName", "email", "phone",
-        "street", "city", "state", "zip", "country", "type", "isDefault", "createdAt", "updatedAt"
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING *`,
-      [
-        id,
-        userId,
-        data.fullName.trim(),
-        data.companyName?.trim() || null,
-        data.email?.trim() || null,
-        formatDisplayPhone(data.phone),
-        data.street.trim(),
-        data.city.trim(),
-        data.state.trim(),
-        data.zip.trim(),
-        data.country?.trim() || "India",
-        data.type || "Home",
-        isDefault,
-      ]
-    );
+    const address = await createAddressForUser(sessionUser.id, parsed.data as any);
 
     revalidatePath("/profile");
     revalidatePath("/checkout");
 
-    return { success: true, address: res.rows[0] };
+    return { success: true, address };
   } catch (error: any) {
     console.error("Failed to create address:", error);
     return { success: false, error: error.message || "Failed to save address" };
@@ -141,56 +77,32 @@ export async function createAddressAction(data: AddressInput) {
 }
 
 /**
- * Update an existing address
+ * Update an existing address (Strict ownership check: WHERE id = $1 AND userId = $2).
  */
 export async function updateAddressAction(id: string, data: AddressInput) {
   try {
-    if (!data.fullName || !data.street || !data.city || !data.state || !data.zip || !data.phone) {
-      return { success: false, error: "Please fill in all required address fields." };
+    const sessionUser = await requireCustomer();
+
+    const parsedId = idSchema.safeParse(id);
+    if (!parsedId.success) {
+      return { success: false, error: "Invalid address ID." };
     }
 
-    const isDefault = Boolean(data.isDefault);
-
-    if (isDefault && data.userId) {
-      await query(`UPDATE "Address" SET "isDefault" = false WHERE "userId" = $1`, [data.userId]);
+    const parsed = addressCreateSchema.partial().safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Invalid address data." };
     }
 
-    const res = await query(
-      `UPDATE "Address" SET
-        "fullName" = $1,
-        "companyName" = $2,
-        "email" = $3,
-        "phone" = $4,
-        "street" = $5,
-        "city" = $6,
-        "state" = $7,
-        "zip" = $8,
-        "country" = $9,
-        "type" = $10,
-        "isDefault" = $11,
-        "updatedAt" = CURRENT_TIMESTAMP
-       WHERE "id" = $12
-       RETURNING *`,
-      [
-        data.fullName.trim(),
-        data.companyName?.trim() || null,
-        data.email?.trim() || null,
-        data.phone.trim(),
-        data.street.trim(),
-        data.city.trim(),
-        data.state.trim(),
-        data.zip.trim(),
-        data.country?.trim() || "India",
-        data.type || "Home",
-        isDefault,
-        id,
-      ]
-    );
+    const address = await updateAddressForUser(parsedId.data, sessionUser.id, parsed.data as any);
+
+    if (!address) {
+      return { success: false, error: "Address not found." };
+    }
 
     revalidatePath("/profile");
     revalidatePath("/checkout");
 
-    return { success: true, address: res.rows[0] };
+    return { success: true, address };
   } catch (error: any) {
     console.error("Failed to update address:", error);
     return { success: false, error: error.message || "Failed to update address" };
@@ -198,11 +110,23 @@ export async function updateAddressAction(id: string, data: AddressInput) {
 }
 
 /**
- * Delete an address
+ * Delete an address (Strict ownership check: WHERE id = $1 AND userId = $2).
  */
 export async function deleteAddressAction(id: string) {
   try {
-    await query(`DELETE FROM "Address" WHERE "id" = $1`, [id]);
+    const sessionUser = await requireCustomer();
+
+    const parsedId = idSchema.safeParse(id);
+    if (!parsedId.success) {
+      return { success: false, error: "Invalid address ID." };
+    }
+
+    const deleted = await deleteAddressForUser(parsedId.data, sessionUser.id);
+
+    if (!deleted) {
+      return { success: false, error: "Address not found." };
+    }
+
     revalidatePath("/profile");
     revalidatePath("/checkout");
     return { success: true };
@@ -213,18 +137,22 @@ export async function deleteAddressAction(id: string) {
 }
 
 /**
- * Set an address as default
+ * Set an address as default (Strict ownership check: WHERE id = $1 AND userId = $2).
  */
-export async function setDefaultAddressAction(id: string, userId: string) {
+export async function setDefaultAddressAction(id: string, clientUserId?: string) {
   try {
-    await transaction(async (client) => {
-      await client.query(`UPDATE "Address" SET "isDefault" = false WHERE "userId" = $1`, [userId]);
-      await client.query(`UPDATE "Address" SET "isDefault" = true, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $1`, [id]);
-    });
+    const sessionUser = await requireCustomer();
+
+    const parsedId = idSchema.safeParse(id);
+    if (!parsedId.success) {
+      return { success: false, error: "Invalid address ID." };
+    }
+
+    const updated = await setDefaultAddressForUser(parsedId.data, sessionUser.id);
 
     revalidatePath("/profile");
     revalidatePath("/checkout");
-    return { success: true };
+    return { success: updated };
   } catch (error: any) {
     console.error("Failed to set default address:", error);
     return { success: false, error: error.message || "Failed to update default address" };
@@ -232,105 +160,29 @@ export async function setDefaultAddressAction(id: string, userId: string) {
 }
 
 /**
- * Automatically save or update address during Checkout
+ * Automatically save or update address during Checkout (Bound to authenticated session).
  */
-export async function saveAddressFromCheckoutAction(data: {
-  userId?: string;
-  fullName: string;
-  companyName?: string;
-  email?: string;
-  phone: string;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-  country?: string;
-  type?: string;
-  saveAsDefault?: boolean;
-}) {
+export async function saveAddressFromCheckoutAction(data: AddressInput & { saveAsDefault?: boolean }) {
   try {
-    const userId = data.userId || (data.phone ? `user_${data.phone.replace(/[^\d]/g, "").slice(-10)}` : undefined);
-    if (!userId) return { success: false, error: "No user identifier" };
-
-    // Check if an address with same street and zip exists for this user
-    const existing = await query(
-      `SELECT "id" FROM "Address" 
-       WHERE "userId" = $1 AND LOWER(TRIM("street")) = LOWER(TRIM($2)) AND TRIM("zip") = TRIM($3)
-       LIMIT 1`,
-      [userId, data.street, data.zip]
-    );
-
-    if (existing.rows.length > 0) {
-      // Update existing address
-      const res = await query(
-        `UPDATE "Address" SET
-          "fullName" = $1,
-          "companyName" = $2,
-          "email" = $3,
-          "phone" = $4,
-          "city" = $5,
-          "state" = $6,
-          "country" = $7,
-          "type" = COALESCE($8, "type"),
-          "isDefault" = CASE WHEN $9 = true THEN true ELSE "isDefault" END,
-          "updatedAt" = CURRENT_TIMESTAMP
-         WHERE "id" = $10
-         RETURNING *`,
-        [
-          data.fullName.trim(),
-          data.companyName?.trim() || null,
-          data.email?.trim() || null,
-          formatDisplayPhone(data.phone),
-          data.city.trim(),
-          data.state.trim(),
-          data.country?.trim() || "India",
-          data.type || "Home",
-          Boolean(data.saveAsDefault),
-          existing.rows[0].id,
-        ]
-      );
-      return { success: true, address: res.rows[0] };
-    } else {
-      // Check count limit: Maximum 4 saved addresses allowed
-      const countRes = await query(
-        `SELECT count(*) as count FROM "Address" WHERE "userId" = $1`,
-        [userId]
-      );
-      const existingCount = parseInt(countRes.rows[0]?.count || "0", 10);
-      if (existingCount >= 4) {
-        // Skip inserting 5th address to respect max 4 limit
-        return { success: false, error: "Maximum 4 saved addresses reached. Please delete an address to save a new one." };
-      }
-
-      // Insert new address
-      const id = `addr_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
-      if (data.saveAsDefault) {
-        await query(`UPDATE "Address" SET "isDefault" = false WHERE "userId" = $1`, [userId]);
-      }
-      const res = await query(
-        `INSERT INTO "Address" (
-          "id", "userId", "fullName", "companyName", "email", "phone",
-          "street", "city", "state", "zip", "country", "type", "isDefault", "createdAt", "updatedAt"
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        RETURNING *`,
-        [
-          id,
-          userId,
-          data.fullName.trim(),
-          data.companyName?.trim() || null,
-          data.email?.trim() || null,
-          formatDisplayPhone(data.phone),
-          data.street.trim(),
-          data.city.trim(),
-          data.state.trim(),
-          data.zip.trim(),
-          data.country?.trim() || "India",
-          data.type || "Home",
-          Boolean(data.saveAsDefault),
-        ]
-      );
-      return { success: true, address: res.rows[0] };
+    let targetUserId: string | null = null;
+    try {
+      const sessionUser = await requireCustomer();
+      targetUserId = sessionUser.id;
+    } catch {
+      // Unauthenticated guest: do NOT bind to database user accounts
+      targetUserId = null;
     }
+
+    if (!targetUserId) {
+      return { success: true, message: "Guest address not stored in user account." };
+    }
+
+    const address = await saveAddressFromCheckoutForUser(targetUserId, data);
+    if (!address) {
+      return { success: false, error: "Maximum 4 saved addresses reached. Please delete an address to save a new one." };
+    }
+
+    return { success: true, address };
   } catch (error: any) {
     console.error("Failed to save address from checkout:", error);
     return { success: false, error: error.message };

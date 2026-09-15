@@ -1,20 +1,63 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyRazorpayWebhookSignature } from "@/lib/razorpay";
 import { query } from "@/lib/db";
+import { z } from "zod";
+
+const MAX_WEBHOOK_BODY_SIZE = 65536; // 64 KB
+
+const razorpayWebhookEventSchema = z.object({
+  event: z.string().max(100),
+  payload: z.object({
+    payment: z.object({
+      entity: z.object({
+        id: z.string().max(100).optional(),
+        order_id: z.string().max(100).optional(),
+        error_description: z.string().max(500).optional(),
+      }).passthrough().optional(),
+    }).passthrough().optional(),
+    order: z.object({
+      entity: z.object({
+        id: z.string().max(100).optional(),
+      }).passthrough().optional(),
+    }).passthrough().optional(),
+  }).passthrough().optional(),
+}).passthrough();
 
 export async function POST(req: NextRequest) {
   try {
-    const signature = req.headers.get("x-razorpay-signature");
-
-    if (!signature) {
+    const contentType = req.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
       return NextResponse.json(
-        { success: false, error: "Missing x-razorpay-signature header." },
+        { success: false, error: "Content-Type must be application/json." },
+        { status: 415 }
+      );
+    }
+
+    const contentLength = parseInt(req.headers.get("content-length") || "0", 10);
+    if (contentLength > MAX_WEBHOOK_BODY_SIZE) {
+      return NextResponse.json(
+        { success: false, error: "Payload exceeds 64KB limit." },
+        { status: 413 }
+      );
+    }
+
+    const signature = req.headers.get("x-razorpay-signature");
+    if (!signature || signature.length > 128) {
+      return NextResponse.json(
+        { success: false, error: "Missing or invalid x-razorpay-signature header." },
         { status: 400 }
       );
     }
 
     const rawBody = await req.text();
+    if (rawBody.length > MAX_WEBHOOK_BODY_SIZE) {
+      return NextResponse.json(
+        { success: false, error: "Payload exceeds 64KB limit." },
+        { status: 413 }
+      );
+    }
 
+    // Step A: Cryptographically verify webhook signature
     const isValid = verifyRazorpayWebhookSignature(rawBody, signature);
     if (!isValid) {
       console.error("[Razorpay Webhook] Invalid webhook signature rejected.");
@@ -24,7 +67,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const eventData = JSON.parse(rawBody);
+    // Step B: Safe JSON parsing
+    let rawJson: unknown;
+    try {
+      rawJson = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "Malformed JSON payload." },
+        { status: 400 }
+      );
+    }
+
+    // Step C: Schema validation
+    const parsed = razorpayWebhookEventSchema.safeParse(rawJson);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: "Invalid webhook payload structure." },
+        { status: 400 }
+      );
+    }
+
+    const eventData = parsed.data;
     const eventType = eventData.event;
     console.log(`[Razorpay Webhook] Received valid event: ${eventType}`);
 

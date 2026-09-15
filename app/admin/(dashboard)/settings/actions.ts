@@ -2,16 +2,17 @@
 
 import { query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth-checks";
+
+import { storeSettingsSchema, booleanSettingKeys, numericSettingKeys } from "@/lib/validations/settings";
 
 export async function saveSettingsAction(prevState: any, formData: FormData) {
-  const session = await auth();
-  if (!session) {
-    return { success: false, error: "Unauthorized" };
-  }
+  await requireAdmin();
 
   try {
-    const keys = [
+    const rawData: Record<string, any> = {};
+
+    const allowlistedKeys = [
       "store_name",
       "support_email",
       "support_phone",
@@ -40,9 +41,30 @@ export async function saveSettingsAction(prevState: any, formData: FormData) {
       "shiprocket_auto_sync",
     ];
 
-    for (const key of keys) {
+    for (const key of allowlistedKeys) {
       const val = formData.get(key);
-      if (val !== null) {
+      if (booleanSettingKeys.has(key)) {
+        // Form checkbox: unchecked returns null or "false", checked returns "on" or "true"
+        rawData[key] = val === "on" || val === "true" || val === "1";
+      } else if (val !== null) {
+        const strVal = String(val).trim();
+        // Skip empty password so existing credentials are not overwritten
+        if (key === "shiprocket_password" && strVal === "") {
+          continue;
+        }
+        rawData[key] = strVal;
+      }
+    }
+
+    const parsed = storeSettingsSchema.safeParse(rawData);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Invalid settings input." };
+    }
+
+    const validatedSettings = parsed.data;
+
+    for (const [key, val] of Object.entries(validatedSettings)) {
+      if (val !== undefined && val !== null) {
         await query(
           `INSERT INTO "SystemSetting" ("key", "value", "updatedAt") 
            VALUES ($1, $2, CURRENT_TIMESTAMP) 
@@ -66,6 +88,7 @@ export async function saveSettingsAction(prevState: any, formData: FormData) {
 }
 
 export async function testDbConnectionAction() {
+  await requireAdmin();
   const start = Date.now();
   try {
     const res = await query("SELECT NOW() as now, version() as version");

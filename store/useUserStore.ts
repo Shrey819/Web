@@ -22,7 +22,7 @@ export const useUserStore = create<UserStoreState>()(
       isSyncing: false,
 
       login: (user) => {
-        trackUserAction("SIGN_IN", `User logged in as ${user.name} (${user.email})`);
+        trackUserAction("SIGN_IN", `User logged in as ${user.name}`);
         set({ user, isLoggedIn: true });
       },
 

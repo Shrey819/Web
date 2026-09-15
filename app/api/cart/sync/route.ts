@@ -1,12 +1,41 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 
+import { z } from "zod";
+import { idSchema, quantitySchema } from "@/lib/validations/common";
+
+const cartSyncItemSchema = z.object({
+  productId: idSchema.optional(),
+  product: z.object({ id: idSchema }).passthrough().optional(),
+  variantId: z.string().trim().max(64).optional().nullable(),
+  variant: z.object({ id: z.string().trim().max(64) }).passthrough().optional(),
+  quantity: quantitySchema.optional(),
+}).passthrough();
+
+const cartSyncRequestSchema = z.object({
+  items: z.array(cartSyncItemSchema).max(100, "Maximum 100 cart items allowed").default([]),
+});
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const items = body.items || [];
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Malformed JSON payload." }, { status: 400 });
+    }
 
-    if (!Array.isArray(items) || items.length === 0) {
+    const parsed = cartSyncRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Invalid cart sync request." },
+        { status: 400 }
+      );
+    }
+
+    const items = parsed.data.items;
+
+    if (items.length === 0) {
       return NextResponse.json({ items: [] });
     }
 

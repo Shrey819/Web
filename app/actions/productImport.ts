@@ -4,6 +4,7 @@ import { transaction, query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import * as XLSX from "xlsx";
+import { requireAdmin } from "@/lib/auth-checks";
 import {
   cleanVal,
   generateSlug,
@@ -25,6 +26,7 @@ export async function downloadImportSampleTemplate(format: "csv" | "xlsx" = "csv
   error?: string;
 }> {
   try {
+    await requireAdmin();
     const headers = [
       // 1) Product Name
       "Product Name",
@@ -269,13 +271,20 @@ export async function previewProductsImportAction(params: {
   shouldAutoAlign?: boolean;
 }): Promise<PreviewImportResult> {
   try {
+    await requireAdmin();
     let headers: string[] = [];
     let rows: string[][] = [];
 
     if (params.rawGridHeaders && params.rawGridRows) {
+      if (params.rawGridRows.length > 1000) {
+        return { success: false, error: "Maximum limit of 1,000 product rows exceeded." };
+      }
       headers = params.rawGridHeaders;
       rows = params.rawGridRows;
     } else if (params.fileBase64) {
+      if (params.fileBase64.length > 7000000) {
+        return { success: false, error: "Uploaded spreadsheet exceeds maximum allowed size of 5MB." };
+      }
       const buffer = Buffer.from(params.fileBase64, "base64");
       const wb = XLSX.read(buffer, { type: "buffer" });
       const sheetName = wb.SheetNames[0];
@@ -285,6 +294,9 @@ export async function previewProductsImportAction(params: {
 
       if (rawData.length < 2) {
         return { success: false, error: "The file is empty or missing data rows." };
+      }
+      if (rawData.length > 1001) {
+        return { success: false, error: "Spreadsheet exceeds maximum limit of 1,000 product rows per import." };
       }
 
       headers = rawData[0].map((h) => cleanVal(h));
@@ -595,13 +607,20 @@ export async function importProductsAction(options: ImportOptions): Promise<{
   error?: string;
 }> {
   try {
+    await requireAdmin();
     let rawHeaders: string[] = [];
     let rawRows: string[][] = [];
 
     if (options.rawGridHeaders && options.rawGridRows) {
+      if (options.rawGridRows.length > 1000) {
+        return { success: false, error: "Maximum limit of 1,000 product rows exceeded." };
+      }
       rawHeaders = options.rawGridHeaders;
       rawRows = options.rawGridRows;
     } else if (options.fileBase64) {
+      if (options.fileBase64.length > 7000000) {
+        return { success: false, error: "Uploaded spreadsheet exceeds maximum allowed size of 5MB." };
+      }
       const buffer = Buffer.from(options.fileBase64, "base64");
       const wb = XLSX.read(buffer, { type: "buffer" });
       const sheetName = wb.SheetNames[0];
@@ -613,6 +632,9 @@ export async function importProductsAction(options: ImportOptions): Promise<{
 
       if (data.length < 2) {
         return { success: false, error: "The uploaded file is empty or missing data rows." };
+      }
+      if (data.length > 1001) {
+        return { success: false, error: "Spreadsheet exceeds maximum limit of 1,000 product rows per import." };
       }
 
       rawHeaders = data[0].map((h) => cleanVal(h));

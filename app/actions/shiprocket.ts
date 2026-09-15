@@ -2,7 +2,7 @@
 
 import { query, transaction } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
+import { requireAdmin, requireCustomer } from "@/lib/auth-checks";
 import {
   checkCourierServiceability,
   createShiprocketAdhocOrder,
@@ -42,7 +42,7 @@ export async function checkPincodeServiceabilityAction(
   rate?: number;
   message?: string;
 }> {
-  const pin = deliveryPincode.trim();
+  const pin = typeof deliveryPincode === "string" ? deliveryPincode.trim() : "";
   if (!/^\d{6}$/.test(pin)) {
     return {
       success: false,
@@ -50,6 +50,8 @@ export async function checkPincodeServiceabilityAction(
       message: "Please enter a valid 6-digit Indian PIN code.",
     };
   }
+
+  const cleanWeight = typeof weight === "number" && isFinite(weight) && weight > 0 && weight <= 1000 ? weight : 0.5;
 
   const settings = await getSystemSettings();
 
@@ -72,7 +74,7 @@ export async function checkPincodeServiceabilityAction(
     const result = await checkCourierServiceability({
       pickup_postcode: settings.shiprocket_pickup_pincode,
       delivery_postcode: pin,
-      weight,
+      weight: cleanWeight,
       cod: isCod,
     });
 
@@ -111,8 +113,7 @@ export async function checkPincodeServiceabilityAction(
  * Admin: Get all registered pickup locations from Shiprocket
  */
 export async function adminGetShiprocketPickupLocationsAction() {
-  const session = await auth();
-  if (!session) return { success: false, error: "Unauthorized", pickupLocations: [] };
+  await requireAdmin();
   try {
     const locations = await getShiprocketPickupLocations();
     const primary = locations.find((l) => l.is_primary_location) || locations[0];
@@ -142,8 +143,7 @@ export async function adminGetShiprocketRatesForOrderAction(
     pickupLocation?: string;
   }
 ) {
-  const session = await auth();
-  if (!session) return { success: false, error: "Unauthorized" };
+  await requireAdmin();
 
   try {
     const orderRes = await query(
@@ -229,8 +229,7 @@ export async function adminCreateShiprocketShipmentAction(
     deliveryPincode?: string;
   }
 ) {
-  const session = await auth();
-  if (!session) return { success: false, error: "Unauthorized" };
+  await requireAdmin();
 
   try {
     const orderRes = await query(
@@ -249,7 +248,7 @@ export async function adminCreateShiprocketShipmentAction(
 
     const order = orderRes.rows[0];
     const itemsRes = await query(
-      `SELECT * FROM "OrderItem" WHERE "orderId" = $1 ORDER BY "createdAt" ASC`,
+      `SELECT "id", "name", "sku", "quantity", "price" FROM "OrderItem" WHERE "orderId" = $1 ORDER BY "createdAt" ASC`,
       [orderId]
     );
 
@@ -398,8 +397,7 @@ export async function adminCreateShiprocketShipmentAction(
  * Admin: Assign AWB to an Existing Shiprocket Shipment
  */
 export async function adminAssignAWBAction(orderId: string, courierId?: number) {
-  const session = await auth();
-  if (!session) return { success: false, error: "Unauthorized" };
+  await requireAdmin();
 
   try {
     const shipRes = await query(
@@ -435,8 +433,7 @@ export async function adminAssignAWBAction(orderId: string, courierId?: number) 
  * Admin: Request Courier Pickup
  */
 export async function adminRequestPickupAction(orderId: string) {
-  const session = await auth();
-  if (!session) return { success: false, error: "Unauthorized" };
+  await requireAdmin();
 
   try {
     const shipRes = await query(
@@ -469,8 +466,7 @@ export async function adminRequestPickupAction(orderId: string) {
  * Admin: Generate Printable Shipping Label (PDF)
  */
 export async function adminGenerateLabelAction(orderId: string) {
-  const session = await auth();
-  if (!session) return { success: false, error: "Unauthorized" };
+  await requireAdmin();
 
   try {
     const shipRes = await query(
@@ -503,9 +499,67 @@ export async function adminGenerateLabelAction(orderId: string) {
 }
 
 /**
- * Admin / Customer: Generate Tax Invoice (PDF)
+ * Customer: Get / Generate Tax Invoice for OWN order (Strict Ownership Guard)
+ */
+export async function getCustomerOrderInvoiceAction(orderId: string) {
+  try {
+    const user = await requireCustomer();
+    if (!orderId || typeof orderId !== "string" || orderId.length > 64) {
+      return { success: false, error: "Order not found." };
+    }
+
+    // Verify ownership in database
+    const orderRes = await query(
+      `SELECT "userId" FROM "Order" WHERE "id" = $1 LIMIT 1`,
+      [orderId]
+    );
+
+    if (orderRes.rows.length === 0) {
+      return { success: false, error: "Order not found." };
+    }
+
+    if (user.role !== "ADMIN" && orderRes.rows[0].userId !== user.id) {
+      return { success: false, error: "Order not found." };
+    }
+
+    const shipRes = await query(
+      `SELECT "shiprocketOrderId", "invoiceUrl" FROM "Shipment" WHERE "orderId" = $1 LIMIT 1`,
+      [orderId]
+    );
+
+    const existingInvoice = shipRes.rows[0]?.invoiceUrl;
+    if (existingInvoice) {
+      return { success: true, invoiceUrl: existingInvoice };
+    }
+
+    const srOrderId = shipRes.rows[0]?.shiprocketOrderId;
+    if (!srOrderId) {
+      return { success: false, error: "Logistics invoice is still being processed. Please check back shortly." };
+    }
+
+    const res = await generateShiprocketInvoice([srOrderId]);
+
+    await query(
+      `UPDATE "Shipment" SET "invoiceUrl" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "orderId" = $2`,
+      [res.invoice_url, orderId]
+    );
+
+    revalidatePath("/orders");
+    revalidatePath(`/orders/${orderId}`);
+
+    return { success: true, invoiceUrl: res.invoice_url };
+  } catch (error: any) {
+    console.error("Failed to generate customer invoice:", error);
+    return { success: false, error: error?.message || "Failed to generate invoice" };
+  }
+}
+
+/**
+ * Admin: Generate Tax Invoice (PDF)
  */
 export async function adminGenerateInvoiceAction(orderId: string) {
+  await requireAdmin();
+
   try {
     const shipRes = await query(
       `SELECT "shiprocketOrderId", "invoiceUrl" FROM "Shipment" WHERE "orderId" = $1 LIMIT 1`,
@@ -543,8 +597,7 @@ export async function adminGenerateInvoiceAction(orderId: string) {
  * Admin: Generate Manifest (PDF)
  */
 export async function adminGenerateManifestAction(orderId: string) {
-  const session = await auth();
-  if (!session) return { success: false, error: "Unauthorized" };
+  await requireAdmin();
 
   try {
     const shipRes = await query(
@@ -577,7 +630,7 @@ export async function adminGenerateManifestAction(orderId: string) {
 }
 
 /**
- * Real-Time Courier Tracking (Admin & Public)
+ * Real-Time Courier Tracking (Admin & Customer Ownership-Verified)
  */
 export async function getLiveOrderTrackingAction(orderIdOrAwb: string): Promise<{
   success: boolean;
@@ -588,20 +641,49 @@ export async function getLiveOrderTrackingAction(orderIdOrAwb: string): Promise<
   error?: string;
 }> {
   try {
+    if (!orderIdOrAwb || typeof orderIdOrAwb !== "string") {
+      return { success: false, error: "Invalid tracking reference." };
+    }
+
+    const cleanInput = orderIdOrAwb.trim();
+
+    // Verify ownership if this reference links to an Order in the DB
+    const orderCheck = await query(
+      `SELECT o."userId" 
+       FROM "Order" o
+       LEFT JOIN "Shipment" s ON o."id" = s."orderId"
+       WHERE o."id" = $1 OR s."shiprocketOrderId" = $1 OR s."awbCode" = $1
+       LIMIT 1`,
+      [cleanInput]
+    );
+
+    if (orderCheck.rows.length > 0 && orderCheck.rows[0].userId) {
+      let callerUser;
+      try {
+        callerUser = await requireCustomer();
+      } catch {
+        return { success: false, error: "Authentication required to track this order." };
+      }
+
+      if (callerUser.role !== "ADMIN" && callerUser.id !== orderCheck.rows[0].userId) {
+        return { success: false, error: "Order not found." };
+      }
+    }
+
     // 1. Check if order exists in DB to retrieve AWB
     const res = await query(
-      `SELECT s.* FROM "Shipment" s 
+      `SELECT s."awbCode", s."trackingNumber", s."shiprocketOrderId" FROM "Shipment" s 
        WHERE s."orderId" = $1 OR s."awbCode" = $1 OR s."trackingNumber" = $1 
        LIMIT 1`,
-      [orderIdOrAwb]
+      [cleanInput]
     );
 
     let awbCode = res.rows[0]?.awbCode || res.rows[0]?.trackingNumber;
     let srOrderId = res.rows[0]?.shiprocketOrderId;
 
     // If param itself looks like an AWB code (numeric / alphanumeric > 8 chars)
-    if (!awbCode && orderIdOrAwb.length >= 8) {
-      awbCode = orderIdOrAwb;
+    if (!awbCode && cleanInput.length >= 8) {
+      awbCode = cleanInput;
     }
 
     let tracking: TrackingResult | null = null;
@@ -662,8 +744,7 @@ export async function getLiveOrderTrackingAction(orderIdOrAwb: string): Promise<
  * Test Shiprocket Connection Action (For Admin Settings UI)
  */
 export async function testShiprocketAuthAction() {
-  const session = await auth();
-  if (!session) return { success: false, error: "Unauthorized" };
+  await requireAdmin();
 
   return testShiprocketConnection();
 }

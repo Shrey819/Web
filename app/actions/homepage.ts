@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { updateHomepageData } from "@/lib/homepage-server";
 import { HomepageData } from "@/lib/homepage";
+import { requireAdmin } from "@/lib/auth-checks";
 
 export async function saveHomepageConfigAction(data: Partial<HomepageData>) {
+  await requireAdmin();
   try {
     const res = await updateHomepageData(data);
     if (res.success) {

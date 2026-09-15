@@ -187,3 +187,36 @@ export interface Order {
 
 export * from "./auth";
 
+export interface AddressItem {
+  id: string;
+  userId: string;
+  fullName: string;
+  companyName?: string | null;
+  email?: string | null;
+  phone: string;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  type: string;
+  isDefault: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AddressInput {
+  userId?: string;
+  fullName: string;
+  companyName?: string | null;
+  email?: string | null;
+  phone: string;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  country?: string | null;
+  type?: string | null;
+  isDefault?: boolean;
+}
+

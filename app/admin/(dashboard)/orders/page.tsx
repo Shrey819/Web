@@ -1,5 +1,3 @@
-"use server";
-
 import { getAllOrdersAdminAction } from "@/app/actions/order";
 import { AdminOrdersClient } from "./AdminOrdersClient";
 

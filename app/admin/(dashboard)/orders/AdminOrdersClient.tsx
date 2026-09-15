@@ -50,13 +50,13 @@ import Link from "next/link";
 interface OrderItem {
   id: string;
   productId?: string;
-  variantId?: string;
+  variantId?: string | null;
   name: string;
   sku: string;
   price: number;
   quantity: number;
   attributes?: { name: string; value: string }[];
-  buyerNote?: string;
+  buyerNote?: string | null;
 }
 
 interface OrderRow {
@@ -67,31 +67,31 @@ interface OrderRow {
   shippingCost: number;
   total: number;
   shippingFullName: string;
-  shippingCompany?: string;
-  shippingStreet?: string;
-  shippingCity?: string;
-  shippingState?: string;
-  shippingZip?: string;
-  shippingCountry?: string;
-  shippingPhone?: string;
+  shippingCompany?: string | null;
+  shippingStreet?: string | null;
+  shippingCity?: string | null;
+  shippingState?: string | null;
+  shippingZip?: string | null;
+  shippingCountry?: string | null;
+  shippingPhone?: string | null;
   createdAt: string;
   paymentMethod: string;
-  originalPaymentMethod?: string;
+  originalPaymentMethod?: string | null;
   paymentReference: string;
-  paymentStatus?: string;
+  paymentStatus?: string | null;
   carrier: string;
   trackingNumber: string;
-  shiprocketOrderId?: string;
-  shiprocketShipmentId?: string;
-  awbCode?: string;
-  courierName?: string;
-  labelUrl?: string;
-  invoiceUrl?: string;
-  manifestUrl?: string;
-  pickupTokenNumber?: string;
+  shiprocketOrderId?: string | null;
+  shiprocketShipmentId?: string | null;
+  awbCode?: string | null;
+  courierName?: string | null;
+  labelUrl?: string | null;
+  invoiceUrl?: string | null;
+  manifestUrl?: string | null;
+  pickupTokenNumber?: string | null;
   pickupScheduledDate?: string | null;
-  etd?: string;
-  shipmentCurrentStatus?: string;
+  etd?: string | null;
+  shipmentCurrentStatus?: string | null;
   trackingData?: any;
   itemCount: number;
   items?: OrderItem[];
@@ -254,13 +254,14 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderRow[]
     setUpdatingPaymentOrderId(orderId);
     try {
       const res = await updateOrderPaymentMethodAction(orderId, newMethod);
-      if (res.success && res.paymentMethod) {
+      const updatedPaymentMethod = res.paymentMethod;
+      if (res.success && updatedPaymentMethod) {
         setOrders((prev) =>
           prev.map((o) =>
             o.id === orderId
               ? {
                   ...o,
-                  paymentMethod: res.paymentMethod,
+                  paymentMethod: updatedPaymentMethod,
                   paymentStatus: res.paymentStatus || (newMethod === "cod" ? "pending_cod" : "paid"),
                 }
               : o
@@ -271,7 +272,7 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderRow[]
             prev
               ? {
                   ...prev,
-                  paymentMethod: res.paymentMethod,
+                  paymentMethod: updatedPaymentMethod,
                   paymentStatus: res.paymentStatus || (newMethod === "cod" ? "pending_cod" : "paid"),
                 }
               : null
@@ -367,7 +368,7 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderRow[]
         length: parcelLength,
         breadth: parcelBreadth,
         height: parcelHeight,
-        deliveryPincode: customDeliveryPin || shippingOrder.shippingZip,
+        deliveryPincode: customDeliveryPin || shippingOrder.shippingZip || undefined,
         pickupLocation: selectedPickupLocation,
         pickupPincode: selectedPickupPincode,
         autoAssignAwb: true,
@@ -433,7 +434,7 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderRow[]
         length: parcelLength,
         breadth: parcelBreadth,
         height: parcelHeight,
-        deliveryPincode: customDeliveryPin || shippingOrder.shippingZip,
+        deliveryPincode: customDeliveryPin || shippingOrder.shippingZip || undefined,
         pickupLocation: selectedPickupLocation,
         pickupPincode: selectedPickupPincode,
       });

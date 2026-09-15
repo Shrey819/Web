@@ -2,6 +2,7 @@
 
 import { query } from "@/lib/db";
 import * as XLSX from "xlsx";
+import { requireAdmin } from "@/lib/auth-checks";
 
 interface ExportOptions {
   scope: "all" | "filtered" | "selected";
@@ -16,7 +17,17 @@ interface ExportOptions {
 
 function escapeCsvCell(value: unknown): string {
   if (value === null || value === undefined) return "";
-  const str = String(value);
+  let str = String(value);
+  // Neutralize CSV Formula Injection: prevent spreadsheet execution of =, +, -, @
+  const trimmed = str.trimStart();
+  if (
+    trimmed.startsWith("=") ||
+    trimmed.startsWith("+") ||
+    trimmed.startsWith("-") ||
+    trimmed.startsWith("@")
+  ) {
+    str = "'" + str;
+  }
   if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r") || str.includes(";")) {
     return `"${str.replace(/"/g, '""')}"`;
   }
@@ -101,14 +112,16 @@ const EXCEL_PRODUCT_HEADERS = [
 
 export async function exportProductsToCSV(options: ExportOptions): Promise<{
   success: boolean;
-  format?: "xlsx" | "csv";
+  format?: "csv" | "xlsx";
   csvContent?: string;
   xlsxBase64?: string;
   filename?: string;
   totalProducts?: number;
+  count?: number;
   error?: string;
 }> {
   try {
+    await requireAdmin();
     const { scope, selectedIds = [], filteredIds = [] } = options;
 
     let whereClause = `WHERE 1=1`;

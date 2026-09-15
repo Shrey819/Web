@@ -3,6 +3,7 @@
 import { query, transaction } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
+import { requireAdmin } from "@/lib/auth-checks";
 
 const generateId = () => "cat_" + crypto.randomBytes(6).toString("hex");
 
@@ -19,18 +20,22 @@ function generateSlug(name: string): string {
  */
 export async function createCategory(name: string, description?: string) {
   try {
-    if (!name || name.trim().length < 2) {
+    await requireAdmin();
+    if (!name || typeof name !== "string" || name.trim().length < 2) {
       return { success: false, error: "Category name must be at least 2 characters." };
     }
 
-    const slug = generateSlug(name);
+    const cleanName = name.trim().slice(0, 100);
+    const cleanDesc = description && typeof description === "string" ? description.trim().slice(0, 1000) : null;
+
+    const slug = generateSlug(cleanName);
     const id = generateId();
 
     await query(`
       INSERT INTO "Category" ("id", "name", "slug", "description", "status", "sortOrder", "createdAt", "updatedAt")
       VALUES ($1, $2, $3, $4, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       ON CONFLICT ("slug") DO UPDATE SET "name" = EXCLUDED."name", "description" = EXCLUDED."description"
-    `, [id, name.trim(), slug, description?.trim() || null]);
+    `, [id, cleanName, slug, cleanDesc]);
 
     revalidatePath("/admin/categories");
     revalidatePath("/admin/products");
@@ -48,17 +53,23 @@ export async function createCategory(name: string, description?: string) {
  */
 export async function updateCategory(id: string, name: string, description?: string) {
   try {
-    if (!name || name.trim().length < 2) {
+    await requireAdmin();
+    if (!id || typeof id !== "string" || id.length > 64) {
+      return { success: false, error: "Invalid category ID." };
+    }
+    if (!name || typeof name !== "string" || name.trim().length < 2) {
       return { success: false, error: "Category name must be at least 2 characters." };
     }
 
-    const slug = generateSlug(name);
+    const cleanName = name.trim().slice(0, 100);
+    const cleanDesc = description && typeof description === "string" ? description.trim().slice(0, 1000) : null;
+    const slug = generateSlug(cleanName);
 
     await query(`
       UPDATE "Category" 
       SET "name" = $1, "slug" = $2, "description" = $3, "updatedAt" = CURRENT_TIMESTAMP
       WHERE "id" = $4
-    `, [name.trim(), slug, description?.trim() || null, id]);
+    `, [cleanName, slug, cleanDesc, id.trim()]);
 
     revalidatePath("/admin/categories");
     revalidatePath("/admin/products");
@@ -76,12 +87,17 @@ export async function updateCategory(id: string, name: string, description?: str
  */
 export async function toggleCategoryVisibility(id: string, isHidden: boolean) {
   try {
-    const newStatus = isHidden ? "hidden" : "active";
+    await requireAdmin();
+    if (!id || typeof id !== "string" || id.length > 64) {
+      return { success: false, error: "Invalid category ID." };
+    }
+
+    const newStatus = Boolean(isHidden) ? "hidden" : "active";
     await query(`
       UPDATE "Category"
       SET "status" = $1, "updatedAt" = CURRENT_TIMESTAMP
       WHERE "id" = $2 OR "slug" = $2
-    `, [newStatus, id]);
+    `, [newStatus, id.trim()]);
 
     revalidatePath("/admin/categories");
     revalidatePath("/admin/products");
@@ -124,6 +140,7 @@ export async function getCategoryProductCount(categoryId: string): Promise<numbe
  */
 export async function deleteCategoryWithReassignment(categoryIdToDelete: string, targetCategoryId?: string) {
   try {
+    await requireAdmin();
     // 1. Resolve category to delete
     const delRes = await query(`
       SELECT id, slug, name 
@@ -272,16 +289,23 @@ export async function deleteCategoryWithReassignment(categoryIdToDelete: string,
  * DELETE CATEGORY (Legacy / Simple check)
  */
 export async function deleteCategory(id: string) {
-  const count = await getCategoryProductCount(id);
-  if (count > 0) {
-    return { 
-      success: false, 
-      hasProducts: true,
-      productCount: count,
-      error: `Cannot delete directly: ${count} product(s) associated with this category.` 
-    };
+  try {
+    await requireAdmin();
+    const count = await getCategoryProductCount(id);
+    if (count > 0) {
+      return { 
+        success: false, 
+        hasProducts: true,
+        productCount: count,
+        error: `Cannot delete directly: ${count} product(s) associated with this category.` 
+      };
+    }
+    return deleteCategoryWithReassignment(id);
+  } catch (error) {
+    console.error("Failed to delete category:", error);
+    const message = error instanceof Error ? error.message : "Failed to delete category";
+    return { success: false, error: message };
   }
-  return deleteCategoryWithReassignment(id);
 }
 
 export interface CategoryProduct {

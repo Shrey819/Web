@@ -1,6 +1,7 @@
 "use server";
 
 import { v2 as cloudinary } from "cloudinary";
+import { requireAdmin } from "@/lib/auth-checks";
 
 // Configure Cloudinary using credentials from environment variables
 cloudinary.config({
@@ -11,6 +12,7 @@ cloudinary.config({
 });
 
 export async function getCloudinarySignature() {
+  await requireAdmin();
   const timestamp = Math.round(new Date().getTime() / 1000);
   const signature = cloudinary.utils.api_sign_request(
     { timestamp, folder: "propel_products" },

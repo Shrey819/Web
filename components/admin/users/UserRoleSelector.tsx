@@ -51,11 +51,8 @@ export function UserRoleSelector({ userId, currentRole, isSelf }: UserRoleSelect
           value={role}
           onChange={handleRoleChange}
           disabled={loading || isSelf}
-          className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-semibold rounded-lg px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 disabled:opacity-50 cursor-pointer"
         >
-          <option value="SUPER_ADMIN">SUPER ADMIN</option>
           <option value="ADMIN">ADMIN</option>
-          <option value="CATALOG_MANAGER">CATALOG MANAGER</option>
           <option value="CUSTOMER">CUSTOMER</option>
         </select>
         {loading && (

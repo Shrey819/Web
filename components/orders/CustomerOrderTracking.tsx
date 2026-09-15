@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Download, Loader2, Navigation, Truck, CheckCircle2, Clock, Package } from "lucide-react";
-import { adminGenerateInvoiceAction } from "@/app/actions/shiprocket";
+import { getCustomerOrderInvoiceAction } from "@/app/actions/shiprocket";
 
 interface CustomerOrderTrackingProps {
   orderId: string;
@@ -32,7 +32,7 @@ export function CustomerOrderTracking({
 
     setDownloadingInvoice(true);
     try {
-      const res = await adminGenerateInvoiceAction(orderId);
+      const res = await getCustomerOrderInvoiceAction(orderId);
       if (res.success && res.invoiceUrl) {
         setInvoiceUrl(res.invoiceUrl);
         window.open(res.invoiceUrl, "_blank");

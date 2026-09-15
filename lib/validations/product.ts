@@ -85,9 +85,9 @@ export const technicalSupportLinkSchema = z.object({
 
 export const productFormSchema = z.object({
   id: z.string().nullish(),
-  name: z.string().min(1, "Product name is required").max(100, "Product name cannot exceed 100 characters"),
+  name: z.string().trim().min(1, "Product name is required").max(80, "Product name cannot exceed 80 characters"),
   slug: z.string().nullish().default(""),
-  description: z.string().nullish().default(""),
+  description: z.string().max(50000, "Description cannot exceed 50,000 characters").nullish().default(""),
   
   // Visibility
   visible: z.boolean().default(true),

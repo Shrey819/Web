@@ -4,6 +4,12 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { trackUserAction } from "@/lib/trackerClient";
 import { useUserStore } from "@/store/useUserStore";
+import { isSensitivePath, sanitizePath, maskEmail } from "@/lib/tracker-utils";
+
+function getCleanPath(path: string): string {
+  if (!path) return "/";
+  return path.split("?")[0].split("#")[0] || "/";
+}
 
 function getOrCreateSessionId(): string {
   if (typeof window === "undefined") return "";
@@ -48,7 +54,8 @@ function detectBrowserAndOS() {
 }
 
 export function UserTracker() {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const pathname = getCleanPath(rawPathname);
   const pageStartTimeRef = useRef<number>(Date.now());
   const prevPathnameRef = useRef<string>(pathname);
   const sessionIdRef = useRef<string>("");
@@ -56,11 +63,14 @@ export function UserTracker() {
   const lastTrackedClickRef = useRef<{ text: string; time: number }>({ text: "", time: 0 });
   const scrollMilestonesRef = useRef<Set<number>>(new Set());
 
-  // 1. Heartbeat & Session Lifecycle
+  // 1. Heartbeat & Session Lifecycle (Skip completely on sensitive routes)
   useEffect(() => {
+    if (isSensitivePath(pathname)) return;
+
     sessionIdRef.current = getOrCreateSessionId();
     const { browser, os } = detectBrowserAndOS();
     const deviceType = detectDeviceType();
+    const maskedUserEmail = user?.email ? maskEmail(user.email) : undefined;
 
     // Initial heartbeat ping
     const sendInitialPing = () => {
@@ -71,8 +81,7 @@ export function UserTracker() {
         browser,
         os,
         userName: user?.name,
-        userEmail: user?.email,
-        userId: user?.id,
+        userEmail: maskedUserEmail,
         clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         pageDurationSeconds: 0,
       };
@@ -84,7 +93,7 @@ export function UserTracker() {
           "ngrok-skip-browser-warning": "69420",
         },
         body: JSON.stringify(payload),
-      }).catch((e) => console.error("Tracker initial ping error:", e));
+      }).catch(() => {});
     };
 
     sendInitialPing();
@@ -99,8 +108,7 @@ export function UserTracker() {
         browser,
         os,
         userName: user?.name,
-        userEmail: user?.email,
-        userId: user?.id,
+        userEmail: maskedUserEmail,
         clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         pageDurationSeconds: durationSeconds,
       };
@@ -116,7 +124,7 @@ export function UserTracker() {
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [pathname, user]);
 
   // 2. Track Route Changes
   useEffect(() => {
@@ -129,8 +137,11 @@ export function UserTracker() {
     prevPathnameRef.current = pathname;
     scrollMilestonesRef.current.clear();
 
+    if (isSensitivePath(pathname)) return;
+
     const { browser, os } = detectBrowserAndOS();
     const deviceType = detectDeviceType();
+    const maskedUserEmail = user?.email ? maskEmail(user.email) : undefined;
 
     const payload = {
       sessionId: sessionIdRef.current,
@@ -139,10 +150,9 @@ export function UserTracker() {
       browser,
       os,
       userName: user?.name,
-      userEmail: user?.email,
-      userId: user?.id,
+      userEmail: maskedUserEmail,
       clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      previousPage,
+      previousPage: isSensitivePath(previousPage) ? undefined : previousPage,
       previousPageDuration,
       pageDurationSeconds: 0,
     };
@@ -157,10 +167,12 @@ export function UserTracker() {
     }).catch(() => {});
 
     trackUserAction("NAVIGATE", `Navigated to ${pathname}`);
-  }, [pathname]);
+  }, [pathname, user]);
 
   // 3. Track Page Unload
   useEffect(() => {
+    if (isSensitivePath(pathname)) return;
+
     const handleUnload = () => {
       const previousPageDuration = Math.floor((Date.now() - pageStartTimeRef.current) / 1000);
       const payload = JSON.stringify({
@@ -190,6 +202,9 @@ export function UserTracker() {
   // 4. Global Smart Click & Tap Telemetry
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
+      // Exclude clicks on sensitive paths
+      if (isSensitivePath(window.location.pathname)) return;
+
       const target = e.target as HTMLElement | null;
       if (!target) return;
 
@@ -197,12 +212,30 @@ export function UserTracker() {
       const interactiveEl = target.closest("button, a, input, select, textarea, [role='button'], [data-track]") as HTMLElement | null;
       if (!interactiveEl) return;
 
-      // Skip internal admin tracker clicks to avoid feedback loops
-      if (window.location.pathname.startsWith("/admin/live-tracker")) return;
-
       const tagName = interactiveEl.tagName.toLowerCase();
-      let label = "";
 
+      // STRICT PRIVACY: Ignore password, hidden, credit card, and token inputs
+      if (tagName === "input") {
+        const inputEl = interactiveEl as HTMLInputElement;
+        const type = (inputEl.type || "").toLowerCase();
+        const name = (inputEl.name || "").toLowerCase();
+        const autocomplete = (inputEl.autocomplete || "").toLowerCase();
+        if (
+          type === "password" ||
+          type === "hidden" ||
+          name.includes("pass") ||
+          name.includes("card") ||
+          name.includes("cvv") ||
+          name.includes("token") ||
+          name.includes("secret") ||
+          autocomplete.includes("password") ||
+          autocomplete.includes("cc-")
+        ) {
+          return;
+        }
+      }
+
+      let label = "";
       const ariaLabel = interactiveEl.getAttribute("aria-label") || interactiveEl.getAttribute("title");
       const textContent = interactiveEl.textContent?.trim().replace(/\s+/g, " ");
 
@@ -211,7 +244,7 @@ export function UserTracker() {
       } else if (textContent && textContent.length < 80) {
         label = textContent;
       } else if (tagName === "input") {
-        label = (interactiveEl as HTMLInputElement).placeholder || (interactiveEl as HTMLInputElement).name || "Search Field";
+        label = (interactiveEl as HTMLInputElement).placeholder || "Form Input";
       }
 
       if (!label) return;
@@ -224,13 +257,21 @@ export function UserTracker() {
       lastTrackedClickRef.current = { text: label, time: now };
 
       const href = interactiveEl.getAttribute("href");
-      if (href && (href.startsWith("/product/") || href.startsWith("/products/"))) {
-        trackUserAction("PRODUCT_CLICK", `Viewed Product: "${label}" (${href})`);
-      } else if (href && href.startsWith("/category/")) {
-        trackUserAction("CATEGORY_CLICK", `Browsed Category: "${label}" (${href})`);
-      } else if (href && (href.startsWith("tel:") || href.startsWith("mailto:") || href.includes("whatsapp.com"))) {
-        trackUserAction("CONTACT_CLICK", `Clicked Contact Link: "${label}" (${href})`);
-      } else if (tagName === "button" || interactiveEl.getAttribute("role") === "button") {
+      if (href) {
+        const cleanHref = href.split("?")[0];
+        if (cleanHref.startsWith("/product/") || cleanHref.startsWith("/products/")) {
+          trackUserAction("PRODUCT_CLICK", `Viewed Product: "${label}" (${cleanHref})`);
+          return;
+        } else if (cleanHref.startsWith("/category/")) {
+          trackUserAction("CATEGORY_CLICK", `Browsed Category: "${label}" (${cleanHref})`);
+          return;
+        } else if (href.startsWith("tel:") || href.startsWith("mailto:") || href.includes("whatsapp.com")) {
+          trackUserAction("CONTACT_CLICK", `Clicked Contact CTA: "${label}"`);
+          return;
+        }
+      }
+
+      if (tagName === "button" || interactiveEl.getAttribute("role") === "button") {
         trackUserAction("CLICK", `Clicked Button: "${label}"`);
       } else {
         trackUserAction("CLICK", `Clicked: "${label}"`);
@@ -243,6 +284,8 @@ export function UserTracker() {
 
   // 5. Scroll Depth Tracking (25%, 50%, 75%, 100%)
   useEffect(() => {
+    if (isSensitivePath(pathname)) return;
+
     let scrollTimer: NodeJS.Timeout | null = null;
 
     const handleScroll = () => {
@@ -260,7 +303,7 @@ export function UserTracker() {
         for (const milestone of milestones) {
           if (percent >= milestone && !scrollMilestonesRef.current.has(milestone)) {
             scrollMilestonesRef.current.add(milestone);
-            trackUserAction("SCROLL_DEPTH", `Scrolled ${milestone}% of ${window.location.pathname}`);
+            trackUserAction("SCROLL_DEPTH", `Scrolled ${milestone}% of ${pathname}`);
           }
         }
       }, 500);
@@ -275,6 +318,8 @@ export function UserTracker() {
 
   // 6. Throttled Hover / Product Card Attention Telemetry
   useEffect(() => {
+    if (isSensitivePath(pathname)) return;
+
     let hoverTimeout: NodeJS.Timeout | null = null;
     let currentHoverTarget: HTMLElement | null = null;
 

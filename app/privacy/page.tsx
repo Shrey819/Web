@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Metadata } from "next";
 import { ChevronRight, Receipt, RotateCcw, Percent, CheckCircle2 } from "lucide-react";
 
-import { getSystemSettings } from "@/lib/settings";
+import { getPublicSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | OM AUTOMATION",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PrivacyPage() {
-  const settings = await getSystemSettings();
+  const settings = await getPublicSettings();
   return (
     <div className="bg-[#faf9f5] min-h-screen text-slate-800 font-sans">
       {/* Breadcrumb Navigation */}

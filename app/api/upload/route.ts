@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import { requireAdminApi } from "@/lib/auth-checks";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -9,6 +10,9 @@ cloudinary.config({
 });
 
 export async function POST(request: Request) {
+  const authCheck = await requireAdminApi();
+  if (authCheck.errorResponse) return authCheck.errorResponse;
+
   try {
     if (!process.env.CLOUDINARY_API_SECRET || !process.env.CLOUDINARY_API_KEY) {
       return NextResponse.json(

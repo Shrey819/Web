@@ -4,8 +4,11 @@ import { getActiveProducts } from "@/lib/storefront";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get("category") || undefined;
-    const search = searchParams.get("search") || undefined;
+    const rawCategory = searchParams.get("category");
+    const rawSearch = searchParams.get("search");
+
+    const category = rawCategory ? rawCategory.trim().slice(0, 100) : undefined;
+    const search = rawSearch ? rawSearch.trim().slice(0, 100) : undefined;
 
     const products = await getActiveProducts(category, search);
     return NextResponse.json(products);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { WorldMap } from "@/components/admin/analytics/WorldMap";
-import { ActiveSession, UserAction } from "@/app/actions/tracker";
+import { ActiveSession, UserAction } from "@/lib/tracker-utils";
 import {
   Users,
   Monitor,
@@ -92,8 +92,7 @@ export default function LiveTrackerPage() {
     const matchesDevice = filterDevice === "ALL" || s.deviceType === filterDevice;
     const matchesSearch =
       (s.userName && s.userName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (s.userEmail && s.userEmail.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      s.ipAddress.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.maskedEmail && s.maskedEmail.toLowerCase().includes(searchQuery.toLowerCase())) ||
       s.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.currentPage.toLowerCase().includes(searchQuery.toLowerCase());
@@ -366,16 +365,12 @@ export default function LiveTrackerPage() {
                     <td className="py-3.5 px-4">
                       <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                        {session.userName ? (
-                          <span className="text-sky-700 dark:text-sky-400 font-extrabold flex items-center gap-1">
-                            <User className="w-3.5 h-3.5" /> {session.userName}
-                          </span>
-                        ) : (
-                          <span className="text-slate-600 dark:text-slate-400 italic">Guest Visitor</span>
-                        )}
+                        <span className="text-sky-700 dark:text-sky-400 font-extrabold flex items-center gap-1">
+                          <User className="w-3.5 h-3.5" /> {session.userName}
+                        </span>
                       </div>
                       <div className="text-[10px] text-slate-400 dark:text-slate-500 pl-4 font-mono">
-                        IP: {session.ipAddress}
+                        {session.maskedEmail || "Anonymous"}
                       </div>
                     </td>
 
@@ -468,11 +463,11 @@ export default function LiveTrackerPage() {
               <div className="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 text-xs space-y-2">
                 <div className="flex justify-between">
                   <span className="text-slate-500 dark:text-slate-400">User Identity:</span>
-                  <span className="font-bold text-sky-700 dark:text-sky-400">{selectedSession.userName || "Guest Visitor"} ({selectedSession.userEmail || "Anonymous"})</span>
+                  <span className="font-bold text-sky-700 dark:text-sky-400">{selectedSession.userName} ({selectedSession.maskedEmail || "Anonymous"})</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">IP Address:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{selectedSession.ipAddress}</span>
+                  <span className="text-slate-500 dark:text-slate-400">Session ID:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{selectedSession.sessionId.slice(0, 16)}...</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 dark:text-slate-400">1st Priority (IP Country):</span>

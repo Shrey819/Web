@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import { requireAdminApi } from "@/lib/auth-checks";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -7,10 +8,29 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+import { cloudinarySignRequestSchema } from "@/lib/validations/cloudinary";
+
 export async function POST(request: Request) {
+  const authCheck = await requireAdminApi();
+  if (authCheck.errorResponse) return authCheck.errorResponse;
+
   try {
-    const body = await request.json();
-    const { paramsToSign } = body;
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Malformed JSON body" }, { status: 400 });
+    }
+
+    const parsed = cloudinarySignRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Unauthorized signing parameters provided." },
+        { status: 400 }
+      );
+    }
+
+    const { paramsToSign } = parsed.data;
 
     const signature = cloudinary.utils.api_sign_request(
       paramsToSign,

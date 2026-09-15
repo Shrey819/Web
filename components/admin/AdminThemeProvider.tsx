@@ -18,18 +18,17 @@ import {
   Moon,
   Sun,
 } from "lucide-react";
+import { logoutAction } from "@/app/admin/actions";
 
 interface AdminThemeProviderProps {
   userEmail?: string | null;
   userName?: string | null;
-  logoutAction: () => Promise<void>;
   children: React.ReactNode;
 }
 
 export function AdminThemeProvider({
   userEmail,
   userName,
-  logoutAction,
   children,
 }: AdminThemeProviderProps) {
   const { theme, toggleTheme } = useAdminThemeStore();

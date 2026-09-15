@@ -1,5 +1,3 @@
-"use server";
-
 import { getAllQuotesAdminAction } from "@/app/actions/quote";
 import { AdminQuotesClient } from "./AdminQuotesClient";
 

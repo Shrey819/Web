@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { ActiveSession } from "@/app/actions/tracker";
+import { ActiveSession } from "@/lib/tracker-utils";
 import {
   Smartphone,
   Monitor,
@@ -12,7 +11,6 @@ import {
   Navigation,
   Maximize2,
   Minimize2,
-  Radio,
 } from "lucide-react";
 
 interface WorldMapProps {
@@ -20,22 +18,89 @@ interface WorldMapProps {
   onSelectSession?: (session: ActiveSession) => void;
 }
 
+const COUNTRY_CENTROIDS: Record<string, { lat: number; lng: number }> = {
+  IN: { lat: 20.5937, lng: 78.9629 },
+  US: { lat: 37.0902, lng: -95.7129 },
+  GB: { lat: 55.3781, lng: -3.4360 },
+  CA: { lat: 56.1304, lng: -106.3468 },
+  AU: { lat: -25.2744, lng: 133.7751 },
+  DE: { lat: 51.1657, lng: 10.4515 },
+  FR: { lat: 46.2276, lng: 2.2137 },
+  IT: { lat: 41.8719, lng: 12.5674 },
+  ES: { lat: 40.4637, lng: -3.7492 },
+  NL: { lat: 52.1326, lng: 5.2913 },
+  SE: { lat: 60.1282, lng: 18.6435 },
+  NO: { lat: 60.4720, lng: 8.4689 },
+  DK: { lat: 56.2639, lng: 9.5018 },
+  FI: { lat: 61.9241, lng: 25.7482 },
+  PL: { lat: 51.9194, lng: 19.1451 },
+  CH: { lat: 46.8182, lng: 8.2275 },
+  AT: { lat: 47.5162, lng: 14.5501 },
+  BE: { lat: 50.5039, lng: 4.4699 },
+  IE: { lat: 53.1424, lng: -7.6921 },
+  NZ: { lat: -40.9006, lng: 174.8860 },
+  SG: { lat: 1.3521, lng: 103.8198 },
+  MY: { lat: 4.2105, lng: 101.9758 },
+  JP: { lat: 36.2048, lng: 138.2529 },
+  KR: { lat: 35.9078, lng: 127.7669 },
+  CN: { lat: 35.8617, lng: 104.1954 },
+  HK: { lat: 22.3193, lng: 114.1694 },
+  TW: { lat: 23.6978, lng: 120.9605 },
+  TH: { lat: 15.8700, lng: 100.9925 },
+  VN: { lat: 14.0583, lng: 108.2772 },
+  PH: { lat: 12.8797, lng: 121.7740 },
+  ID: { lat: -0.7893, lng: 113.9213 },
+  BR: { lat: -14.2350, lng: -51.9253 },
+  MX: { lat: 23.6345, lng: -102.5528 },
+  AR: { lat: -38.4161, lng: -63.6167 },
+  CL: { lat: -35.6751, lng: -71.5430 },
+  CO: { lat: 4.5709, lng: -74.2973 },
+  ZA: { lat: -30.5595, lng: 22.9375 },
+  EG: { lat: 26.8206, lng: 30.8025 },
+  NG: { lat: 9.0820, lng: 8.6753 },
+  KE: { lat: -0.0236, lng: 37.9062 },
+  AE: { lat: 23.4241, lng: 53.8478 },
+  SA: { lat: 23.8859, lng: 45.0792 },
+  IL: { lat: 31.0461, lng: 34.8516 },
+  TR: { lat: 38.9637, lng: 35.2433 },
+  RU: { lat: 61.5240, lng: 105.3188 },
+  UA: { lat: 48.3794, lng: 31.1656 },
+  PK: { lat: 30.3753, lng: 69.3451 },
+  BD: { lat: 23.6850, lng: 90.3563 },
+  LK: { lat: 7.8731, lng: 80.7718 },
+  NP: { lat: 28.3949, lng: 84.1240 },
+};
+
+function getSessionCoords(session: ActiveSession): { lat: number; lng: number } {
+  const code = (session.countryCode || "IN").toUpperCase();
+  const base = COUNTRY_CENTROIDS[code] || COUNTRY_CENTROIDS["IN"];
+
+  let hash = 0;
+  const sid = session.sessionId || "";
+  for (let i = 0; i < sid.length; i++) {
+    hash = (hash << 5) - hash + sid.charCodeAt(i);
+    hash |= 0;
+  }
+
+  // Safe deterministic jitter ±2° lat, ±3° lng to prevent overlap
+  const latOffset = ((Math.abs(hash) % 100) / 100 - 0.5) * 4;
+  const lngOffset = (((Math.abs(hash >> 4)) % 100) / 100 - 0.5) * 6;
+
+  return {
+    lat: base.lat + latOffset,
+    lng: base.lng + lngOffset,
+  };
+}
+
 /**
  * Miller Cylindrical Projection (Exact for MapChart_Map.png)
- * MapChart PNG parameters:
- * Width: 6460px, Height: 3403px (Aspect Ratio = 6460 / 3403 ≈ 1.898325)
- * Top Latitude: +83.6°N, Bottom Latitude: -55.6°S
- * Left Longitude: -180°W, Right Longitude: +180°E
  */
 function latLngToPercentCoords(lat: number, lng: number) {
-  // Clamp latitude to MapChart boundaries [-55.6, 83.6]
   const clampedLat = Math.max(-55.6, Math.min(83.6, lat));
   const clampedLng = Math.max(-180, Math.min(180, lng));
 
-  // Longitude X % (Linear -180 to 180)
   const xPercent = ((clampedLng + 180) / 360) * 100;
 
-  // Latitude Y % (Miller Cylindrical Projection Formula)
   const latRad = (clampedLat * Math.PI) / 180;
   const millerY = 1.25 * Math.log(Math.tan(Math.PI / 4 + 0.4 * latRad));
 
@@ -80,7 +145,7 @@ export function WorldMap({ sessions, onSelectSession }: WorldMapProps) {
               </span>
             </h3>
             <p className="text-[11px] text-slate-500 hidden sm:block">
-              Miller Cylindrical Projection • Exact Lat/Lng Beacon Placement
+              Miller Cylindrical Projection • Zero-PII Coarse Country Centroid Mapping
             </p>
           </div>
         </div>
@@ -114,9 +179,8 @@ export function WorldMap({ sessions, onSelectSession }: WorldMapProps) {
         </div>
       </div>
 
-      {/* MAP CANVAS WITH EXACT 6460/3403 PROPORTIONS - 100% VISIBLE FULL MAP */}
+      {/* MAP CANVAS WITH EXACT 6460/3403 PROPORTIONS */}
       <div className={`relative w-full max-w-4xl mx-auto bg-slate-900 rounded-xl border border-slate-800/80 overflow-hidden shadow-xl select-none ${isFullscreen ? "max-w-none" : ""}`}>
-        {/* MapChart Map Base Image with Dark High-Tech Filter */}
         <img
           src="/MapChart_Map.png"
           alt="World Map with Country Borders"
@@ -126,15 +190,16 @@ export function WorldMap({ sessions, onSelectSession }: WorldMapProps) {
         {/* Grid Overlay */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
 
-        {/* Equator (0° Latitude) & Prime Meridian (0° Longitude) Reference Lines */}
+        {/* Equator & Prime Meridian Reference Lines */}
         <div className="absolute left-0 right-0 top-[59.8%] h-[1px] border-b border-dashed border-sky-400/25 pointer-events-none" />
         <div className="absolute top-0 bottom-0 left-[50%] w-[1px] border-r border-dashed border-sky-400/25 pointer-events-none" />
 
         {/* ACTIVE USER BEACON PINS */}
         {sessions.map((session) => {
-          const { x, y } = latLngToPercentCoords(session.latitude, session.longitude);
+          const coords = getSessionCoords(session);
+          const { x, y } = latLngToPercentCoords(coords.lat, coords.lng);
           const isHovered = hoveredSession?.sessionId === session.sessionId;
-          const isLogged = !!session.userName;
+          const isLogged = session.userName && session.userName !== "Guest Visitor";
 
           return (
             <div
@@ -163,7 +228,7 @@ export function WorldMap({ sessions, onSelectSession }: WorldMapProps) {
               {/* Floating Quick Tooltip */}
               <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-xl bg-slate-950 text-[10px] text-white font-bold whitespace-nowrap border border-slate-700 pointer-events-none z-30 shadow-2xl flex items-center gap-1.5">
                 <Navigation className="w-3 h-3 text-sky-400" />
-                <span>{session.userName || "Guest"} ({session.city}, {session.country})</span>
+                <span>{session.userName} ({session.city}, {session.country})</span>
               </div>
             </div>
           );
@@ -171,8 +236,9 @@ export function WorldMap({ sessions, onSelectSession }: WorldMapProps) {
 
         {/* DETAILED INSPECTION TOOLTIP CARD */}
         {hoveredSession && (() => {
-          const { x, y } = latLngToPercentCoords(hoveredSession.latitude, hoveredSession.longitude);
-          const isLogged = !!hoveredSession.userName;
+          const coords = getSessionCoords(hoveredSession);
+          const { x, y } = latLngToPercentCoords(coords.lat, coords.lng);
+          const isLogged = hoveredSession.userName && hoveredSession.userName !== "Guest Visitor";
 
           return (
             <div
@@ -190,11 +256,11 @@ export function WorldMap({ sessions, onSelectSession }: WorldMapProps) {
                   </div>
                   <div>
                     <div className="font-bold text-white text-xs truncate max-w-[150px]">
-                      {hoveredSession.userName || "Guest Visitor"}
+                      {hoveredSession.userName}
                     </div>
-                    {hoveredSession.userEmail && (
+                    {hoveredSession.maskedEmail && (
                       <div className="text-[10px] text-slate-400 truncate max-w-[150px]">
-                        {hoveredSession.userEmail}
+                        {hoveredSession.maskedEmail}
                       </div>
                     )}
                   </div>
@@ -209,7 +275,7 @@ export function WorldMap({ sessions, onSelectSession }: WorldMapProps) {
               {/* Hybrid Priority Telemetry */}
               <div className="space-y-1.5 text-[11px]">
                 <div className="flex justify-between items-center text-slate-400">
-                  <span>1st Priority (IP Location):</span>
+                  <span>Location Area:</span>
                   <span className="text-white font-bold flex items-center gap-1">
                     <span>{hoveredSession.countryCode === "IN" ? "🇮🇳" : hoveredSession.countryCode === "US" ? "🇺🇸" : "🌐"}</span>
                     {hoveredSession.city}, {hoveredSession.country}
@@ -217,14 +283,7 @@ export function WorldMap({ sessions, onSelectSession }: WorldMapProps) {
                 </div>
 
                 <div className="flex justify-between items-center text-slate-400">
-                  <span>Exact Coordinates:</span>
-                  <span className="text-emerald-400 font-bold">
-                    {hoveredSession.latitude.toFixed(4)}°N, {hoveredSession.longitude.toFixed(4)}°E
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center text-slate-400">
-                  <span>2nd Priority (Timezone):</span>
+                  <span>Timezone:</span>
                   <span className="text-sky-400 font-bold">
                     {hoveredSession.clientTimezone || "Asia/Calcutta"}
                   </span>
@@ -248,7 +307,7 @@ export function WorldMap({ sessions, onSelectSession }: WorldMapProps) {
               </div>
 
               <div className="mt-2.5 pt-2 border-t border-slate-800 text-[10px] text-slate-400 text-center italic">
-                Click beacon to open full telemetry inspector drawer
+                Click beacon to open telemetry inspector drawer
               </div>
             </div>
           );

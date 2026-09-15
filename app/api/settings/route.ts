@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getSystemSettings } from "@/lib/settings";
+import { getPublicSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
   try {
-    const settings = await getSystemSettings();
+    const settings = await getPublicSettings();
     return NextResponse.json(settings, {
       headers: {
         "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",

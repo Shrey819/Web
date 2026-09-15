@@ -1,8 +1,10 @@
+import "server-only";
 import { cookies } from "next/headers";
 import { query } from "@/lib/db";
 import { UserSession } from "@/types";
 import { redirect } from "next/navigation";
 import crypto from "crypto";
+import { sanitizeCallbackUrl } from "@/lib/utils";
 
 export const SESSION_COOKIE_NAME = "om_session";
 export const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // 30 days
@@ -114,15 +116,18 @@ export async function invalidateSession(): Promise<void> {
 }
 
 /**
- * Route protection helper: redirects unauthenticated users to login with a returnUrl
+
+ * Route protection helper: redirects unauthenticated users to login with a sanitized callbackUrl
  */
 export async function requireUser(returnUrl?: string): Promise<UserSession> {
   const user = await getCurrentUser();
   if (!user) {
-    const destination = returnUrl 
-      ? `/login?returnUrl=${encodeURIComponent(returnUrl)}` 
+    const safeTarget = returnUrl ? sanitizeCallbackUrl(returnUrl, "/profile") : null;
+    const destination = safeTarget
+      ? `/login?callbackUrl=${encodeURIComponent(safeTarget)}`
       : "/login";
     redirect(destination);
   }
   return user;
 }
+

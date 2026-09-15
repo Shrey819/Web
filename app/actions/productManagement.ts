@@ -2,6 +2,7 @@
 
 import { query, transaction } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth-checks";
 import crypto from "crypto";
 
 const generateId = (prefix = "id_") => prefix + crypto.randomBytes(8).toString("hex");
@@ -45,6 +46,7 @@ export interface CategoryItem {
 
 export async function getGlobalCategories(): Promise<{ success: boolean; categories: CategoryItem[]; error?: string }> {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT 
         c."id", 
@@ -68,6 +70,7 @@ export async function getGlobalCategories(): Promise<{ success: boolean; categor
  */
 export async function getGlobalRibbons(): Promise<{ success: boolean; ribbons: RibbonItem[]; error?: string }> {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT 
         r."id", 
@@ -86,6 +89,7 @@ export async function getGlobalRibbons(): Promise<{ success: boolean; ribbons: R
 
 export async function createRibbon(name: string, color = "#2563eb") {
   try {
+    await requireAdmin();
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: "Ribbon name cannot be empty" };
     const id = generateId("rib_");
@@ -104,6 +108,7 @@ export async function createRibbon(name: string, color = "#2563eb") {
 
 export async function renameRibbon(id: string, newName: string, color?: string) {
   try {
+    await requireAdmin();
     const trimmed = newName.trim();
     if (!trimmed) return { success: false, error: "Ribbon name cannot be empty" };
     
@@ -138,6 +143,7 @@ export async function renameRibbon(id: string, newName: string, color?: string) 
 
 export async function deleteRibbon(id: string) {
   try {
+    await requireAdmin();
     await transaction(async (client) => {
       const oldRes = await client.query(`SELECT "name" FROM "ProductRibbon" WHERE "id" = $1`, [id]);
       const oldName = oldRes.rows[0]?.name;
@@ -166,6 +172,7 @@ export async function deleteRibbon(id: string) {
  */
 export async function getGlobalTags(): Promise<{ success: boolean; tags: TagItem[]; error?: string }> {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT 
         t."id", 
@@ -183,6 +190,7 @@ export async function getGlobalTags(): Promise<{ success: boolean; tags: TagItem
 
 export async function createTag(name: string) {
   try {
+    await requireAdmin();
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: "Tag name cannot be empty" };
     const existing = await query(`SELECT "id", "name" FROM "ProductTag" WHERE LOWER("name") = LOWER($1) LIMIT 1`, [trimmed]);
@@ -206,6 +214,7 @@ export async function createTag(name: string) {
 
 export async function renameTag(id: string, newName: string) {
   try {
+    await requireAdmin();
     const trimmed = newName.trim();
     if (!trimmed) return { success: false, error: "Tag name cannot be empty" };
     await query(`UPDATE "ProductTag" SET "name" = $1 WHERE "id" = $2`, [trimmed, id]);
@@ -219,6 +228,7 @@ export async function renameTag(id: string, newName: string) {
 
 export async function deleteTag(id: string) {
   try {
+    await requireAdmin();
     await query(`DELETE FROM "ProductTag" WHERE "id" = $1`, [id]);
     revalidatePath("/admin/products");
     return { success: true };
@@ -246,6 +256,7 @@ export interface BrandItem {
 
 export async function getGlobalBrands(): Promise<{ success: boolean; brands: BrandItem[]; unbrandedCount: number; error?: string }> {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT 
         b."id", 
@@ -295,6 +306,7 @@ export async function createBrand(
   websiteUrl?: string | null
 ): Promise<{ success: boolean; id?: string; name?: string; error?: string }> {
   try {
+    await requireAdmin();
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: "Brand name cannot be empty" };
     if (trimmed.length > 50) return { success: false, error: "Brand name cannot exceed 50 characters" };
@@ -333,6 +345,7 @@ export async function updateBrand(
   oldName?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin();
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: "Brand name cannot be empty" };
     if (trimmed.length > 50) return { success: false, error: "Brand name cannot exceed 50 characters" };
@@ -376,6 +389,7 @@ export async function renameBrand(
   logo?: string | null,
   country?: string | null
 ): Promise<{ success: boolean; error?: string }> {
+  await requireAdmin();
   return updateBrand(id, newName, logo, country, undefined, undefined, oldName);
 }
 
@@ -388,6 +402,7 @@ export async function deleteBrandWithReassignment(
   targetBrandId?: string | null
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireAdmin();
     // 1. Resolve brand to delete
     const delRes = await query(`
       SELECT id, name, slug 
@@ -466,6 +481,7 @@ export async function deleteBrandWithReassignment(
 }
 
 export async function deleteBrand(id: string, name?: string): Promise<{ success: boolean; error?: string }> {
+  await requireAdmin();
   return deleteBrandWithReassignment(id, null);
 }
 
@@ -477,6 +493,7 @@ export async function assignProductToBrand(
   brandId: string | null
 ): Promise<{ success: boolean; brandName?: string | null; error?: string }> {
   try {
+    await requireAdmin();
     if (brandId && brandId !== "unbranded" && brandId !== "none") {
       const brandRes = await query(`
         SELECT id, name FROM "Brand" 
@@ -529,6 +546,7 @@ export async function assignMultipleProductsToBrand(
   brandId: string | null
 ): Promise<{ success: boolean; count?: number; error?: string }> {
   try {
+    await requireAdmin();
     if (!productIds || productIds.length === 0) {
       return { success: false, error: "No products selected." };
     }
@@ -577,6 +595,7 @@ export async function assignMultipleProductsToBrand(
 }
 
 export async function removeProductFromBrand(productId: string): Promise<{ success: boolean; error?: string }> {
+  await requireAdmin();
   return assignProductToBrand(productId, null);
 }
 
@@ -599,6 +618,7 @@ export interface BrandProductItem {
  */
 export async function getUnbrandedProducts(): Promise<{ success: boolean; products: BrandProductItem[]; error?: string }> {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT 
         p.id, 
@@ -629,6 +649,7 @@ export async function getUnbrandedProducts(): Promise<{ success: boolean; produc
  */
 export async function getBrandProducts(brandIdOrName: string): Promise<{ success: boolean; products: BrandProductItem[]; error?: string }> {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT 
         p.id, 
@@ -663,6 +684,7 @@ export async function getBrandProducts(brandIdOrName: string): Promise<{ success
  */
 export async function getGlobalOptions(): Promise<{ success: boolean; options: GlobalOptionItem[]; error?: string }> {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT 
         o."id", 
@@ -681,6 +703,7 @@ export async function getGlobalOptions(): Promise<{ success: boolean; options: G
 
 export async function createGlobalOption(name: string, fieldType: "TEXT_CHOICES" | "SWATCH_CHOICES") {
   try {
+    await requireAdmin();
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: "Option name cannot be empty" };
     const id = generateId("gopt_");
@@ -698,6 +721,7 @@ export async function createGlobalOption(name: string, fieldType: "TEXT_CHOICES"
 
 export async function renameGlobalOption(id: string, newName: string, fieldType?: "TEXT_CHOICES" | "SWATCH_CHOICES") {
   try {
+    await requireAdmin();
     const trimmed = newName.trim();
     if (!trimmed) return { success: false, error: "Option name cannot be empty" };
 
@@ -732,6 +756,7 @@ export async function renameGlobalOption(id: string, newName: string, fieldType?
 
 export async function deleteGlobalOption(id: string) {
   try {
+    await requireAdmin();
     await query(`DELETE FROM "GlobalOption" WHERE "id" = $1`, [id]);
     revalidatePath("/admin/products");
     return { success: true };
@@ -748,6 +773,7 @@ export async function deleteGlobalOption(id: string) {
  */
 export async function getGlobalInfoSections(): Promise<{ success: boolean; sections: GlobalInfoSectionItem[]; error?: string }> {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT 
         s."id", 
@@ -768,6 +794,7 @@ export async function getGlobalInfoSections(): Promise<{ success: boolean; secti
 
 export async function getLastUsedInfoSectionIds(): Promise<string[]> {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT pai."sectionId"
       FROM "ProductAssignedInfoSection" pai
@@ -787,6 +814,7 @@ export async function getLastUsedInfoSectionIds(): Promise<string[]> {
 
 export async function getLastUsedCategoryIds(): Promise<{ categoryIds: string[]; primaryCategoryId?: string }> {
   try {
+    await requireAdmin();
     const latestProdRes = await query(`
       SELECT p."id", p."categoryId", p."primaryCategoryId"
       FROM "Product" p
@@ -819,6 +847,7 @@ export async function getLastUsedCategoryIds(): Promise<{ categoryIds: string[];
 
 export async function createInfoSection(internalName: string, title: string, content: string) {
   try {
+    await requireAdmin();
     const trimmedTitle = title.trim();
     const trimmedInternal = (internalName || title).trim();
     if (!trimmedTitle) return { success: false, error: "Section title is required" };
@@ -837,6 +866,7 @@ export async function createInfoSection(internalName: string, title: string, con
 
 export async function updateInfoSection(id: string, internalName: string, title: string, content: string) {
   try {
+    await requireAdmin();
     const trimmedTitle = title.trim();
     const trimmedInternal = (internalName || title).trim();
     if (!trimmedTitle) return { success: false, error: "Section title is required" };
@@ -856,6 +886,7 @@ export async function updateInfoSection(id: string, internalName: string, title:
 
 export async function deleteInfoSection(id: string) {
   try {
+    await requireAdmin();
     await query(`DELETE FROM "GlobalInfoSection" WHERE "id" = $1`, [id]);
     revalidatePath("/admin/products");
     return { success: true };
@@ -872,6 +903,7 @@ export async function deleteInfoSection(id: string) {
  */
 export async function getAdminCategories(): Promise<{ success: boolean; categories: CategoryItem[]; error?: string }> {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT 
         c."id", 
@@ -891,6 +923,7 @@ export async function getAdminCategories(): Promise<{ success: boolean; categori
 
 export async function createInlineCategory(name: string) {
   try {
+    await requireAdmin();
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: "Category name is required" };
     const id = "cat_" + Date.now();
@@ -918,6 +951,7 @@ export async function createInlineCategory(name: string) {
  */
 export async function getVariantsForProduct(productId: string) {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT * FROM "ProductVariant" WHERE "productId" = $1 ORDER BY "id" ASC
     `, [productId]);
@@ -930,6 +964,7 @@ export async function getVariantsForProduct(productId: string) {
 
 export async function saveProductVariants(productId: string, variants: any[]) {
   try {
+    await requireAdmin();
     await transaction(async (client) => {
       await client.query(`DELETE FROM "ProductVariant" WHERE "productId" = $1`, [productId]);
       for (let i = 0; i < variants.length; i++) {
@@ -987,6 +1022,7 @@ export interface OptionPresetItem {
 
 export async function getOptionPresets(): Promise<{ success: boolean; presets: OptionPresetItem[]; error?: string }> {
   try {
+    await requireAdmin();
     const res = await query(`
       SELECT "id", "name", "options", "includeVariants", "variants", "createdAt", "updatedAt"
       FROM "ProductOptionPreset"
@@ -1006,6 +1042,7 @@ export async function saveOptionPreset(
   variants?: any[]
 ) {
   try {
+    await requireAdmin();
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: "Preset name cannot be empty" };
     const id = generateId("optset_");
@@ -1041,6 +1078,7 @@ export async function updateOptionPreset(
   variants?: any[]
 ) {
   try {
+    await requireAdmin();
     const trimmed = name.trim();
     if (!trimmed) return { success: false, error: "Preset name cannot be empty" };
 
@@ -1070,6 +1108,7 @@ export async function updateOptionPreset(
 
 export async function deleteOptionPreset(id: string) {
   try {
+    await requireAdmin();
     await query(`DELETE FROM "ProductOptionPreset" WHERE "id" = $1`, [id]);
     return { success: true };
   } catch (error: unknown) {

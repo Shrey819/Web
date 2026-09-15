@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useToastStore } from "@/store/useToastStore";
 import { useUserStore } from "@/store/useUserStore";
 import { Loader2 } from "lucide-react";
+import { sanitizeCallbackUrl } from "@/lib/utils";
 
 interface GoogleIdConfiguration {
   client_id: string;
@@ -107,9 +108,11 @@ export function GoogleSignInButton({
         if (res.ok && data?.success && data?.user) {
           login(data.user);
           addToast("success", "Welcome!", `Signed in as ${data.user.name}`);
-          const destination = data.returnUrl || returnUrl || "/profile";
+          const rawDest = data.returnUrl || returnUrl || "/profile";
+          const destination = sanitizeCallbackUrl(rawDest, "/profile");
           router.push(destination);
           router.refresh();
+
         } else {
           const errorMsg = data?.error || "Google authentication failed on the server.";
           addToast("error", "Sign In Failed", errorMsg);
