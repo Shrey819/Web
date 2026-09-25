@@ -1,18 +1,15 @@
 import { z } from "zod";
-import { emailSchema, phoneSchema, idSchema } from "./common";
+import { emailSchema, phoneSchema, idSchema, personNameSchema } from "./common";
 
 /**
  * Public Customer Registration Schema:
  * - Enforces password bounds: 8 to 128 characters to protect Argon2 hashing against DoS
  * - Strictly rejects any role or privileged field attempts
+ * - Enforces valid person name criteria (no special characters or numbers)
  */
 export const userRegistrationSchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(1, "Name is required")
-      .max(100, "Name cannot exceed 100 characters"),
+    name: personNameSchema,
     email: emailSchema,
     password: z
       .string()
@@ -43,12 +40,7 @@ export const userLoginSchema = z
  */
 export const userProfileUpdateSchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(1, "Name cannot be empty")
-      .max(100, "Name cannot exceed 100 characters")
-      .optional(),
+    name: personNameSchema.optional(),
     phone: phoneSchema.optional().or(z.literal("")),
     companyName: z
       .string()
@@ -65,11 +57,7 @@ export const userProfileUpdateSchema = z
  */
 export const adminUserCreateSchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(1, "Name is required")
-      .max(100, "Name cannot exceed 100 characters"),
+    name: personNameSchema,
     email: emailSchema,
     password: z
       .string()

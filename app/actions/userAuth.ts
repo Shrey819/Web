@@ -9,13 +9,13 @@ import * as argon2 from "argon2";
 import crypto from "crypto";
 
 import { userLoginSchema, userProfileUpdateSchema } from "@/lib/validations/auth";
-import { emailSchema } from "@/lib/validations/common";
+import { emailSchema, personNameSchema } from "@/lib/validations/common";
 import { z } from "zod";
 
 const generateUserId = () => "usr_" + crypto.randomBytes(8).toString("hex");
 
 const registerInputSchema = z.object({
-  fullName: z.string().trim().min(1, "Name is required").max(100, "Name cannot exceed 100 characters"),
+  fullName: personNameSchema,
   companyName: z.string().trim().max(100).optional(),
   email: emailSchema,
   password: z.string().min(8, "Password must be at least 8 characters").max(128, "Password cannot exceed 128 characters"),

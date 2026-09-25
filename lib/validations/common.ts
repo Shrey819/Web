@@ -17,6 +17,29 @@ export const idSchema = z
 export const uuidSchema = z.string().trim().uuid("Invalid UUID format");
 
 /**
+ * Strict person name schema (used for customer fullName, recipient name, user name):
+ * - Minimum 2, maximum 70 characters
+ * - Only alphabetic characters (A-Z, a-z), spaces, dots, hyphens, and apostrophes allowed
+ * - Strictly disallows numbers and special characters (!, @, #, $, %, ^, &, *, +, =, <, >, ?, /, \, _, ~, etc.)
+ * - Must start with a letter and contain at least 2 letters
+ */
+export const personNameSchema = z
+  .string({ message: "Full name is required" })
+  .trim()
+  .min(2, "Full name must be at least 2 characters")
+  .max(70, "Full name cannot exceed 70 characters")
+  .regex(
+    /^[a-zA-Z\s.'-]+$/,
+    "Full name can only contain letters and spaces. Special characters and numbers are not allowed."
+  )
+  .refine((val) => /^[a-zA-Z]/.test(val), {
+    message: "Full name must start with a letter",
+  })
+  .refine((val) => val.replace(/[^a-zA-Z]/g, "").length >= 2, {
+    message: "Full name must contain at least 2 letters",
+  });
+
+/**
  * Normalized email schema:
  * - Trims whitespace
  * - Converts to lowercase

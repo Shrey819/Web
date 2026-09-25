@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { idSchema, emailSchema, phoneSchema, quantitySchema } from "./common";
+import { idSchema, emailSchema, phoneSchema, quantitySchema, personNameSchema } from "./common";
 
 /**
  * Validates individual item in order/cart submissions
@@ -20,11 +20,7 @@ export const orderItemInputSchema = z
  * Validates shipping address during checkout
  */
 export const orderAddressInputSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    .min(1, "Full name is required")
-    .max(100, "Full name cannot exceed 100 characters"),
+  fullName: personNameSchema,
   companyName: z.string().trim().max(100).optional().or(z.literal("")),
   email: emailSchema,
   phone: phoneSchema,

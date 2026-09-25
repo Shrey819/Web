@@ -1,16 +1,12 @@
 import { z } from "zod";
-import { idSchema, emailSchema, phoneSchema } from "./common";
+import { idSchema, emailSchema, phoneSchema, personNameSchema } from "./common";
 
 /**
  * Customer address creation schema
  */
 export const addressCreateSchema = z
   .object({
-    fullName: z
-      .string()
-      .trim()
-      .min(1, "Full name is required")
-      .max(100, "Full name cannot exceed 100 characters"),
+    fullName: personNameSchema,
     companyName: z.string().trim().max(100).optional().nullable(),
     email: emailSchema.optional().nullable().or(z.literal("")),
     phone: phoneSchema,

@@ -34,7 +34,7 @@ import {
   Loader2,
   ArrowRight
 } from "lucide-react";
-import { formatCurrency, formatDisplayPhone } from "@/lib/utils";
+import { formatCurrency, formatDisplayPhone, validatePersonName } from "@/lib/utils";
 import { 
   getUserAddressesAction, 
   createAddressAction, 
@@ -177,6 +177,12 @@ export function ProfileClient({
     e.preventDefault();
     if (!addressForm.fullName || !addressForm.phone || !addressForm.street || !addressForm.city || !addressForm.state || !addressForm.zip) {
       addToast("warning", "Missing Information", "Please fill in all mandatory address fields.");
+      return;
+    }
+
+    const nameCheck = validatePersonName(addressForm.fullName);
+    if (!nameCheck.isValid) {
+      addToast("error", "Invalid Full Name", nameCheck.error || "Please enter a valid full name without special characters or numbers.");
       return;
     }
 
@@ -965,17 +971,29 @@ export function ProfileClient({
               {/* Full Name & Company */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Full Name <span className="text-rose-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Full Name <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono">Letters only</span>
+                  </div>
                   <input
                     type="text"
                     required
                     value={addressForm.fullName}
                     onChange={(e) => setAddressForm({ ...addressForm, fullName: e.target.value })}
                     placeholder="e.g. Shrey Sojitra"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
+                    className={`w-full p-2.5 rounded-xl border text-xs text-slate-900 dark:text-white focus:outline-none transition-all ${
+                      addressForm.fullName.trim().length > 0 && !validatePersonName(addressForm.fullName).isValid
+                        ? "border-rose-500 bg-rose-50/20 ring-2 ring-rose-500/20"
+                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-amber-500"
+                    }`}
                   />
+                  {addressForm.fullName.trim().length > 0 && !validatePersonName(addressForm.fullName).isValid && (
+                    <span className="text-[10px] text-rose-500 font-bold mt-1 block">
+                      {validatePersonName(addressForm.fullName).error}
+                    </span>
+                  )}
                 </div>
 
                 <div>

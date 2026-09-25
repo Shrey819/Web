@@ -105,3 +105,46 @@ export function sanitizeCallbackUrl(rawUrl?: string | null, fallback = "/profile
   return trimmed;
 }
 
+/**
+ * Validates a person's full name:
+ * - Must be at least 2 characters and at most 70 characters
+ * - Only alphabetic characters (A-Z, a-z), spaces, dots, hyphens, and apostrophes are permitted
+ * - Numbers and special characters (@, #, $, %, etc.) are strictly disallowed
+ * - Must start with a letter and contain at least 2 letters
+ */
+export function validatePersonName(name?: string | null): { isValid: boolean; error?: string } {
+  if (!name || typeof name !== "string") {
+    return { isValid: false, error: "Full name is required." };
+  }
+
+  const trimmed = name.trim();
+  if (trimmed.length === 0) {
+    return { isValid: false, error: "Full name is required." };
+  }
+
+  if (trimmed.length < 2) {
+    return { isValid: false, error: "Full name must be at least 2 characters." };
+  }
+
+  if (trimmed.length > 70) {
+    return { isValid: false, error: "Full name cannot exceed 70 characters." };
+  }
+
+  if (!/^[a-zA-Z\s.'-]+$/.test(trimmed)) {
+    return {
+      isValid: false,
+      error: "Full name can only contain letters and spaces. Special characters and numbers are not allowed.",
+    };
+  }
+
+  if (!/^[a-zA-Z]/.test(trimmed)) {
+    return { isValid: false, error: "Full name must start with a letter." };
+  }
+
+  if (trimmed.replace(/[^a-zA-Z]/g, "").length < 2) {
+    return { isValid: false, error: "Full name must contain at least 2 letters." };
+  }
+
+  return { isValid: true };
+}
+

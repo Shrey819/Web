@@ -29,7 +29,7 @@ import {
   Star,
   Trash2
 } from "lucide-react";
-import { formatCurrency, formatDisplayPhone } from "@/lib/utils";
+import { formatCurrency, formatDisplayPhone, validatePersonName } from "@/lib/utils";
 import { createOrderAction } from "@/app/actions/order";
 import { createRazorpayOrderAction, verifyAndCreatePrepaidOrderAction } from "@/app/actions/razorpay";
 import { checkPincodeServiceabilityAction } from "@/app/actions/shiprocket";
@@ -441,6 +441,12 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
 
     if (formData.paymentMethod === "cod" && !settings.cod_enabled) {
       addToast("error", "Payment Disabled", "Cash on Delivery is currently disabled by store administrator.");
+      return;
+    }
+
+    const nameCheck = validatePersonName(formData.fullName);
+    if (!nameCheck.isValid) {
+      addToast("error", "Invalid Full Name", nameCheck.error || "Please enter a valid full name without special characters or numbers.");
       return;
     }
 
@@ -1067,16 +1073,19 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                   {/* 2. Contact Details */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     <div>
-                      <label className="font-semibold uppercase tracking-wider text-slate-600 mb-1 flex items-center gap-1">
-                        Full Name <span className="text-rose-500 font-bold">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1">
+                          Full Name <span className="text-rose-500 font-bold">*</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400 font-mono">Letters only</span>
+                      </div>
                       <input
                         type="text"
                         value={formData.fullName}
                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                         placeholder="e.g. Rahul Sharma"
                         className={`w-full p-3 rounded-2xl border focus:outline-none transition-all ${
-                          isFieldMissing(formData.fullName)
+                          isFieldMissing(formData.fullName) || (formData.fullName.trim().length > 0 && !validatePersonName(formData.fullName).isValid)
                             ? "border-rose-500 bg-rose-50/20 ring-2 ring-rose-500/20"
                             : "border-slate-200 focus:border-sky-500"
                         }`}
@@ -1085,6 +1094,11 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
                       {isFieldMissing(formData.fullName) && (
                         <span className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
                           <AlertCircle className="w-3 h-3" /> Full Name is required
+                        </span>
+                      )}
+                      {formData.fullName.trim().length > 0 && !validatePersonName(formData.fullName).isValid && (
+                        <span className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3 shrink-0" /> {validatePersonName(formData.fullName).error}
                         </span>
                       )}
                     </div>

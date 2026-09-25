@@ -8,7 +8,7 @@ import { useUserStore } from "@/store/useUserStore";
 import { registerUserAction } from "@/app/actions/userAuth";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Loader2 } from "lucide-react";
-import { sanitizeCallbackUrl } from "@/lib/utils";
+import { sanitizeCallbackUrl, validatePersonName } from "@/lib/utils";
 
 interface RegisterFormProps {
   returnUrl?: string;
@@ -33,6 +33,12 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
     e.preventDefault();
     if (!form.fullName || !form.email || !form.password) {
       addToast("warning", "Input Required", "Please fill in all required fields.");
+      return;
+    }
+
+    const nameCheck = validatePersonName(form.fullName);
+    if (!nameCheck.isValid) {
+      addToast("error", "Invalid Full Name", nameCheck.error || "Please enter a valid full name without special characters or numbers.");
       return;
     }
 
@@ -90,17 +96,29 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
           {/* Registration Form */}
           <form onSubmit={handleRegister} className="space-y-4 text-xs">
             <div>
-              <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">
-                Full Name *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-semibold uppercase tracking-wider text-slate-500 block">
+                  Full Name *
+                </label>
+                <span className="text-[10px] text-slate-400 font-mono">Letters only</span>
+              </div>
               <input
                 type="text"
                 required
                 placeholder="Sarah Jenkins"
                 value={form.fullName}
                 onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                className="w-full p-3 rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
+                className={`w-full p-3 rounded-2xl border focus:outline-none transition-all ${
+                  form.fullName.trim().length > 0 && !validatePersonName(form.fullName).isValid
+                    ? "border-rose-500 bg-rose-50/20 ring-2 ring-rose-500/20"
+                    : "border-slate-200 focus:border-sky-500"
+                }`}
               />
+              {form.fullName.trim().length > 0 && !validatePersonName(form.fullName).isValid && (
+                <span className="text-[10px] text-rose-500 font-bold mt-1 block">
+                  {validatePersonName(form.fullName).error}
+                </span>
+              )}
             </div>
 
             <div>
