@@ -9,7 +9,9 @@ import {
   truncateText,
   generateProductJsonLd,
   generateBreadcrumbJsonLd,
+  safeJsonLdStringify,
 } from "@/lib/seo";
+import { sanitizeRichHtml } from "@/lib/sanitize";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -123,21 +125,26 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     { name: product.name, url: `/product/${product.slug}` },
   ]);
 
+  const sanitizedProduct = {
+    ...product,
+    description: sanitizeRichHtml(product.description),
+  };
+
   return (
     <>
       {/* Schema.org Structured Data: Product + Offer */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(productJsonLd) }}
       />
       {/* Schema.org Structured Data: BreadcrumbList */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(breadcrumbJsonLd) }}
       />
 
       <ProductDetailClient
-        product={product}
+        product={sanitizedProduct}
         relatedProducts={relatedProducts}
       />
     </>

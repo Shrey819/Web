@@ -10,7 +10,8 @@ import { UserTracker } from "@/components/layout/UserTracker";
 import { 
   getSiteUrl, 
   generateOrganizationJsonLd, 
-  generateWebSiteJsonLd 
+  generateWebSiteJsonLd,
+  safeJsonLdStringify 
 } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -80,14 +81,14 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(orgJsonLd),
+            __html: safeJsonLdStringify(orgJsonLd),
           }}
         />
         {/* Global WebSite SearchAction Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(websiteJsonLd),
+            __html: safeJsonLdStringify(websiteJsonLd),
           }}
         />
         <script

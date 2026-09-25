@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recordUserAction } from "@/app/actions/tracker";
 import { ALLOWED_ACTION_TYPES, sanitizeActionDetails } from "@/lib/tracker-utils";
+import { requireValidOrigin } from "@/lib/csrf";
 
 const MAX_PAYLOAD_BYTES = 10240; // 10KB limit
 
 export async function POST(req: NextRequest) {
+  const originBlock = requireValidOrigin(req);
+  if (originBlock) return originBlock;
+
   try {
     // 1. Enforce payload size limit
     const contentLength = req.headers.get("content-length");

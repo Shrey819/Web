@@ -3,6 +3,7 @@
 import { query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-checks";
+import { safeActionResponse } from "@/lib/safe-error";
 import crypto from "crypto";
 
 const generateId = () => "sub_" + crypto.randomBytes(8).toString("hex");
@@ -52,7 +53,7 @@ export async function submitInquiryFormAction(data: {
   email: string;
   category?: string;
   message: string;
-}) {
+}): Promise<{ success: true; id: string; error?: never } | { success: false; error: string; id?: never }> {
   try {
     const parsed = inquiryFormSchema.safeParse(data);
     if (!parsed.success) {
@@ -79,19 +80,17 @@ export async function submitInquiryFormAction(data: {
 
     revalidatePath("/admin/forms");
     return { success: true, id };
-  } catch (error: any) {
-    console.error("Failed to submit inquiry form:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to submit inquiry message.",
-    };
+  } catch (error) {
+    return safeActionResponse(error, "Failed to submit inquiry message.");
   }
 }
 
 /**
  * SUBMIT PROMOTIONAL NEWSLETTER (Form 2: "Sign up to our Newsletter")
  */
-export async function submitPromotionalNewsletterAction(email: string) {
+export async function submitPromotionalNewsletterAction(
+  email: string
+): Promise<{ success: true; id: string; error?: never } | { success: false; error: string; id?: never }> {
   try {
     const parsed = newsletterSchema.safeParse({ email });
     if (!parsed.success) {
@@ -113,12 +112,8 @@ export async function submitPromotionalNewsletterAction(email: string) {
 
     revalidatePath("/admin/forms");
     return { success: true, id };
-  } catch (error: any) {
-    console.error("Failed to subscribe newsletter:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to subscribe to newsletter.",
-    };
+  } catch (error) {
+    return safeActionResponse(error, "Failed to subscribe to newsletter.");
   }
 }
 
@@ -169,7 +164,7 @@ export async function updateFormSubmissionAction(
   id: string,
   field: "name" | "email" | "category" | "message" | "status",
   value: string
-) {
+): Promise<{ success: true; error?: never } | { success: false; error: string }> {
   await requireAdmin();
   try {
     await ensureTableExists();
@@ -190,16 +185,17 @@ export async function updateFormSubmissionAction(
 
     revalidatePath("/admin/forms");
     return { success: true };
-  } catch (error: any) {
-    console.error("Failed to update submission:", error);
-    return { success: false, error: error.message || "Failed to update record." };
+  } catch (error) {
+    return safeActionResponse(error, "Failed to update record.");
   }
 }
 
 /**
  * DELETE FORM SUBMISSION ROW
  */
-export async function deleteFormSubmissionAction(id: string) {
+export async function deleteFormSubmissionAction(
+  id: string
+): Promise<{ success: true; error?: never } | { success: false; error: string }> {
   await requireAdmin();
   try {
     await ensureTableExists();
@@ -208,8 +204,7 @@ export async function deleteFormSubmissionAction(id: string) {
 
     revalidatePath("/admin/forms");
     return { success: true };
-  } catch (error: any) {
-    console.error("Failed to delete submission:", error);
-    return { success: false, error: error.message || "Failed to delete record." };
+  } catch (error) {
+    return safeActionResponse(error, "Failed to delete record.");
   }
 }

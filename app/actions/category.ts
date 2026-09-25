@@ -4,6 +4,8 @@ import { query, transaction } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { requireAdmin } from "@/lib/auth-checks";
+import { sanitizeRichHtml } from "@/lib/sanitize";
+import { safeActionResponse } from "@/lib/safe-error";
 
 const generateId = () => "cat_" + crypto.randomBytes(6).toString("hex");
 
@@ -26,7 +28,7 @@ export async function createCategory(name: string, description?: string) {
     }
 
     const cleanName = name.trim().slice(0, 100);
-    const cleanDesc = description && typeof description === "string" ? description.trim().slice(0, 1000) : null;
+    const cleanDesc = description && typeof description === "string" ? sanitizeRichHtml(description.trim().slice(0, 1000)) : null;
 
     const slug = generateSlug(cleanName);
     const id = generateId();
@@ -42,9 +44,7 @@ export async function createCategory(name: string, description?: string) {
     revalidatePath("/products");
     return { success: true };
   } catch (error) {
-    console.error("Failed to create category:", error);
-    const message = error instanceof Error ? error.message : "Failed to create category";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to create category");
   }
 }
 
@@ -62,7 +62,7 @@ export async function updateCategory(id: string, name: string, description?: str
     }
 
     const cleanName = name.trim().slice(0, 100);
-    const cleanDesc = description && typeof description === "string" ? description.trim().slice(0, 1000) : null;
+    const cleanDesc = description && typeof description === "string" ? sanitizeRichHtml(description.trim().slice(0, 1000)) : null;
     const slug = generateSlug(cleanName);
 
     await query(`
@@ -76,9 +76,7 @@ export async function updateCategory(id: string, name: string, description?: str
     revalidatePath("/products");
     return { success: true };
   } catch (error) {
-    console.error("Failed to update category:", error);
-    const message = error instanceof Error ? error.message : "Failed to update category";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to update category");
   }
 }
 
@@ -106,9 +104,7 @@ export async function toggleCategoryVisibility(id: string, isHidden: boolean) {
     revalidatePath("/", "layout");
     return { success: true, newStatus };
   } catch (error) {
-    console.error("Failed to toggle category visibility:", error);
-    const message = error instanceof Error ? error.message : "Failed to update category visibility";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to update category visibility");
   }
 }
 
@@ -279,9 +275,7 @@ export async function deleteCategoryWithReassignment(categoryIdToDelete: string,
     revalidatePath("/", "layout");
     return { success: true };
   } catch (error) {
-    console.error("Failed to delete category with reassignment:", error);
-    const message = error instanceof Error ? error.message : "Failed to delete category";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to delete category");
   }
 }
 
@@ -302,9 +296,7 @@ export async function deleteCategory(id: string) {
     }
     return deleteCategoryWithReassignment(id);
   } catch (error) {
-    console.error("Failed to delete category:", error);
-    const message = error instanceof Error ? error.message : "Failed to delete category";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to delete category");
   }
 }
 

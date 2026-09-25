@@ -24,6 +24,7 @@ import {
 import { useCartStore } from "@/store/useCartStore";
 import { useToastStore } from "@/store/useToastStore";
 import { formatCurrency } from "@/lib/utils";
+import { isSafeUrl } from "@/lib/url-sanitizer";
 
 export interface FeatureHighlight {
   label: string;
@@ -416,10 +417,12 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
             <div className="space-y-3">
               <h2 className="text-lg font-bold text-[#1a1a1a]">{brandName} Technical Support</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {supportLinks.map((link, idx) => (
-                  <a
-                    key={idx}
-                    href={link.url}
+                {supportLinks
+                  .filter((link) => isSafeUrl(link.url))
+                  .map((link, idx) => (
+                    <a
+                      key={idx}
+                      href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 py-2.5 px-4 border-2 border-[#00a651] bg-white text-[#00a651] hover:bg-[#00a651] hover:text-white rounded-md text-xs sm:text-sm font-semibold transition-all shadow-2xs group cursor-pointer"

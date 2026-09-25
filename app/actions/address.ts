@@ -14,6 +14,7 @@ import {
 } from "@/lib/dal/address";
 import { addressCreateSchema } from "@/lib/validations/address";
 import { idSchema } from "@/lib/validations/common";
+import { safeActionResponse, sanitizeErrorMessage } from "@/lib/safe-error";
 
 /**
  * Get all saved addresses for the authenticated customer.
@@ -31,9 +32,8 @@ export async function getUserAddressesAction(userId?: string | null, userEmail?:
 
     const addresses = await getAddressesForUser(sessionUser.id);
     return { success: true, addresses };
-  } catch (error: any) {
-    console.error("Failed to fetch user addresses:", error);
-    return { success: false, error: error.message || "Failed to load addresses", addresses: [] };
+  } catch (error) {
+    return { success: false, error: sanitizeErrorMessage(error, "Failed to load addresses"), addresses: [] };
   }
 }
 
@@ -70,9 +70,8 @@ export async function createAddressAction(data: AddressInput) {
     revalidatePath("/checkout");
 
     return { success: true, address };
-  } catch (error: any) {
-    console.error("Failed to create address:", error);
-    return { success: false, error: error.message || "Failed to save address" };
+  } catch (error) {
+    return safeActionResponse(error, "Failed to save address");
   }
 }
 
@@ -103,9 +102,8 @@ export async function updateAddressAction(id: string, data: AddressInput) {
     revalidatePath("/checkout");
 
     return { success: true, address };
-  } catch (error: any) {
-    console.error("Failed to update address:", error);
-    return { success: false, error: error.message || "Failed to update address" };
+  } catch (error) {
+    return safeActionResponse(error, "Failed to update address");
   }
 }
 
@@ -130,9 +128,8 @@ export async function deleteAddressAction(id: string) {
     revalidatePath("/profile");
     revalidatePath("/checkout");
     return { success: true };
-  } catch (error: any) {
-    console.error("Failed to delete address:", error);
-    return { success: false, error: error.message || "Failed to delete address" };
+  } catch (error) {
+    return safeActionResponse(error, "Failed to delete address");
   }
 }
 
@@ -153,9 +150,8 @@ export async function setDefaultAddressAction(id: string, clientUserId?: string)
     revalidatePath("/profile");
     revalidatePath("/checkout");
     return { success: updated };
-  } catch (error: any) {
-    console.error("Failed to set default address:", error);
-    return { success: false, error: error.message || "Failed to update default address" };
+  } catch (error) {
+    return safeActionResponse(error, "Failed to update default address");
   }
 }
 
@@ -183,8 +179,7 @@ export async function saveAddressFromCheckoutAction(data: AddressInput & { saveA
     }
 
     return { success: true, address };
-  } catch (error: any) {
-    console.error("Failed to save address from checkout:", error);
-    return { success: false, error: error.message };
+  } catch (error) {
+    return safeActionResponse(error, "Failed to save address from checkout");
   }
 }

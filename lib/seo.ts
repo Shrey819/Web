@@ -2,6 +2,8 @@
  * Centralized SEO Utilities and Schema.org JSON-LD Generators
  */
 
+export { safeJsonLdStringify } from "@/lib/sanitize";
+
 export function getSiteUrl(): string {
   const url = process.env.NEXT_PUBLIC_SITE_URL || "https://omautomation.com";
   return url.replace(/\/+$/, "");

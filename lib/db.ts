@@ -47,7 +47,11 @@ export async function query<T extends QueryResultRow = QueryResultRow>(text: str
     }
     return res;
   } catch (error) {
-    console.error(`[DB Error] query failed: ${text}`, error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`[DB Error] query failed: ${text}`, error);
+    } else {
+      console.error(`[DB Error] query failed: ${text.substring(0, 40)}...`, error instanceof Error ? error.name : "DatabaseQueryError");
+    }
     throw error;
   }
 }

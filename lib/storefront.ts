@@ -1,5 +1,6 @@
 import { query } from "@/lib/db";
 import { Product } from "@/types";
+import { sanitizeRichHtml } from "@/lib/sanitize";
 
 export interface StorefrontCategory {
   id: string;
@@ -113,7 +114,7 @@ export async function getActiveProducts(categorySlug?: string, search?: string):
       slug: row.slug,
       sku: row.sku,
       brand: row.brand,
-      description: row.description,
+      description: sanitizeRichHtml(row.description),
       shortDescription: row.description?.slice(0, 120) || "",
       categoryId: row.categoryId || "General",
       subcategoryId: row.categoryId || "General",
@@ -217,7 +218,7 @@ export async function getActiveProductBySlug(slug: string): Promise<any | null> 
       id: s.id,
       title: s.title,
       internalName: s.internalName,
-      content: s.content
+      content: sanitizeRichHtml(s.content)
     }));
 
     const rawPrice = (p.price || p.basePrice || 0) / 100;
@@ -243,7 +244,7 @@ export async function getActiveProductBySlug(slug: string): Promise<any | null> 
       slug: p.slug,
       sku: p.sku,
       brand: p.brand || "Industrial Standard",
-      description: p.description || "",
+      description: sanitizeRichHtml(p.description || ""),
       shortDescription: p.shortDescription || p.description?.replace(/<[^>]*>?/gm, "").slice(0, 160) || "",
       categoryId: p.categoryId,
       primaryRibbon: p.primaryRibbon,

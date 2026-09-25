@@ -3,6 +3,7 @@
 import { query } from "@/lib/db";
 import * as XLSX from "xlsx";
 import { requireAdmin } from "@/lib/auth-checks";
+import { sanitizeErrorMessage } from "@/lib/safe-error";
 
 interface ExportOptions {
   scope: "all" | "filtered" | "selected";
@@ -308,7 +309,7 @@ export async function exportProductsToCSV(options: ExportOptions): Promise<{
       };
     }
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to export products";
+    const message = sanitizeErrorMessage(error, "Failed to export products");
     console.error("Export products error:", error);
     return { success: false, error: message };
   }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { requireAdminApi } from "@/lib/auth-checks";
+import { requireValidOrigin } from "@/lib/csrf";
+import { safeApiResponse } from "@/lib/safe-error";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -10,6 +12,9 @@ cloudinary.config({
 });
 
 export async function POST(request: Request) {
+  const originBlock = requireValidOrigin(request);
+  if (originBlock) return originBlock;
+
   const authCheck = await requireAdminApi();
   if (authCheck.errorResponse) return authCheck.errorResponse;
 
@@ -70,11 +75,7 @@ export async function POST(request: Request) {
       items: uploadedItems,
       count: urls.length,
     });
-  } catch (error: any) {
-    console.error("Upload handler error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to upload images" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return safeApiResponse(error, "Failed to upload images. Please try again.", 500, "UploadHandler");
   }
 }

@@ -6,6 +6,7 @@ import { PRODUCTS } from "@/data/products";
 import { CATEGORIES } from "@/data/categories";
 import { CategoryProductGridWithFilters } from "@/components/catalog/CategoryProductGridWithFilters";
 import { ChevronRight, Layers, ShieldCheck, Truck } from "lucide-react";
+import { safeJsonLdStringify } from "@/lib/seo";
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -171,7 +172,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       {/* Schema.org Structured Data */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(jsonLd) }}
       />
 
       <div className="content-shell">

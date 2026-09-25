@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isSafeUrl } from "@/lib/sanitize";
 
 const toNullableNumber = z.preprocess((val) => {
   if (val === "" || val === null || val === undefined) return null;
@@ -78,8 +79,11 @@ export const featureHighlightSchema = z.object({
 });
 
 export const technicalSupportLinkSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  url: z.string().min(1, "URL is required"),
+  title: z.string().trim().min(1, "Title is required").max(100, "Title cannot exceed 100 characters"),
+  url: z.string().trim().min(1, "URL is required").refine(
+    (val) => isSafeUrl(val),
+    { message: "URL must be a valid http, https, mailto, or relative path" }
+  ),
   icon: z.enum(["specs", "selection", "calculation", "cad"]).nullish().default("specs"),
 });
 
@@ -106,7 +110,10 @@ export const productFormSchema = z.object({
 
   // Media (Images & Videos)
   images: z.array(productMediaSchema).max(15, "Maximum 15 images allowed").default([]),
-  videoUrl: z.string().nullish().default(""),
+  videoUrl: z.string().trim().nullish().refine(
+    (val) => !val || isSafeUrl(val),
+    { message: "Video URL must be a valid http or https URL" }
+  ).default(""),
 
   // Competitor Benchmark Feature Elements
   featureHighlights: z.array(featureHighlightSchema).max(6, "Maximum 6 custom feature cards allowed").default([]),

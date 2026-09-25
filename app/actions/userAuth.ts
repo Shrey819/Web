@@ -75,8 +75,13 @@ export async function registerUserAction(formData: {
     };
   } catch (error) {
     console.error("Failed to register user:", error);
-    const msg = error instanceof Error ? error.message : "Registration failed";
-    return { success: false, error: msg };
+    const isDuplicate =
+      Boolean(error && typeof error === "object" && "code" in error && (error as any).code === "23505") ||
+      (error instanceof Error && error.message.toLowerCase().includes("unique constraint"));
+    if (isDuplicate) {
+      return { success: false, error: "An account with this email address already exists. Please sign in." };
+    }
+    return { success: false, error: "Registration failed. Please try again later." };
   }
 }
 

@@ -25,6 +25,7 @@ import {
   cancelOrderInputSchema,
 } from "@/lib/validations/order";
 import { idSchema } from "@/lib/validations/common";
+import { safeActionResponse } from "@/lib/safe-error";
 import { z } from "zod";
 
 const generateId = () => "ord_" + crypto.randomBytes(8).toString("hex");
@@ -310,9 +311,7 @@ export async function createOrderAction(input: CreateOrderInput) {
       deliveryRange,
     };
   } catch (error) {
-    console.error("Failed to place order:", error);
-    const message = error instanceof Error ? error.message : "Failed to place order";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to place order");
   }
 }
 
@@ -398,9 +397,8 @@ export async function cancelMyOrderAction(orderId: string) {
     revalidatePath("/admin/orders");
 
     return { success: true };
-  } catch (error: any) {
-    console.error("Failed to cancel order:", error);
-    return { success: false, error: error?.message || "Failed to cancel order" };
+  } catch (error) {
+    return safeActionResponse(error, "Failed to cancel order");
   }
 }
 
@@ -414,7 +412,7 @@ export async function getAllOrdersAdminAction() {
     return { success: true, orders };
   } catch (error) {
     console.error("Failed to fetch admin orders:", error);
-    return { success: false, orders: [], error: String(error) };
+    return { success: false, orders: [], error: "Failed to fetch orders. Please try again." };
   }
 }
 
@@ -440,9 +438,7 @@ export async function updateOrderStatusAction(orderId: string, status: string, c
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    console.error("Failed to update order status:", error);
-    const message = error instanceof Error ? error.message : "Failed to update order status";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to update order status");
   }
 }
 
@@ -472,9 +468,7 @@ export async function updateOrderPaymentMethodAction(
 
     return res;
   } catch (error) {
-    console.error("Failed to update order payment method:", error);
-    const message = error instanceof Error ? error.message : "Failed to update payment method";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to update payment method");
   }
 }
 
@@ -499,8 +493,6 @@ export async function updateOrderItemNoteAction(orderItemId: string, buyerNote: 
 
     return res;
   } catch (error) {
-    console.error("Failed to update order item buyer note:", error);
-    const message = error instanceof Error ? error.message : "Failed to update buyer note";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to update buyer note");
   }
 }

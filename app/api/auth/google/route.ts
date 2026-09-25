@@ -3,11 +3,16 @@ import { verifyGoogleIdToken } from "@/lib/google-auth";
 import { createSession } from "@/lib/session";
 import { query } from "@/lib/db";
 import { sanitizeCallbackUrl } from "@/lib/utils";
+import { requireValidOrigin } from "@/lib/csrf";
+import { safeApiResponse } from "@/lib/safe-error";
 import crypto from "crypto";
 
 const generateId = (prefix: string) => prefix + "_" + crypto.randomBytes(8).toString("hex");
 
 export async function POST(request: Request) {
+  const originBlock = requireValidOrigin(request);
+  if (originBlock) return originBlock;
+
   try {
     const body = await request.json();
     const { credential, returnUrl } = body || {};
@@ -25,11 +30,7 @@ export async function POST(request: Request) {
       payload = await verifyGoogleIdToken(credential);
     } catch (verifyError) {
       console.error("Google token verification failed:", verifyError);
-      const errorMsg = verifyError instanceof Error ? verifyError.message : "Token verification failed";
-      return NextResponse.json(
-        { success: false, error: errorMsg },
-        { status: 401 }
-      );
+      return safeApiResponse(verifyError, "Token verification failed", 401);
     }
 
     const { sub, email, email_verified, name, picture, given_name, family_name, locale } = payload;
@@ -200,9 +201,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Google authentication error:", error);
-    return NextResponse.json(
-      { success: false, error: "An unexpected error occurred during Google sign-in." },
-      { status: 500 }
-    );
+    return safeApiResponse(error, "An unexpected error occurred during Google sign-in.", 500);
   }
 }

@@ -11,6 +11,8 @@ import {
   autoAlignSpreadsheetOptions,
   calculateProductDetailSimilarity,
 } from "@/lib/importHelpers";
+import { sanitizeRichHtml, isSafeUrl } from "@/lib/sanitize";
+import { sanitizeErrorMessage } from "@/lib/safe-error";
 
 const generateId = (prefix = "prd_") => prefix + crypto.randomBytes(8).toString("hex");
 
@@ -213,7 +215,7 @@ export async function downloadImportSampleTemplate(format: "csv" | "xlsx" = "csv
       return { success: true, xlsxBase64, filename };
     }
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to generate sample template";
+    const message = sanitizeErrorMessage(error, "Failed to generate sample template");
     return { success: false, error: message, filename: "products_import_template.csv" };
   }
 }
@@ -581,7 +583,7 @@ export async function previewProductsImportAction(params: {
       },
     };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to analyze import preview";
+    const message = sanitizeErrorMessage(error, "Failed to analyze import preview");
     console.error("Preview import error:", error);
     return { success: false, error: message };
   }
@@ -731,11 +733,12 @@ export async function importProductsAction(options: ImportOptions): Promise<{
         const idInput = getVal(colIdx.id);
         const skuInput = getVal(colIdx.sku);
         const slugInput = getVal(colIdx.slug);
-        const descInput = getVal(colIdx.description);
+        const descInput = sanitizeRichHtml(getVal(colIdx.description));
         const priceInput = getVal(colIdx.price);
         const strikethroughInput = getVal(colIdx.strikethroughPrice);
         const imagesInput = getVal(colIdx.imagesUrl);
-        const videoInput = getVal(colIdx.videoUrl);
+        const rawVideo = getVal(colIdx.videoUrl);
+        const videoInput = isSafeUrl(rawVideo) ? rawVideo : null;
         const appsInput = getVal(colIdx.applications);
         const buyerNoteInput = getVal(colIdx.enableBuyerNote);
         const visInput = getVal(colIdx.visibility);
@@ -875,8 +878,8 @@ export async function importProductsAction(options: ImportOptions): Promise<{
           if (!["specs", "selection", "calculation", "cad"].includes(icon)) {
             icon = "specs";
           }
-          if (title || url) {
-            technicalSupportLinks.push({ title, url, icon });
+          if (title && url && isSafeUrl(url)) {
+            technicalSupportLinks.push({ title: title.slice(0, 100), url, icon });
           }
         }
 
@@ -1037,7 +1040,7 @@ export async function importProductsAction(options: ImportOptions): Promise<{
       errors,
     };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to import products";
+    const message = sanitizeErrorMessage(error, "Failed to import products");
     console.error("Product import error:", error);
     return { success: false, error: message };
   }

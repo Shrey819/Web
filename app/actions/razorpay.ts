@@ -13,6 +13,7 @@ import {
   createRazorpayOrderInputSchema,
   createPrepaidOrderInputSchema,
 } from "@/lib/validations/order";
+import { safeActionResponse } from "@/lib/safe-error";
 
 const generateId = () => "ord_" + crypto.randomBytes(8).toString("hex");
 const generateOrderItemId = () => "ori_" + crypto.randomBytes(8).toString("hex");
@@ -400,11 +401,7 @@ export async function verifyAndCreatePrepaidOrderAction(input: CreatePrepaidOrde
       carrier: initialCarrier,
       deliveryRange,
     };
-  } catch (error: any) {
-    console.error("[Razorpay] verifyAndCreatePrepaidOrderAction failed:", error);
-    return {
-      success: false,
-      error: error?.message || "Failed to process and finalize prepaid order.",
-    };
+  } catch (error) {
+    return safeActionResponse(error, "Failed to process and finalize prepaid order.", "RazorpayCheckout");
   }
 }

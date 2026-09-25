@@ -3,6 +3,8 @@
 import { query, transaction } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-checks";
+import { sanitizeRichHtml } from "@/lib/sanitize";
+import { sanitizeErrorMessage } from "@/lib/safe-error";
 import crypto from "crypto";
 
 const generateId = (prefix = "id_") => prefix + crypto.randomBytes(8).toString("hex");
@@ -58,7 +60,7 @@ export async function getGlobalCategories(): Promise<{ success: boolean; categor
     `);
     return { success: true, categories: res.rows as CategoryItem[] };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to load categories";
+    const message = sanitizeErrorMessage(error, "Failed to load categories");
     return { success: false, error: message, categories: [] };
   }
 }
@@ -82,7 +84,7 @@ export async function getGlobalRibbons(): Promise<{ success: boolean; ribbons: R
     `);
     return { success: true, ribbons: res.rows as RibbonItem[] };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to load ribbons";
+    const message = sanitizeErrorMessage(error, "Failed to load ribbons");
     return { success: false, error: message, ribbons: [] };
   }
 }
@@ -101,7 +103,7 @@ export async function createRibbon(name: string, color = "#2563eb") {
     revalidatePath("/admin/products");
     return { success: true, id, name: trimmed };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to create ribbon";
+    const message = sanitizeErrorMessage(error, "Failed to create ribbon");
     return { success: false, error: message };
   }
 }
@@ -136,7 +138,7 @@ export async function renameRibbon(id: string, newName: string, color?: string) 
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to rename ribbon";
+    const message = sanitizeErrorMessage(error, "Failed to rename ribbon");
     return { success: false, error: message };
   }
 }
@@ -160,7 +162,7 @@ export async function deleteRibbon(id: string) {
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to delete ribbon";
+    const message = sanitizeErrorMessage(error, "Failed to delete ribbon");
     return { success: false, error: message };
   }
 }
@@ -183,7 +185,7 @@ export async function getGlobalTags(): Promise<{ success: boolean; tags: TagItem
     `);
     return { success: true, tags: res.rows as TagItem[] };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to load tags";
+    const message = sanitizeErrorMessage(error, "Failed to load tags");
     return { success: false, error: message, tags: [] };
   }
 }
@@ -207,7 +209,7 @@ export async function createTag(name: string) {
     revalidatePath("/admin/products");
     return { success: true, id, name: trimmed };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to create tag";
+    const message = sanitizeErrorMessage(error, "Failed to create tag");
     return { success: false, error: message };
   }
 }
@@ -221,7 +223,7 @@ export async function renameTag(id: string, newName: string) {
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to rename tag";
+    const message = sanitizeErrorMessage(error, "Failed to rename tag");
     return { success: false, error: message };
   }
 }
@@ -233,7 +235,7 @@ export async function deleteTag(id: string) {
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to delete tag";
+    const message = sanitizeErrorMessage(error, "Failed to delete tag");
     return { success: false, error: message };
   }
 }
@@ -293,7 +295,7 @@ export async function getGlobalBrands(): Promise<{ success: boolean; brands: Bra
     };
   } catch (error: unknown) {
     console.error("Failed to load brands:", error);
-    const message = error instanceof Error ? error.message : "Failed to load brands";
+    const message = sanitizeErrorMessage(error, "Failed to load brands");
     return { success: false, error: message, brands: [], unbrandedCount: 0 };
   }
 }
@@ -330,7 +332,7 @@ export async function createBrand(
     revalidatePath("/brands");
     return { success: true, id, name: trimmed };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to create brand";
+    const message = sanitizeErrorMessage(error, "Failed to create brand");
     return { success: false, error: message };
   }
 }
@@ -377,7 +379,7 @@ export async function updateBrand(
     revalidatePath("/brands");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to update brand";
+    const message = sanitizeErrorMessage(error, "Failed to update brand");
     return { success: false, error: message };
   }
 }
@@ -475,7 +477,7 @@ export async function deleteBrandWithReassignment(
     return { success: true };
   } catch (error: unknown) {
     console.error("Failed to delete brand with reassignment:", error);
-    const message = error instanceof Error ? error.message : "Failed to delete brand";
+    const message = sanitizeErrorMessage(error, "Failed to delete brand");
     return { success: false, error: message };
   }
 }
@@ -533,7 +535,7 @@ export async function assignProductToBrand(
     }
   } catch (error: unknown) {
     console.error("Failed to assign product to brand:", error);
-    const message = error instanceof Error ? error.message : "Failed to update product brand";
+    const message = sanitizeErrorMessage(error, "Failed to update product brand");
     return { success: false, error: message };
   }
 }
@@ -589,7 +591,7 @@ export async function assignMultipleProductsToBrand(
     }
   } catch (error: unknown) {
     console.error("Failed to batch assign products to brand:", error);
-    const message = error instanceof Error ? error.message : "Failed to batch assign products";
+    const message = sanitizeErrorMessage(error, "Failed to batch assign products");
     return { success: false, error: message };
   }
 }
@@ -639,7 +641,7 @@ export async function getUnbrandedProducts(): Promise<{ success: boolean; produc
 
     return { success: true, products: res.rows as BrandProductItem[] };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to load unbranded products";
+    const message = sanitizeErrorMessage(error, "Failed to load unbranded products");
     return { success: false, error: message, products: [] };
   }
 }
@@ -672,7 +674,7 @@ export async function getBrandProducts(brandIdOrName: string): Promise<{ success
 
     return { success: true, products: res.rows as BrandProductItem[] };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to load products for brand";
+    const message = sanitizeErrorMessage(error, "Failed to load products for brand");
     return { success: false, error: message, products: [] };
   }
 }
@@ -696,7 +698,7 @@ export async function getGlobalOptions(): Promise<{ success: boolean; options: G
     `);
     return { success: true, options: res.rows as GlobalOptionItem[] };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to load global options";
+    const message = sanitizeErrorMessage(error, "Failed to load global options");
     return { success: false, error: message, options: [] };
   }
 }
@@ -714,7 +716,7 @@ export async function createGlobalOption(name: string, fieldType: "TEXT_CHOICES"
     `, [id, trimmed, fieldType]);
     return { success: true, id, name: trimmed, fieldType };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to create option";
+    const message = sanitizeErrorMessage(error, "Failed to create option");
     return { success: false, error: message };
   }
 }
@@ -749,7 +751,7 @@ export async function renameGlobalOption(id: string, newName: string, fieldType?
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to rename option";
+    const message = sanitizeErrorMessage(error, "Failed to rename option");
     return { success: false, error: message };
   }
 }
@@ -761,7 +763,7 @@ export async function deleteGlobalOption(id: string) {
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to delete global option";
+    const message = sanitizeErrorMessage(error, "Failed to delete global option");
     return { success: false, error: message };
   }
 }
@@ -787,7 +789,7 @@ export async function getGlobalInfoSections(): Promise<{ success: boolean; secti
     `);
     return { success: true, sections: res.rows as GlobalInfoSectionItem[] };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to load info sections";
+    const message = sanitizeErrorMessage(error, "Failed to load info sections");
     return { success: false, error: message, sections: [] };
   }
 }
@@ -855,11 +857,11 @@ export async function createInfoSection(internalName: string, title: string, con
     await query(`
       INSERT INTO "GlobalInfoSection" ("id", "internalName", "title", "content", "sortOrder", "createdAt", "updatedAt")
       VALUES ($1, $2, $3, $4, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    `, [id, trimmedInternal, trimmedTitle, content || ""]);
+    `, [id, trimmedInternal, trimmedTitle, sanitizeRichHtml(content)]);
     revalidatePath("/admin/products");
     return { success: true, id };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to create info section";
+    const message = sanitizeErrorMessage(error, "Failed to create info section");
     return { success: false, error: message };
   }
 }
@@ -874,12 +876,12 @@ export async function updateInfoSection(id: string, internalName: string, title:
       UPDATE "GlobalInfoSection" 
       SET "internalName" = $1, "title" = $2, "content" = $3, "updatedAt" = CURRENT_TIMESTAMP
       WHERE "id" = $4
-    `, [trimmedInternal, trimmedTitle, content || "", id]);
+    `, [trimmedInternal, trimmedTitle, sanitizeRichHtml(content), id]);
     revalidatePath("/admin/products");
     revalidatePath("/product");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to update info section";
+    const message = sanitizeErrorMessage(error, "Failed to update info section");
     return { success: false, error: message };
   }
 }
@@ -891,7 +893,7 @@ export async function deleteInfoSection(id: string) {
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to delete info section";
+    const message = sanitizeErrorMessage(error, "Failed to delete info section");
     return { success: false, error: message };
   }
 }
@@ -916,7 +918,7 @@ export async function getAdminCategories(): Promise<{ success: boolean; categori
     `);
     return { success: true, categories: res.rows as CategoryItem[] };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to load categories";
+    const message = sanitizeErrorMessage(error, "Failed to load categories");
     return { success: false, error: message, categories: [] };
   }
 }
@@ -939,7 +941,7 @@ export async function createInlineCategory(name: string) {
     revalidatePath("/admin/products");
     return { success: true, id, name: trimmed, slug };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to create category";
+    const message = sanitizeErrorMessage(error, "Failed to create category");
     return { success: false, error: message };
   }
 }
@@ -957,7 +959,7 @@ export async function getVariantsForProduct(productId: string) {
     `, [productId]);
     return { success: true, variants: res.rows };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to load variants";
+    const message = sanitizeErrorMessage(error, "Failed to load variants");
     return { success: false, error: message, variants: [] };
   }
 }
@@ -1000,7 +1002,7 @@ export async function saveProductVariants(productId: string, variants: any[]) {
     revalidatePath("/admin/products");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to save variants";
+    const message = sanitizeErrorMessage(error, "Failed to save variants");
     return { success: false, error: message };
   }
 }
@@ -1030,7 +1032,7 @@ export async function getOptionPresets(): Promise<{ success: boolean; presets: O
     `);
     return { success: true, presets: res.rows as unknown as OptionPresetItem[] };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to load option presets";
+    const message = sanitizeErrorMessage(error, "Failed to load option presets");
     return { success: false, error: message, presets: [] };
   }
 }
@@ -1065,7 +1067,7 @@ export async function saveOptionPreset(
 
     return { success: true, id, name: trimmed };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to save option preset";
+    const message = sanitizeErrorMessage(error, "Failed to save option preset");
     return { success: false, error: message };
   }
 }
@@ -1101,7 +1103,7 @@ export async function updateOptionPreset(
 
     return { success: true, id, name: trimmed };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to update option preset";
+    const message = sanitizeErrorMessage(error, "Failed to update option preset");
     return { success: false, error: message };
   }
 }
@@ -1112,7 +1114,7 @@ export async function deleteOptionPreset(id: string) {
     await query(`DELETE FROM "ProductOptionPreset" WHERE "id" = $1`, [id]);
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to delete option preset";
+    const message = sanitizeErrorMessage(error, "Failed to delete option preset");
     return { success: false, error: message };
   }
 }

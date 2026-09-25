@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { getActiveProducts, getStorefrontCategories } from "@/lib/storefront";
 import { StorefrontCatalog } from "@/components/catalog/StorefrontCatalog";
 import { PRODUCTS as MOCK_PRODUCTS } from "@/data/products";
-import { getSiteUrl, generateBreadcrumbJsonLd } from "@/lib/seo";
+import { getSiteUrl, generateBreadcrumbJsonLd, safeJsonLdStringify } from "@/lib/seo";
 
 interface ProductsPageProps {
   searchParams?: Promise<{
@@ -88,7 +88,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(breadcrumbJsonLd) }}
       />
       <StorefrontCatalog
         initialProducts={products}

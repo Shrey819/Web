@@ -24,6 +24,7 @@ import {
 } from "@/lib/shiprocket";
 import { getSystemSettings } from "@/lib/settings";
 import { getSuggestedStateForPincode } from "@/lib/indiaLocations";
+import { safeActionResponse, sanitizeErrorMessage } from "@/lib/safe-error";
 
 /**
  * Public Pincode Serviceability & Delivery Estimation Check (Checkout & Product Page)
@@ -122,9 +123,9 @@ export async function adminGetShiprocketPickupLocationsAction() {
       pickupLocations: locations,
       primaryLocation: primary,
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Failed to fetch Shiprocket pickup locations:", e);
-    return { success: false, error: e.message, pickupLocations: [] };
+    return { success: false, error: sanitizeErrorMessage(e, "Failed to fetch pickup locations"), pickupLocations: [] };
   }
 }
 
@@ -199,12 +200,13 @@ export async function adminGetShiprocketRatesForOrderAction(
       pickupPincode: pickupPin,
       shiprocketError: res.available_courier_companies.length === 0 ? (res.error || res.message || "Pincode is not serviceable by any courier partner.") : undefined,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to query Shiprocket rates:", error);
+    const safeMsg = sanitizeErrorMessage(error, "Failed to calculate courier rates");
     return { 
       success: false, 
-      error: error.message || "Failed to calculate courier rates",
-      shiprocketError: error.message || "Failed to calculate courier rates",
+      error: safeMsg,
+      shiprocketError: safeMsg,
       couriers: [],
       deliveryPincode: customDimensions?.deliveryPincode || "360003",
     };
@@ -386,10 +388,7 @@ export async function adminCreateShiprocketShipmentAction(
     };
   } catch (error: any) {
     console.error("Failed to create Shiprocket shipment:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to create shipment in Shiprocket",
-    };
+    return safeActionResponse(error, "Failed to create shipment in Shiprocket");
   }
 }
 
@@ -425,7 +424,7 @@ export async function adminAssignAWBAction(orderId: string, courierId?: number) 
 
     return { success: true, awbCode: res.awb_code, courierName: res.courier_name };
   } catch (error: any) {
-    return { success: false, error: error.message || "Failed to assign AWB" };
+    return safeActionResponse(error, "Failed to assign AWB");
   }
 }
 
@@ -458,7 +457,7 @@ export async function adminRequestPickupAction(orderId: string) {
     revalidatePath("/admin/orders");
     return { success: true, pickupToken: res.pickup_token_number, pickupDate: res.pickup_scheduled_date };
   } catch (error: any) {
-    return { success: false, error: error.message || "Failed to schedule pickup" };
+    return safeActionResponse(error, "Failed to schedule pickup");
   }
 }
 
@@ -494,7 +493,7 @@ export async function adminGenerateLabelAction(orderId: string) {
     revalidatePath("/admin/orders");
     return { success: true, labelUrl: res.label_url };
   } catch (error: any) {
-    return { success: false, error: error.message || "Failed to generate shipping label" };
+    return safeActionResponse(error, "Failed to generate shipping label");
   }
 }
 
@@ -550,7 +549,7 @@ export async function getCustomerOrderInvoiceAction(orderId: string) {
     return { success: true, invoiceUrl: res.invoice_url };
   } catch (error: any) {
     console.error("Failed to generate customer invoice:", error);
-    return { success: false, error: error?.message || "Failed to generate invoice" };
+    return safeActionResponse(error, "Failed to generate invoice");
   }
 }
 
@@ -589,7 +588,7 @@ export async function adminGenerateInvoiceAction(orderId: string) {
 
     return { success: true, invoiceUrl: res.invoice_url };
   } catch (error: any) {
-    return { success: false, error: error.message || "Failed to generate invoice" };
+    return safeActionResponse(error, "Failed to generate invoice");
   }
 }
 
@@ -625,7 +624,7 @@ export async function adminGenerateManifestAction(orderId: string) {
     revalidatePath("/admin/orders");
     return { success: true, manifestUrl: res.manifest_url };
   } catch (error: any) {
-    return { success: false, error: error.message || "Failed to generate manifest" };
+    return safeActionResponse(error, "Failed to generate manifest");
   }
 }
 
@@ -735,7 +734,7 @@ export async function getLiveOrderTrackingAction(orderIdOrAwb: string): Promise<
     console.error("Failed to fetch live tracking:", error);
     return {
       success: false,
-      error: error.message || "Failed to fetch live tracking information.",
+      error: sanitizeErrorMessage(error, "Failed to fetch live tracking information."),
     };
   }
 }

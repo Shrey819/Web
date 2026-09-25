@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getProductForEdit, updateProduct, deleteProduct } from "@/app/actions/product";
 import { requireAdminApi } from "@/lib/auth-checks";
+import { requireValidOrigin } from "@/lib/csrf";
+import { safeApiResponse } from "@/lib/safe-error";
 
 import { idSchema } from "@/lib/validations/common";
 
@@ -23,9 +25,8 @@ export async function GET(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
     return NextResponse.json(product);
-  } catch (error: any) {
-    console.error("GET product API error:", error);
-    return NextResponse.json({ error: error.message || "Failed to fetch product" }, { status: 500 });
+  } catch (error) {
+    return safeApiResponse(error, "Failed to fetch product.", 500, "GetProduct");
   }
 }
 
@@ -33,6 +34,9 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const originBlock = requireValidOrigin(request);
+  if (originBlock) return originBlock;
+
   const authCheck = await requireAdminApi();
   if (authCheck.errorResponse) return authCheck.errorResponse;
 
@@ -55,9 +59,8 @@ export async function PUT(
       return NextResponse.json({ error: result.error || "Failed to update product" }, { status: 400 });
     }
     return NextResponse.json({ success: true, id: parsedId.data });
-  } catch (error: any) {
-    console.error("PUT product API error:", error);
-    return NextResponse.json({ error: error.message || "Failed to update product" }, { status: 500 });
+  } catch (error) {
+    return safeApiResponse(error, "Failed to update product.", 500, "UpdateProduct");
   }
 }
 
@@ -65,6 +68,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const originBlock = requireValidOrigin(request);
+  if (originBlock) return originBlock;
+
   const authCheck = await requireAdminApi();
   if (authCheck.errorResponse) return authCheck.errorResponse;
 
@@ -80,8 +86,7 @@ export async function DELETE(
       return NextResponse.json({ error: result.error || "Failed to delete product" }, { status: 400 });
     }
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error("DELETE product API error:", error);
-    return NextResponse.json({ error: error.message || "Failed to delete product" }, { status: 500 });
+  } catch (error) {
+    return safeApiResponse(error, "Failed to delete product.", 500, "DeleteProduct");
   }
 }

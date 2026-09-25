@@ -4,6 +4,8 @@ import { transaction, query } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { requireAdmin } from "@/lib/auth-checks";
+import { sanitizeRichHtml } from "@/lib/sanitize";
+import { sanitizeErrorMessage } from "@/lib/safe-error";
 
 const generateId = () => "cl" + crypto.randomBytes(12).toString("hex");
 
@@ -193,7 +195,7 @@ export async function bulkCreateProducts(products: BulkProductRowInput[]): Promi
             sku,
             productCode,
             item.description ? item.description.slice(0, 200) : null,
-            item.description || null,
+            item.description ? sanitizeRichHtml(item.description) : null,
             primaryCategoryId,
             "default-brand",
             status,
@@ -243,7 +245,7 @@ export async function bulkCreateProducts(products: BulkProductRowInput[]): Promi
       createdCount++;
     } catch (err: unknown) {
       failedCount++;
-      const errorMessage = err instanceof Error ? err.message : String(err);
+      const errorMessage = sanitizeErrorMessage(err, "Failed to import row data");
       errors.push(`Row #${rowNum} (${item.productCode || item.name}): ${errorMessage}`);
     }
   }

@@ -128,11 +128,12 @@ export async function requireAdminApi(explicitUserId?: string): Promise<
   try {
     const user = await requireAdmin(explicitUserId);
     return { user };
-  } catch (err: any) {
+  } catch (err: unknown) {
     const status = err instanceof AuthError ? err.statusCode : 401;
+    const message = err instanceof AuthError ? err.message : "Unauthorized";
     return {
       errorResponse: NextResponse.json(
-        { error: err?.message || "Unauthorized" },
+        { error: message },
         { status }
       ),
     };

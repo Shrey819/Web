@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-checks";
 import crypto from "crypto";
 import { createQuoteInputSchema, quoteStatusUpdateSchema } from "@/lib/validations/forms";
+import { safeActionResponse } from "@/lib/safe-error";
 
 const generateId = () => "rfq_" + crypto.randomBytes(8).toString("hex");
 const generateQuoteItemId = () => "qti_" + crypto.randomBytes(8).toString("hex");
@@ -74,9 +75,7 @@ export async function createQuoteAction(input: CreateQuoteInput) {
     revalidatePath("/admin");
     return { success: true, quoteId };
   } catch (error) {
-    console.error("Failed to create quote request:", error);
-    const message = error instanceof Error ? error.message : "Failed to submit quote request";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to submit quote request");
   }
 }
 
@@ -126,7 +125,7 @@ export async function getAllQuotesAdminAction() {
     };
   } catch (error) {
     console.error("Failed to fetch admin quotes:", error);
-    return { success: false, quotes: [], error: String(error) };
+    return { success: false, quotes: [], error: "Failed to fetch quotes. Please try again." };
   }
 }
 
@@ -153,8 +152,6 @@ export async function updateQuoteStatusAction(quoteId: string, status: string, n
     revalidatePath("/admin");
     return { success: true };
   } catch (error) {
-    console.error("Failed to update quote status:", error);
-    const message = error instanceof Error ? error.message : "Failed to update quote status";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to update quote status");
   }
 }

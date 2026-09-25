@@ -3,6 +3,8 @@ import { query } from "@/lib/db";
 
 import { z } from "zod";
 import { idSchema, quantitySchema } from "@/lib/validations/common";
+import { requireValidOrigin } from "@/lib/csrf";
+import { safeApiResponse } from "@/lib/safe-error";
 
 const cartSyncItemSchema = z.object({
   productId: idSchema.optional(),
@@ -17,6 +19,9 @@ const cartSyncRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const originBlock = requireValidOrigin(request);
+  if (originBlock) return originBlock;
+
   try {
     let body: unknown;
     try {
@@ -101,8 +106,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, items: syncedItems });
-  } catch (error: any) {
-    console.error("Cart price sync error:", error);
-    return NextResponse.json({ error: error.message || "Failed to sync cart prices" }, { status: 500 });
+  } catch (error) {
+    return safeApiResponse(error, "Failed to sync cart prices. Please try again.", 500, "CartSync");
   }
 }

@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { productFormSchema, type ProductFormValues } from "@/lib/validations/product";
 import { requireAdmin } from "@/lib/auth-checks";
+import { sanitizeRichHtml } from "@/lib/sanitize";
+import { safeActionResponse } from "@/lib/safe-error";
 
 const generateId = (prefix = "prd_") => prefix + crypto.randomBytes(8).toString("hex");
 
@@ -120,7 +122,9 @@ function safeRevalidate(path: string) {
 /**
  * CREATE PRODUCT (Atomic PostgreSQL Transaction)
  */
-export async function createProduct(input: ProductFormValues) {
+export async function createProduct(input: ProductFormValues): Promise<
+  { success: true; id: string; error?: never } | { success: false; error: string; id?: never }
+> {
   try {
     await requireAdmin();
     const validated = productFormSchema.parse(input);
@@ -166,7 +170,7 @@ export async function createProduct(input: ProductFormValues) {
           CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         )
       `, [
-        productId, validated.name, slug, sku, validated.description || "", validated.visible ? 'ACTIVE' : 'DRAFT', validated.visible, validated.showInPos,
+        productId, validated.name, slug, sku, sanitizeRichHtml(validated.description), validated.visible ? 'ACTIVE' : 'DRAFT', validated.visible, validated.showInPos,
         primaryCat, primaryCat, validated.primaryRibbon || null, brandName || null,
         priceInPaise, priceInPaise, strikethroughInPaise, strikethroughInPaise, costInPaise,
         validated.showPricePerUnit, validated.baseUnit, validated.baseUnitMeasurement, validated.totalUnits || null, validated.totalUnitsMeasurement, validated.taxGroup,
@@ -285,16 +289,16 @@ export async function createProduct(input: ProductFormValues) {
     safeRevalidate("/");
     return { success: true, id: productId };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to create product";
-    console.error("Failed to create product:", error);
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to create product");
   }
 }
 
 /**
  * UPDATE PRODUCT (Atomic PostgreSQL Transaction)
  */
-export async function updateProduct(productId: string, input: ProductFormValues) {
+export async function updateProduct(productId: string, input: ProductFormValues): Promise<
+  { success: true; id: string; error?: never } | { success: false; error: string; id?: never }
+> {
   try {
     await requireAdmin();
     const validated = productFormSchema.parse(input);
@@ -330,7 +334,7 @@ export async function updateProduct(productId: string, input: ProductFormValues)
           "updatedAt" = CURRENT_TIMESTAMP
         WHERE "id" = $29
       `, [
-        validated.name, slug, validated.description || "", validated.visible ? 'ACTIVE' : 'DRAFT', validated.visible, validated.showInPos,
+        validated.name, slug, sanitizeRichHtml(validated.description), validated.visible ? 'ACTIVE' : 'DRAFT', validated.visible, validated.showInPos,
         primaryCat, primaryCat, validated.primaryRibbon || null, brandName || null,
         priceInPaise, priceInPaise, strikethroughInPaise, strikethroughInPaise, costInPaise,
         validated.showPricePerUnit, validated.baseUnit, validated.baseUnitMeasurement, validated.totalUnits || null, validated.totalUnitsMeasurement, validated.taxGroup,
@@ -457,9 +461,7 @@ export async function updateProduct(productId: string, input: ProductFormValues)
     safeRevalidate("/products");
     return { success: true, id: productId };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to update product";
-    console.error("Failed to update product:", error);
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to update product");
   }
 }
 
@@ -666,7 +668,10 @@ export async function getAdminProductsList(params?: { search?: string; category?
 /**
  * TOGGLE PRODUCT VISIBILITY
  */
-export async function toggleProductVisibility(productId: string, currentVisible: boolean) {
+export async function toggleProductVisibility(
+  productId: string,
+  currentVisible: boolean
+): Promise<{ success: true; visible: boolean; error?: never } | { success: false; error: string; visible?: never }> {
   try {
     await requireAdmin();
     const nextVisible = !currentVisible;
@@ -680,15 +685,16 @@ export async function toggleProductVisibility(productId: string, currentVisible:
     safeRevalidate("/products");
     return { success: true, visible: nextVisible };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to toggle visibility";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to toggle visibility");
   }
 }
 
 /**
  * DUPLICATE PRODUCT
  */
-export async function duplicateProduct(productId: string) {
+export async function duplicateProduct(productId: string): Promise<
+  { success: true; id: string; error?: never } | { success: false; error: string; id?: never }
+> {
   try {
     await requireAdmin();
     const original = await getProductForEdit(productId);
@@ -712,15 +718,16 @@ export async function duplicateProduct(productId: string) {
     }
     return res;
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to duplicate product";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to duplicate product");
   }
 }
 
 /**
  * DELETE PRODUCT
  */
-export async function deleteProduct(productId: string) {
+export async function deleteProduct(productId: string): Promise<
+  { success: true; error?: never } | { success: false; error: string }
+> {
   try {
     await requireAdmin();
     await query(`DELETE FROM "Product" WHERE "id" = $1`, [productId]);
@@ -728,7 +735,6 @@ export async function deleteProduct(productId: string) {
     safeRevalidate("/products");
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to delete product";
-    return { success: false, error: message };
+    return safeActionResponse(error, "Failed to delete product");
   }
 }

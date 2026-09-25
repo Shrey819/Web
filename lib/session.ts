@@ -109,7 +109,14 @@ export async function invalidateSession(): Promise<void> {
       await query(`DELETE FROM "Session" WHERE "sessionToken" = $1`, [token]);
     }
 
-    cookieStore.delete(SESSION_COOKIE_NAME);
+    cookieStore.set(SESSION_COOKIE_NAME, "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+      expires: new Date(0),
+    });
   } catch (error) {
     console.error("Error invalidating session:", error);
   }

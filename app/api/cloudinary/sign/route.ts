@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { requireAdminApi } from "@/lib/auth-checks";
+import { requireValidOrigin } from "@/lib/csrf";
+import { safeApiResponse } from "@/lib/safe-error";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -11,6 +13,9 @@ cloudinary.config({
 import { cloudinarySignRequestSchema } from "@/lib/validations/cloudinary";
 
 export async function POST(request: Request) {
+  const originBlock = requireValidOrigin(request);
+  if (originBlock) return originBlock;
+
   const authCheck = await requireAdminApi();
   if (authCheck.errorResponse) return authCheck.errorResponse;
 
@@ -39,7 +44,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ signature });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Error signing request";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return safeApiResponse(error, "Failed to generate upload signature.", 500, "CloudinarySign");
   }
 }
