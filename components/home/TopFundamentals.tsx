@@ -72,8 +72,19 @@ export function TopFundamentals({ config }: { config?: TopFundamentalsConfig }) 
   const totalCards = items.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [tossingCard, setTossingCard] = useState<TossingCardState | null>(null);
   const isTransitioningRef = useRef(false);
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up any pending transition timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const dragX = useMotionValue(0);
   const dragY = useMotionValue(0);
@@ -97,6 +108,7 @@ export function TopFundamentals({ config }: { config?: TopFundamentalsConfig }) 
     ) => {
       if (isTransitioningRef.current || totalCards === 0) return;
       isTransitioningRef.current = true;
+      setIsTransitioning(true);
 
       const currentCard = items[activeIndex];
       const finalOrder = totalCards - 1; // resting at the bottom of the deck
@@ -128,10 +140,12 @@ export function TopFundamentals({ config }: { config?: TopFundamentalsConfig }) 
       dragX.set(0);
       dragY.set(0);
 
-      // Settle into final resting slot at the bottom of the deck
-      setTimeout(() => {
+      // Settle into final resting slot at the bottom of the deck and re-enable navigation
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+      transitionTimeoutRef.current = setTimeout(() => {
         setTossingCard(null);
         isTransitioningRef.current = false;
+        setIsTransitioning(false);
       }, 530);
     },
     [activeIndex, items, totalCards, dragX, dragY]
@@ -144,11 +158,20 @@ export function TopFundamentals({ config }: { config?: TopFundamentalsConfig }) 
   const handlePrev = useCallback(() => {
     if (isTransitioningRef.current || totalCards === 0) return;
     isTransitioningRef.current = true;
+    setIsTransitioning(true);
+
+    dragX.set(0);
+    dragY.set(0);
+    setTossingCard(null);
+
     setActiveIndex((prev) => (prev - 1 + totalCards) % totalCards);
-    setTimeout(() => {
+
+    if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+    transitionTimeoutRef.current = setTimeout(() => {
       isTransitioningRef.current = false;
-    }, 350);
-  }, [totalCards]);
+      setIsTransitioning(false);
+    }, 380);
+  }, [totalCards, dragX, dragY]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -312,7 +335,7 @@ export function TopFundamentals({ config }: { config?: TopFundamentalsConfig }) 
               return (
                 <motion.div
                   key={item.id || idx}
-                  drag={!isTransitioningRef.current}
+                  drag={!isTransitioning}
                   dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
                   dragElastic={0.85}
                   onDragStart={() => setIsDragging(true)}
@@ -452,8 +475,8 @@ export function TopFundamentals({ config }: { config?: TopFundamentalsConfig }) 
         <div className="inline-flex items-center gap-4 sm:gap-5 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full bg-slate-900 border border-slate-800 text-slate-300 shadow-md">
           <button
             onClick={handlePrev}
-            disabled={isTransitioningRef.current}
-            className="p-1 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+            disabled={isTransitioning}
+            className="p-1 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Previous card"
           >
             <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 hover:text-cyan-400" />
@@ -463,8 +486,8 @@ export function TopFundamentals({ config }: { config?: TopFundamentalsConfig }) 
           </span>
           <button
             onClick={handleNext}
-            disabled={isTransitioningRef.current}
-            className="p-1 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+            disabled={isTransitioning}
+            className="p-1 hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Next card"
           >
             <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 hover:text-cyan-400" />

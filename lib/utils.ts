@@ -148,3 +148,109 @@ export function validatePersonName(name?: string | null): { isValid: boolean; er
   return { isValid: true };
 }
 
+/**
+ * Validates an email address:
+ * - Must not contain spaces or forbidden characters (#, $, %, etc.)
+ * - Must contain exactly one '@'
+ * - Must have a valid domain and TLD extension (.com, .in, etc.)
+ */
+export function validateEmailAddress(email?: string | null): { isValid: boolean; error?: string } {
+  if (!email || typeof email !== "string") {
+    return { isValid: false, error: "Corporate email is required." };
+  }
+
+  const trimmed = email.trim();
+  if (trimmed.length === 0) {
+    return { isValid: false, error: "Corporate email is required." };
+  }
+
+  if (trimmed.length > 254) {
+    return { isValid: false, error: "Email cannot exceed 254 characters." };
+  }
+
+  if (/\s/.test(trimmed)) {
+    return { isValid: false, error: "Email address cannot contain spaces." };
+  }
+
+  if (/[#$!%^&*()=+[\]{}|;:"'<>?\\/]/i.test(trimmed)) {
+    return { isValid: false, error: "Email address contains invalid special characters." };
+  }
+
+  const atCount = (trimmed.match(/@/g) || []).length;
+  if (atCount === 0) {
+    return { isValid: false, error: "Email address must include an '@' symbol." };
+  }
+  if (atCount > 1) {
+    return { isValid: false, error: "Email address cannot contain more than one '@' symbol." };
+  }
+
+  const [localPart, domainPart] = trimmed.split("@");
+  if (!localPart || localPart.length === 0) {
+    return { isValid: false, error: "Email must include a username before '@'." };
+  }
+  if (!domainPart || domainPart.length === 0) {
+    return { isValid: false, error: "Email must include a domain after '@' (e.g. company.com)." };
+  }
+
+  if (localPart.startsWith(".") || localPart.endsWith(".") || localPart.includes("..")) {
+    return { isValid: false, error: "Invalid placement of dots in email address." };
+  }
+
+  if (!domainPart.includes(".") || domainPart.startsWith(".") || domainPart.endsWith(".") || domainPart.includes("..")) {
+    return { isValid: false, error: "Please enter a valid domain (e.g. company.com)." };
+  }
+
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(trimmed)) {
+    return { isValid: false, error: "Please enter a valid email address (e.g. rahul@company.com)." };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Transforms high-resolution images (Cloudinary, Unsplash, etc.) into low-pixel,
+ * highly compressed lightweight thumbnails for mega menus, mobile drawers, and cards.
+ * Prevents loading multi-megabyte original images, saving 95%+ bandwidth and loading instantly.
+ */
+export function getOptimizedThumbnail(
+  url?: string | null,
+  width: number = 180,
+  height: number = width
+): string {
+  if (!url || typeof url !== "string") return "";
+
+  // Cloudinary image transformation
+  if (url.includes("res.cloudinary.com") && url.includes("/image/upload/")) {
+    if (url.includes("/image/upload/w_") || url.includes("/image/upload/c_")) {
+      return url.replace(
+        /\/image\/upload\/(w_[^/]+|c_[^/]+)\//,
+        `/image/upload/w_${width},h_${height},c_fill,q_auto:eco,f_auto/`
+      );
+    }
+    return url.replace(
+      "/image/upload/",
+      `/image/upload/w_${width},h_${height},c_fill,q_auto:eco,f_auto/`
+    );
+  }
+
+  // Unsplash image transformation
+  if (url.includes("images.unsplash.com")) {
+    try {
+      const parsed = new URL(url);
+      parsed.searchParams.set("w", String(width));
+      parsed.searchParams.set("h", String(height));
+      parsed.searchParams.set("q", "80");
+      parsed.searchParams.set("auto", "format");
+      parsed.searchParams.set("fit", "crop");
+      return parsed.toString();
+    } catch {
+      return url;
+    }
+  }
+
+  return url;
+}
+
+
+

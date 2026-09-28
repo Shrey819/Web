@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUserStore } from "@/store/useUserStore";
+import { formatCurrency, getOptimizedThumbnail } from "@/lib/utils";
 
 
 interface MobileNavProps {
@@ -129,11 +130,13 @@ export function MobileNav({
 
   const getCategoryIcon = (slug: string) => {
     switch (slug) {
-      case "sensors":
+      case "ballscrew":
+      case "ballscrews":
         return "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&auto=format&fit=crop&q=60";
-      case "plcs":
+      case "linear-guideway":
+      case "linear-guideways":
         return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=100&auto=format&fit=crop&q=60";
-      case "drives":
+      case "actuators":
         return "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=100&auto=format&fit=crop&q=60";
       default:
         return "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&auto=format&fit=crop&q=60";
@@ -377,16 +380,17 @@ export function MobileNav({
                         <div key={cat.id} className="bg-white">
                           <button
                             onClick={() => handleCategoryClick(cat)}
-                            className="w-full flex items-center justify-between p-4 hover:bg-slate-50 text-left font-bold text-slate-900 text-sm"
+                            className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 text-left font-bold text-slate-900 text-sm"
                           >
                             <div className="flex items-center gap-3">
                               {/* Thumbnail Image */}
                               <img
                                 src={getCategoryIcon(cat.slug)}
                                 alt={cat.name}
+                                loading="lazy"
                                 className="w-10 h-10 object-cover rounded-lg bg-slate-100 border border-slate-200"
                               />
-                              <span className="font-mono">{cat.name}</span>
+                              <span className="font-semibold text-slate-900">{cat.name}</span>
                             </div>
                             {expandedCategory === cat.id ? (
                               <ChevronUp className="w-4 h-4 text-slate-400" />
@@ -397,34 +401,46 @@ export function MobileNav({
 
                           {/* Accordion content: Product Cards Grid (Limit to max top 20 products) */}
                           {expandedCategory === cat.id && (
-                            <div className="p-4 bg-slate-50 border-t border-b border-slate-100">
+                            <div className="p-3 bg-slate-50 border-t border-b border-slate-100">
                               {loadingCategory === cat.id ? (
                                 <div className="flex items-center justify-center py-6">
                                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500"></div>
                                 </div>
                               ) : (
                                 <>
-                                  <div className="grid grid-cols-2 gap-4">
+                                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                                     {((categoryProducts[cat.id] || []).slice(0, 20)).map((prod) => {
-                                      const imgUrl = (prod.images && prod.images[0]?.url) || "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300&auto=format&fit=crop&q=80";
+                                      const rawImg =
+                                        (prod.images && prod.images[0]?.url) ||
+                                        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=180&h=180&auto=format&fit=crop&q=80";
+                                      const thumbImg = getOptimizedThumbnail(rawImg, 180, 180);
+
                                       return (
                                         <Link
                                           key={prod.id}
                                           href={`/product/${prod.slug}`}
                                           onClick={onClose}
-                                          className="bg-white p-3 rounded-2xl border border-slate-200 hover:border-amber-400 transition-colors flex flex-col items-center justify-between min-h-[140px] shadow-sm group"
+                                          className="bg-white p-2.5 rounded-xl border border-slate-200 hover:border-amber-400 transition-colors flex flex-col items-center justify-between shadow-sm group"
                                         >
                                           {/* Product Image */}
-                                          <div className="w-full h-24 bg-slate-50 rounded-xl overflow-hidden flex items-center justify-center p-1 border border-slate-100">
+                                          <div className="w-full h-20 sm:h-24 bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center p-1 border border-slate-100">
                                             <img
-                                              src={imgUrl}
+                                              src={thumbImg}
                                               alt={prod.name}
+                                              loading="lazy"
+                                              decoding="async"
                                               className="max-h-full max-w-full object-contain mix-blend-multiply transition-transform group-hover:scale-105"
                                             />
                                           </div>
-                                          <span className="text-[11px] font-bold font-mono text-slate-800 leading-snug mt-2 text-center line-clamp-2">
-                                            {prod.name}
-                                          </span>
+                                          {/* Product Name & Price */}
+                                          <div className="w-full flex flex-col items-center mt-2 px-0.5">
+                                            <span className="text-[11px] font-semibold text-slate-800 leading-tight text-center line-clamp-2">
+                                              {prod.name}
+                                            </span>
+                                            <span className="text-[11px] font-bold text-amber-600 mt-1">
+                                              {formatCurrency(prod.basePrice || prod.price || 0)}
+                                            </span>
+                                          </div>
                                         </Link>
                                       );
                                     })}
@@ -434,10 +450,10 @@ export function MobileNav({
                                   <Link
                                     href={`/category/${cat.slug}`}
                                     onClick={onClose}
-                                    className="flex items-center gap-2 text-slate-800 hover:text-amber-500 font-mono font-bold text-sm pt-4 mt-4 border-t border-slate-200/80 group"
+                                    className="flex items-center gap-2 text-slate-800 hover:text-amber-500 font-bold text-xs sm:text-sm pt-3 mt-3 border-t border-slate-200/80 group"
                                   >
                                     <span>Go to {cat.name}</span>
-                                    <ChevronRight className="w-5 h-5 bg-slate-200 text-slate-700 rounded-full p-1 group-hover:bg-amber-400 group-hover:text-slate-950 transition-all" />
+                                    <ChevronRight className="w-4 h-4 bg-slate-200 text-slate-700 rounded-full p-0.5 group-hover:bg-amber-400 group-hover:text-slate-950 transition-all" />
                                   </Link>
                                 </>
                               )}

@@ -48,23 +48,24 @@ export function PhoneInput({ value, onChange, required = true, className = "" }:
 
   // Sync internal state when parent value changes or initializes
   useEffect(() => {
-    if (value) {
-      const matched = COUNTRIES.find((c) => value.startsWith(c.prefix)) || defaultCountry;
-      setSelectedCountry(matched);
-
-      let digits = value.replace(/\D/g, "");
-      const prefixDigits = matched.prefix.replace(/\D/g, "");
-
-      // If prefix was repeated or included in digits and length exceeds maxDigits
-      while (digits.length > matched.maxDigits && prefixDigits && digits.startsWith(prefixDigits)) {
-        digits = digits.slice(prefixDigits.length);
-      }
-
-      const digitsOnly = digits.slice(0, matched.maxDigits);
-      setNationalNumber((prev) => (prev !== digitsOnly ? digitsOnly : prev));
-    } else {
-      setNationalNumber((prev) => (prev !== "" ? "" : prev));
+    if (!value || !value.trim()) {
+      setNationalNumber("");
+      return;
     }
+
+    const trimmed = value.trim();
+    // Sort by longest prefix first so +971 is matched before +9
+    const sorted = [...COUNTRIES].sort((a, b) => b.prefix.length - a.prefix.length);
+    const matched = sorted.find((c) => trimmed.startsWith(c.prefix)) || defaultCountry;
+
+    setSelectedCountry(matched);
+
+    const rest = trimmed.startsWith(matched.prefix)
+      ? trimmed.slice(matched.prefix.length)
+      : trimmed;
+
+    const digitsOnly = rest.replace(/\D/g, "").slice(0, matched.maxDigits);
+    setNationalNumber(digitsOnly);
   }, [value, defaultCountry]);
 
   useEffect(() => {
@@ -84,15 +85,43 @@ export function PhoneInput({ value, onChange, required = true, className = "" }:
     // Trim digits to new country's maxDigits
     const trimmed = nationalNumber.slice(0, country.maxDigits);
     setNationalNumber(trimmed);
-    onChange(`${country.prefix} ${trimmed}`);
+    onChange(trimmed ? `${country.prefix} ${trimmed}` : "");
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value;
     // Strip non-digit characters and truncate to country maxDigits
-    const digits = rawVal.replace(/[^\d]/g, "").slice(0, selectedCountry.maxDigits);
+    const digits = rawVal.replace(/\D/g, "").slice(0, selectedCountry.maxDigits);
     setNationalNumber(digits);
-    onChange(`${selectedCountry.prefix} ${digits}`);
+    onChange(digits ? `${selectedCountry.prefix} ${digits}` : "");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Explicitly allow navigation, backspace, delete, copy-paste shortcuts
+    if (
+      [
+        "Backspace",
+        "Delete",
+        "Tab",
+        "Escape",
+        "Enter",
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowUp",
+        "ArrowDown",
+        "Home",
+        "End",
+      ].includes(e.key) ||
+      e.ctrlKey ||
+      e.metaKey
+    ) {
+      return;
+    }
+
+    // Disallow non-digit characters
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+    }
   };
 
   // Validation Check
@@ -126,34 +155,85 @@ export function PhoneInput({ value, onChange, required = true, className = "" }:
 
   return (
     <div className={`space-y-1.5 ${className}`} ref={dropdownRef}>
-      <div className={`flex items-center rounded-2xl border bg-white transition-all overflow-hidden shadow-sm ${
+      <div className={`relative flex items-center rounded-2xl border bg-white transition-all shadow-sm ${
         validationMessage?.type === "invalid"
           ? "border-rose-500 ring-2 ring-rose-500/20"
           : validationMessage?.type === "valid"
           ? "border-emerald-500 ring-2 ring-emerald-500/20"
           : "border-slate-200 focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-500/20"
       }`}>
-        {/* Country Flag & Prefix Dropdown Button */}
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1.5 px-3 py-3 bg-slate-50 border-r border-slate-200 hover:bg-slate-100 text-slate-800 font-mono text-xs font-bold shrink-0 transition-colors"
-        >
-          <span className="text-base">{selectedCountry.flag}</span>
-          <span>{selectedCountry.prefix}</span>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-500 ml-0.5" />
-        </button>
+        {/* Country Flag & Prefix Dropdown Button Container (Position relative anchors the dropdown) */}
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex items-center gap-1.5 px-3 py-3 bg-slate-50 border-r border-slate-200 hover:bg-slate-100 text-slate-800 font-mono text-xs font-bold rounded-l-2xl transition-colors cursor-pointer"
+          >
+            <span className="text-base">{selectedCountry.flag}</span>
+            <span>{selectedCountry.prefix}</span>
+            <ChevronDown className={`w-3.5 h-3.5 text-slate-500 ml-0.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {/* Flag / Prefix Selection Dropdown Anchored Directly Below Country Button */}
+          {isOpen && (
+            <div className="absolute left-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="p-2 border-b border-slate-100 bg-slate-50">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search country or code..."
+                    className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-sky-500"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div className="max-h-56 overflow-y-auto divide-y divide-slate-50">
+                {filteredCountries.map((country) => {
+                  const isSelected = country.code === selectedCountry.code;
+                  return (
+                    <button
+                      key={country.code}
+                      type="button"
+                      onClick={() => handleCountrySelect(country)}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 text-xs text-left transition-colors cursor-pointer ${
+                        isSelected ? "bg-sky-50 text-sky-900 font-bold" : "hover:bg-slate-50 text-slate-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-base">{country.flag}</span>
+                        <span className="truncate max-w-[130px]">{country.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-500">
+                        <span>{country.prefix}</span>
+                        <span className="text-[9px] text-slate-400 bg-slate-100 px-1 py-0.5 rounded">
+                          {country.maxDigits}D
+                        </span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-sky-600" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Local Number Input */}
         <div className="relative flex-1 flex items-center">
           <input
             type="tel"
+            inputMode="numeric"
             value={nationalNumber}
             onChange={handleNumberChange}
+            onKeyDown={handleKeyDown}
             placeholder={selectedCountry.placeholder}
             maxLength={selectedCountry.maxDigits}
             required={required}
-            className="w-full pl-3 pr-9 py-3 text-xs font-mono text-slate-900 placeholder-slate-400 bg-transparent focus:outline-none tracking-wider"
+            className="w-full pl-3 pr-9 py-3 text-xs font-mono text-slate-900 placeholder-slate-400 bg-transparent focus:outline-none tracking-wider rounded-r-2xl"
           />
 
           <div className="absolute right-3 flex items-center pointer-events-none">
@@ -182,53 +262,6 @@ export function PhoneInput({ value, onChange, required = true, className = "" }:
           <span className="ml-auto text-[10px] text-slate-400 font-bold">
             {digitsCount}/{selectedCountry.maxDigits}
           </span>
-        </div>
-      )}
-
-      {/* Flag / Prefix Selection Dropdown */}
-      {isOpen && (
-        <div className="absolute left-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-          <div className="p-2 border-b border-slate-100 bg-slate-50">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search country or code..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-sky-500"
-                autoFocus
-              />
-            </div>
-          </div>
-
-          <div className="max-h-56 overflow-y-auto divide-y divide-slate-50">
-            {filteredCountries.map((country) => {
-              const isSelected = country.code === selectedCountry.code;
-              return (
-                <button
-                  key={country.code}
-                  type="button"
-                  onClick={() => handleCountrySelect(country)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 text-xs text-left transition-colors ${
-                    isSelected ? "bg-sky-50 text-sky-900 font-bold" : "hover:bg-slate-50 text-slate-700"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-base">{country.flag}</span>
-                    <span className="truncate max-w-[130px]">{country.name}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-500">
-                    <span>{country.prefix}</span>
-                    <span className="text-[9px] text-slate-400 bg-slate-100 px-1 py-0.5 rounded">
-                      {country.maxDigits}D
-                    </span>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-sky-600" />}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
         </div>
       )}
     </div>

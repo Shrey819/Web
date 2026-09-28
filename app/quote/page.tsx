@@ -69,118 +69,118 @@ function QuoteForm() {
   };
 
   return (
-    <div className="bg-[#faf9f5] min-h-screen py-10 border-b border-slate-200">
+    <div className="bg-[#faf9f5] min-h-screen py-4 sm:py-10 border-b border-slate-200">
       <div className="content-shell">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 type-body-small text-slate-500 font-mono mb-6">
+        <nav className="flex items-center gap-1.5 sm:gap-2 text-xs text-slate-500 mb-3 sm:mb-6">
           <Link href="/" className="hover:text-slate-900">
             Home
           </Link>
           <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-slate-900 font-bold">Request Bulk Quote</span>
+          <span className="text-slate-900 font-semibold">Request Bulk Quote</span>
         </nav>
 
         {submitted ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xl space-y-6">
-            <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-lg">
-              <CheckCircle2 className="w-10 h-10" />
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center border border-slate-200 shadow-xl space-y-4 sm:space-y-6">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
+              <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10" />
             </div>
 
-            <h1 className="text-3xl font-mono font-extrabold text-slate-900">
+            <h1 className="text-xl sm:text-3xl font-bold text-slate-900">
               Bulk Quote Request Received!
             </h1>
 
-            <p className="text-sm text-slate-600 max-w-md mx-auto">
-              Your Request for Quotation <strong className="font-mono text-sky-700">{rfqNumber}</strong> has been logged in our database and routed to our B2B industrial engineering team.
+            <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
+              Your Request for Quotation <strong className="text-sky-700 font-semibold">{rfqNumber}</strong> has been logged in our database and routed to our engineering team.
             </p>
 
-            <div className="pt-4">
+            <div className="pt-2 sm:pt-4">
               <Link
                 href="/products"
-                className="px-8 py-3 rounded-full bg-slate-900 text-white type-button shadow-md hover:bg-slate-800"
+                className="px-6 py-2.5 sm:px-8 sm:py-3 rounded-xl sm:rounded-full bg-slate-900 text-white font-semibold text-xs sm:text-sm shadow-md hover:bg-slate-800"
               >
                 Return to Hardware Catalog
               </Link>
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-xl space-y-8">
-            <div className="space-y-2">
-              <span className="inline-flex items-center gap-2 type-label text-sky-600 bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-10 border border-slate-200 shadow-xl space-y-5 sm:space-y-8">
+            <div className="space-y-1.5">
+              <span className="inline-flex items-center gap-1.5 text-xs text-sky-600 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200 font-medium">
                 <Sparkles className="w-3.5 h-3.5" /> Direct B2B Pricing Portal
               </span>
-              <h1 className="text-3xl sm:text-4xl font-mono font-extrabold text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                 Request a Custom Bulk Quotation (RFQ)
               </h1>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs sm:text-sm text-slate-600">
                 Submit multi-line bill of materials (BOM), project specifications, or scheduled release orders for tiered volume pricing.
               </p>
             </div>
 
-            <form onSubmit={handleSubmitQuote} className="space-y-6 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmitQuote} className="space-y-4 sm:space-y-6 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">Full Name *</label>
+                  <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block text-[11px]">Full Name *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Sarah Jenkins"
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full p-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
+                    className="w-full p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">Corporate / Organization Name *</label>
+                  <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block text-[11px]">Organization Name *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Apex Packaging Solutions"
                     value={formData.companyName}
                     onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                    className="w-full p-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
+                    className="w-full p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">Corporate Email *</label>
+                  <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block text-[11px]">Corporate Email *</label>
                   <input
                     type="email"
                     required
                     placeholder="s.jenkins@apex-packaging.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full p-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
+                    className="w-full p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">Direct Phone Line *</label>
+                  <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block text-[11px]">Phone Line *</label>
                   <input
                     type="text"
                     required
                     placeholder="1-800-555-0199"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full p-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
+                    className="w-full p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">Requested Part Numbers & Quantities *</label>
+                <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block text-[11px]">Requested Part Numbers & Quantities *</label>
                 <textarea
                   rows={4}
                   required
                   placeholder="Paste your BOM list or model numbers (e.g. Siemens S7-1200 CPU x 25 units, OMRON E2B Proximity Sensor x 100 units)..."
                   value={formData.partNumbers}
                   onChange={(e) => setFormData({ ...formData, partNumbers: e.target.value })}
-                  className="w-full p-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                  className="w-full p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3 sm:py-4 rounded-xl sm:rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>
@@ -188,7 +188,7 @@ function QuoteForm() {
                     <span>Saving RFQ to Database...</span>
                   </>
                 ) : (
-                  <span>Submit RFQ for 2-Hour Response</span>
+                  <span>Submit RFQ for Response</span>
                 )}
               </button>
             </form>

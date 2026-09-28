@@ -25,11 +25,11 @@ export async function getStorefrontCategories(): Promise<StorefrontCategory[]> {
         SELECT pc."productId", pc."categoryId" 
         FROM "ProductCategory" pc 
         JOIN "Product" p ON pc."productId" = p.id 
-        WHERE p.status = 'ACTIVE' AND COALESCE(p.visible, true) = true
+        WHERE (p.status IS NULL OR p.status != 'DELETED') AND p."deletedAt" IS NULL AND p.status = 'ACTIVE' AND COALESCE(p.visible, true) = true
         UNION
         SELECT id as "productId", "categoryId" 
         FROM "Product" 
-        WHERE (status = 'ACTIVE' OR COALESCE(visible, true) = true) AND "categoryId" IS NOT NULL
+        WHERE (status IS NULL OR status != 'DELETED') AND "deletedAt" IS NULL AND (status = 'ACTIVE' OR COALESCE(visible, true) = true) AND "categoryId" IS NOT NULL
       ) pc ON c.id = pc."categoryId" OR c.slug = pc."categoryId"
       WHERE COALESCE(c.status, 'active') != 'hidden'
       GROUP BY c.id, c.name, c.slug, c.status
@@ -82,7 +82,9 @@ export async function getActiveProducts(categorySlug?: string, search?: string):
         ) as "images"
       FROM "Product" p
       LEFT JOIN "ProductImage" img ON p."id" = img."productId"
-      WHERE (p."status" = 'ACTIVE' OR COALESCE(p."visible", true) = true)
+      WHERE (p."status" IS NULL OR p."status" != 'DELETED') 
+        AND p."deletedAt" IS NULL 
+        AND (p."status" = 'ACTIVE' OR COALESCE(p."visible", true) = true)
     `;
 
     const params: any[] = [];
@@ -159,6 +161,8 @@ export async function getActiveProductBySlug(slug: string): Promise<any | null> 
     const prodRes = await query(`
       SELECT * FROM "Product" 
       WHERE (slug = $1 OR id = $1)
+        AND (status IS NULL OR status != 'DELETED')
+        AND "deletedAt" IS NULL
       LIMIT 1
     `, [slug]);
 
@@ -339,7 +343,10 @@ export async function getSitemapData(): Promise<SitemapData> {
       query(`
         SELECT slug, COALESCE("updatedAt", "createdAt") as "updatedAt"
         FROM "Product"
-        WHERE (status = 'ACTIVE' OR COALESCE(visible, true) = true) AND slug IS NOT NULL
+        WHERE (status = 'ACTIVE' OR COALESCE(visible, true) = true)
+          AND (status IS NULL OR status != 'DELETED')
+          AND "deletedAt" IS NULL
+          AND slug IS NOT NULL
         ORDER BY "updatedAt" DESC
       `),
       query(`

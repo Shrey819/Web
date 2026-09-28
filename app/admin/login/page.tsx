@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
                   type="password" 
                   name="password"
                   required
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-4 pr-11 py-3.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors font-mono"
                   placeholder="Enter password"
                 />
                 <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -57,9 +57,9 @@ export default function AdminLoginPage() {
               <motion.div 
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
-                className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 type-body-small text-center"
+                className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 type-body-small text-center flex items-center justify-center gap-2"
               >
-                {errorMessage}
+                <span>{errorMessage}</span>
               </motion.div>
             )}
 

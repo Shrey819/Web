@@ -289,10 +289,23 @@ export function calculateProductDetailSimilarity(
   const b2 = normalizeSimilarityText(existing.brand);
   const brandScore = !b1 && !b2 ? 1.0 : b1 === b2 ? 1.0 : 0.0;
 
-  // 4. Category
-  const c1 = normalizeSimilarityText(incoming.category);
-  const c2 = normalizeSimilarityText(existing.categoryName);
-  const catScore = !c1 && !c2 ? 1.0 : c1 === c2 ? 1.0 : 0.0;
+  // 4. Category (supports semicolon-delimited multi-categories with 1st as primary)
+  const cats1 = incoming.category
+    ? incoming.category.split(";").map((c) => normalizeSimilarityText(c)).filter(Boolean)
+    : [];
+  const cats2 = existing.categoryName
+    ? existing.categoryName.split(";").map((c) => normalizeSimilarityText(c)).filter(Boolean)
+    : [];
+  let catScore = 0.0;
+  if (cats1.length === 0 && cats2.length === 0) {
+    catScore = 1.0;
+  } else if (cats1.length > 0 && cats2.length > 0) {
+    catScore = computeSetSimilarity(cats1, cats2);
+    // If the primary (first) category matches, assign at least 0.85
+    if (cats1[0] === cats2[0]) {
+      catScore = Math.max(catScore, 0.85);
+    }
+  }
 
   // 5. Feature Highlights
   const f1 = incoming.features || [];

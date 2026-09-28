@@ -323,16 +323,16 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
         style={{ zIndex: 9 }}
       >
         {(config?.navPills && config.navPills.length > 0 ? config.navPills : [
-          { label: "Sensors", url: "/products" },
-          { label: "PLCs & Controllers", url: "/categories/plcs" },
-          { label: "VFD Drives", url: "/categories/vfd-drives" },
-          { label: "RFQ Portal", url: "/quote" },
+          { label: "Ballscrew", url: "/category/ballscrew" },
+          { label: "Linear Guideway", url: "/category/linear-guideway" },
+          { label: "Actuators", url: "/category/actuators" },
+          { label: "Instant RFQ Portal", url: "/quote" },
         ]).map((item, idx) => (
           <Link
             key={idx}
             href={item.url}
             onClick={() => setIsMenuOpen(false)}
-            className="text-[30px] font-semibold text-slate-900 hover:text-sky-600 transition-colors"
+            className="text-xl sm:text-2xl font-bold text-slate-900 hover:text-sky-600 transition-colors"
           >
             {item.label}
           </Link>
@@ -340,7 +340,7 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
         <Link
           href={config?.ctaUrl || "/quote"}
           onClick={() => setIsMenuOpen(false)}
-          className="text-[30px] font-bold text-sky-600 underline underline-offset-4"
+          className="text-xl sm:text-2xl font-bold text-sky-600 underline underline-offset-4"
         >
           {config?.ctaText || "Request Instant Quote"}
         </Link>
@@ -365,7 +365,7 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
                 className="text-slate-700 font-medium text-[16px] sm:text-[18px] lg:text-[20px] leading-snug"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
-                {config?.subheading || "High-Precision Sensors, PLCs & Factory Drives"}
+                {config?.subheading || "High-Precision Ballscrews, Linear Guideways & Industrial Actuators"}
               </div>
             </div>
 
@@ -444,10 +444,10 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
             >
               {/* Industry Pill Buttons */}
               {(config?.navPills && config.navPills.length > 0 ? config.navPills : [
-                { label: "Sensors", url: "/products" },
-                { label: "PLCs", url: "/categories/plcs" },
-                { label: "VFD Drives", url: "/categories/vfd-drives" },
-                { label: "RFQ Portal", url: "/quote" },
+                { label: "Ballscrew", url: "/category/ballscrew" },
+                { label: "Linear Guideway", url: "/category/linear-guideway" },
+                { label: "Actuators", url: "/category/actuators" },
+                { label: "Instant RFQ Portal", url: "/quote" },
               ]).map((pill, pIdx) => (
                 <Link
                   key={pIdx}

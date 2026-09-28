@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronRight, FolderTree } from "lucide-react";
 import { CATEGORIES } from "@/data/categories";
 import { PRODUCTS } from "@/data/products";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getOptimizedThumbnail } from "@/lib/utils";
 import { Product } from "@/types";
 
 interface DbCategory {
@@ -149,7 +149,7 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
 
       <div
         id="megamenu-panel"
-        className="absolute top-full left-0 right-0 bg-slate-950 text-white border-b border-slate-800 shadow-2xl transition-all duration-300 z-50 py-6 px-4 sm:px-8 before:content-[''] before:absolute before:-top-6 before:left-0 before:right-0 before:h-6"
+        className="absolute top-full left-0 right-0 bg-slate-950 text-white border-b border-slate-800 shadow-2xl transition-all duration-300 z-50 py-6 px-4 sm:px-8 before:content-[''] before:absolute before:-top-8 before:left-0 before:right-0 before:h-8"
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave || onClose}
       >
@@ -257,9 +257,10 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                   {displayProducts.map((prod) => {
-                    const imgUrl =
+                    const rawImgUrl =
                       prod.images?.[0]?.url ||
-                      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500&auto=format&fit=crop&q=80";
+                      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500&h=500&auto=format&fit=crop&q=80";
+                    const thumbUrl = getOptimizedThumbnail(rawImgUrl, 500, 500);
 
                     return (
                       <Link
@@ -272,8 +273,10 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
                           {/* Product Thumbnail Box */}
                           <div className="relative aspect-square w-full rounded-xl bg-slate-950 overflow-hidden mb-2.5 border border-slate-100">
                             <img
-                              src={imgUrl}
+                              src={thumbUrl}
                               alt={prod.name}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-cover group-hover/prod:scale-108 transition-transform duration-500"
                             />
                           </div>

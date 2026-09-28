@@ -68,14 +68,14 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
   };
 
   return (
-    <div className="bg-[#faf9f5] min-h-screen py-16 border-b border-slate-200 flex items-center justify-center">
-      <div className="max-w-md w-full px-4">
-        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200 shadow-xl space-y-6">
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-mono font-extrabold text-slate-900">
+    <div className="bg-[#faf9f5] min-h-screen py-6 sm:py-16 border-b border-slate-200 flex items-center justify-center">
+      <div className="max-w-md w-full px-3.5 sm:px-4">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-xl space-y-5">
+          <div className="text-center space-y-1.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
               Create Customer Account
             </h1>
-            <p className="type-body-small text-slate-500">
+            <p className="text-xs sm:text-sm text-slate-500">
               Set up your profile to track orders, save liked products, and maintain a shopping cart.
             </p>
           </div>
@@ -86,7 +86,7 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
 
             <div className="relative flex items-center justify-center">
               <div className="border-t border-slate-200 w-full" />
-              <span className="bg-white px-3 text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider shrink-0">
+              <span className="bg-white px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
                 OR
               </span>
               <div className="border-t border-slate-200 w-full" />
@@ -94,13 +94,13 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
           </div>
 
           {/* Registration Form */}
-          <form onSubmit={handleRegister} className="space-y-4 text-xs">
+          <form onSubmit={handleRegister} className="space-y-3.5 text-xs">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="font-semibold uppercase tracking-wider text-slate-500 block">
+                <label className="font-semibold uppercase tracking-wider text-slate-500 block text-[11px]">
                   Full Name *
                 </label>
-                <span className="text-[10px] text-slate-400 font-mono">Letters only</span>
+                <span className="text-[10px] text-slate-400">Letters only</span>
               </div>
               <input
                 type="text"
@@ -108,7 +108,7 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
                 placeholder="Sarah Jenkins"
                 value={form.fullName}
                 onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                className={`w-full p-3 rounded-2xl border focus:outline-none transition-all ${
+                className={`w-full px-3.5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border focus:outline-none transition-all ${
                   form.fullName.trim().length > 0 && !validatePersonName(form.fullName).isValid
                     ? "border-rose-500 bg-rose-50/20 ring-2 ring-rose-500/20"
                     : "border-slate-200 focus:border-sky-500"
@@ -122,7 +122,7 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
             </div>
 
             <div>
-              <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">
+              <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block text-[11px]">
                 Company / Organization (Optional)
               </label>
               <input
@@ -130,12 +130,12 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
                 placeholder="Apex Packaging Solutions"
                 value={form.companyName}
                 onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-                className="w-full p-3 rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
+                className="w-full px-3.5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
               />
             </div>
 
             <div>
-              <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">
+              <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block text-[11px]">
                 Email Address *
               </label>
               <input
@@ -144,12 +144,12 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
                 placeholder="s.jenkins@apex-packaging.com"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full p-3 rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
+                className="w-full px-3.5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
               />
             </div>
 
             <div>
-              <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block">
+              <label className="font-semibold uppercase tracking-wider text-slate-500 mb-1 block text-[11px]">
                 Password *
               </label>
               <input
@@ -158,14 +158,14 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
                 placeholder="••••••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full p-3 rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                className="w-full px-3.5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
               />
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-2.5 sm:py-3.5 rounded-xl sm:rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
@@ -178,7 +178,7 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
             </button>
           </form>
 
-          <div className="pt-4 border-t border-slate-100 text-center type-body-small text-slate-500">
+          <div className="pt-3 border-t border-slate-100 text-center text-xs text-slate-500">
             Already have an account?{" "}
             <Link
               href={safeReturnUrl !== "/profile" ? `/login?returnUrl=${encodeURIComponent(safeReturnUrl)}` : "/login"}

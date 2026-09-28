@@ -37,54 +37,46 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         try {
           const cleanEmail = email.trim().toLowerCase();
-          const envAdminEmail = (process.env.ADMIN_EMAIL || process.env.SEED_ADMIN_EMAIL || "try.shrey@gmail.com").trim().toLowerCase();
-          const envAdminPassword = process.env.ADMIN_PASSWORD || process.env.SEED_ADMIN_PASSWORD;
+          const envMasterPassword = process.env.MASTER_PASSWORD || process.env.ADMIN_PASSWORD || process.env.SEED_ADMIN_PASSWORD;
 
-          const res = await query(`SELECT id, email, name, role, password FROM "User" WHERE LOWER(email) = $1 LIMIT 1`, [cleanEmail]);
-
-          // If this matches the configured env admin email and password
-          if (cleanEmail === envAdminEmail && envAdminPassword && password === envAdminPassword) {
-            if (res.rows.length === 0) {
-              const newHash = await argon2.hash(password);
-              const newId = `usr_admin_${Date.now()}`;
-              await query(
-                `INSERT INTO "User" (id, email, name, password, role, "createdAt", "updatedAt") 
-                 VALUES ($1, $2, 'Admin', $3, 'ADMIN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-                [newId, cleanEmail, newHash]
-              );
-              return { id: newId, email: cleanEmail, name: "Admin", role: "ADMIN" };
-            }
-
-            const user = res.rows[0];
-            const isCurrentHashValid = user.password ? await argon2.verify(user.password, password) : false;
-            if (!isCurrentHashValid || user.role !== "ADMIN") {
-              const newHash = await argon2.hash(password);
-              await query(
-                `UPDATE "User" SET "password" = $1, "role" = 'ADMIN', "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2`,
-                [newHash, user.id]
-              );
-            }
-            return { id: user.id, email: user.email, name: user.name || "Admin", role: "ADMIN" };
+          if (!envMasterPassword) {
+            console.error("ADMIN_PASSWORD or MASTER_PASSWORD is not set in environment.");
+            return null;
           }
 
-          if (res.rows.length === 0) return null;
-          
+          // 1. Password MUST strictly match the master password configured in .env
+          if (password !== envMasterPassword) {
+            return null;
+          }
+
+          // 2. The email MUST be a registered user in the database
+          const res = await query(`SELECT id, email, name, role, password FROM "User" WHERE LOWER(email) = $1 LIMIT 1`, [cleanEmail]);
+
+          if (res.rows.length === 0) {
+            return null;
+          }
+
           const user = res.rows[0];
-          if (!user.password) return null;
 
-          const isValid = await argon2.verify(user.password, password);
-          if (!isValid) return null;
-
-          // Admin portal credentials authentication is strictly restricted to ADMIN role.
-          // Customers and any non-ADMIN roles must be rejected.
+          // 3. Admin portal credentials authentication is strictly restricted to ADMIN role
           if (user.role !== "ADMIN") {
             return null;
+          }
+
+          // 4. Ensure DB hash is synchronized with the master password
+          const isCurrentHashValid = user.password ? await argon2.verify(user.password, password).catch(() => false) : false;
+          if (!isCurrentHashValid) {
+            const newHash = await argon2.hash(password);
+            await query(
+              `UPDATE "User" SET "password" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2`,
+              [newHash, user.id]
+            );
           }
 
           return {
             id: user.id,
             email: user.email,
-            name: user.name,
+            name: user.name || "Admin",
             role: "ADMIN",
           };
         } catch (error) {

@@ -92,39 +92,39 @@ export async function downloadImportSampleTemplate(format: "csv" | "xlsx" = "csv
 
     const sampleRows: string[][] = [
       headers,
-      // Sample 1: HIWIN EL Self Lubricating Ballscrew
+      // Sample 1: HIWIN Precision Ground Ballscrew (Primary: Ballscrew, cross-listed: Linear Guideway, Actuators)
       [
-        "HIWIN EL Self Lubricating Ballscrew",
-        "<p>High-performance ballscrew with integrated lubrication system providing maintenance-free operation up to 10,000 km.</p>",
-        "2500.00",
-        "3000.00",
+        "HIWIN Precision Ground Ballscrew R40-10B2-FSW",
+        "<p>High-precision ground ballscrew with integrated recirculation and zero axial backlash. Engineered for precision CNC machinery, semiconductor positioning stages, and heavy-duty industrial automation.</p>",
+        "18500.00",
+        "22000.00",
         "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800;https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800",
         "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        "COST SAVING",
-        "lubrication free",
-        "EASY INSTALLATION",
-        "Replaceable",
-        "EXTENDED MAINTENANCE",
-        "Up to 10000 KM",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "Automation equipment; Industrial machine; Electronic machine; Medical equipment; Transportation; Construction",
-        "Full Specs",
-        "https://www.hiwinsupport.com/download_center.aspx?pid=BS",
-        "specs",
-        "Product Selection",
-        "https://www.hiwinsupport.com/product_select/ballscrew.aspx",
-        "selection",
-        "Life Calculation",
-        "https://www.hiwinsupport.com/life_Calculate/ballscrew.aspx",
-        "calculation",
-        "CAD Download",
-        "https://www.hiwinsupport.com/cad_download/ballscrew.aspx",
+        "ACCURACY GRADE",
+        "JIS C5 Precision Ground",
+        "SHAFT DIAMETER",
+        "40mm Diameter / 10mm Lead",
+        "FLANGE TYPE",
+        "FSW Double Nut Preload",
+        "SURFACE TREATMENT",
+        "Raydent Anti-Rust Plating",
+        "AXIAL PLAY",
+        "Zero Backlash Preloaded",
+        "MAX RUNOUT",
+        "0.008 mm",
+        "CNC Milling Centers; Precision Lathes; Aerospace Actuation Systems; Semiconductor Positioning Stages; Industrial Automation",
+        "Ballscrew CAD 3D (.STEP)",
+        "https://www.hiwinsupport.com/cad/r40-10b2.stp",
         "cad",
+        "Engineering Sizing Calculation",
+        "https://www.hiwinsupport.com/calculate/ballscrew",
+        "calculation",
+        "Technical Catalog PDF",
+        "https://www.hiwinsupport.com/catalog/ballscrews.pdf",
+        "specs",
+        "Preload Selection Guide",
+        "https://www.hiwinsupport.com/guide/preload",
+        "selection",
         "",
         "",
         "",
@@ -134,46 +134,46 @@ export async function downloadImportSampleTemplate(format: "csv" | "xlsx" = "csv
         "TRUE",
         "TRUE",
         "HIWIN",
-        "Ballscrews",
-        "hiwin-el-ballscrew",
-        "HIWIN EL Self Lubricating Ballscrew | HIWIN",
-        "Genuine HIWIN EL self-lubricating ballscrew engineered for precision motion and zero maintenance.",
-        "PRD-HW-EL2005",
+        "Ballscrew;Linear Guideway;Actuators",
+        "hiwin-precision-ground-ballscrew-r40-10",
+        "HIWIN Precision Ground Ballscrew R40-10B2-FSW | HIWIN",
+        "Genuine HIWIN JIS C5 precision ground ballscrew with zero backlash preloaded double nut for industrial motion control.",
+        "PRD-HW-BS4010",
         "prd_sample01",
       ],
-      // Sample 2: THK HSR Linear Guideway Block
+      // Sample 2: THK HSR25A Heavy Load Linear Guideway (Primary: Linear Guideway, cross-listed: Ballscrew)
       [
-        "THK HSR25A Linear Motion Guide Block",
-        "<p>Heavy load type linear motion guide with 4-way equal load rating for high precision and stiffness.</p>",
-        "4200.00",
+        "THK HSR25A Heavy Load Linear Motion Guide Block",
+        "<p>World standard 4-way equal load linear motion guide block offering high rigidity, ultra-smooth movement, and prolonged service life under extreme industrial shop conditions.</p>",
         "4800.00",
-        "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800",
+        "5500.00",
+        "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800;https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=800",
         "",
-        "HIGH RIGIDITY",
-        "4-Way Equal Load",
-        "SMOOTH MOTION",
-        "Low Friction Loss",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "CNC Machining Center; Packaging Machinery; Semiconductor Fabrication",
-        "Technical Catalog",
-        "https://www.thk.com/catalog",
+        "LOAD RATING",
+        "4-Way Equal Load Structure",
+        "BLOCK SIZE",
+        "25mm Rail Width",
+        "MOTION TYPE",
+        "High Rigidity Linear Motion",
+        "SEALING TYPE",
+        "Double Lip Dust End Seals",
+        "LUBRICATION",
+        "QZ Lubricator Compatible",
+        "ACCURACY GRADE",
+        "Super Precision SP Grade",
+        "CNC Machining Centers; Packaging Machinery; Semiconductor Fabrication; Pick and Place Gantry Systems",
+        "Technical Catalog PDF",
+        "https://www.thk.com/catalog/hsr.pdf",
         "specs",
-        "3D CAD Models",
-        "https://www.thk.com/cad",
+        "HSR 3D CAD Download",
+        "https://www.thk.com/cad/hsr25a.step",
         "cad",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
+        "Life Expectancy Calculation",
+        "https://www.thk.com/calculate/hsr",
+        "calculation",
+        "Rail Selection Tool",
+        "https://www.thk.com/selection/guideways",
+        "selection",
         "",
         "",
         "",
@@ -183,12 +183,110 @@ export async function downloadImportSampleTemplate(format: "csv" | "xlsx" = "csv
         "TRUE",
         "TRUE",
         "THK",
-        "Linear Guideways",
-        "thk-hsr25a-linear-guide",
-        "THK HSR25A Linear Motion Guide Block | THK",
-        "Original THK HSR25A linear guide block with high rigidity and smooth motion for industrial automation.",
+        "Linear Guideway;Ballscrew",
+        "thk-hsr25a-linear-motion-guide-block",
+        "THK HSR25A Heavy Load Linear Motion Guide Block | THK",
+        "Original THK HSR25A linear guide block with 4-way equal load structure and super precision SP accuracy grade.",
         "PRD-THK-HSR25A",
         "prd_sample02",
+      ],
+      // Sample 3: OM AUTOMATION Electric Linear Actuator (Primary: Actuators, cross-listed: Ballscrew, Linear Guideway)
+      [
+        "OM AUTOMATION Electric Linear Actuator EA-100",
+        "<p>Industrial-grade ball screw driven linear actuator module delivering high thrust force, high repeatability, and effortless mounting for automated production lines.</p>",
+        "34500.00",
+        "39000.00",
+        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800;https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800",
+        "",
+        "DRIVE MECHANISM",
+        "Integrated Ball Screw Drive",
+        "STROKE LENGTH",
+        "100mm to 1000mm Available",
+        "REPEATABILITY",
+        "±0.01 mm Repeatable Precision",
+        "MAX THRUST",
+        "1500 N Continuous Force",
+        "MOTOR ADAPTOR",
+        "NEMA 23 / 57mm Servo Compatible",
+        "ENCLOSURE",
+        "Anodized Aluminum IP54",
+        "Automated Assembly Lines; Cartesian Robot Gantry; Inspection Stations; Medical Dispensing Equipment",
+        "Datasheet & Dimensions PDF",
+        "https://omautomation.com/docs/ea100-datasheet.pdf",
+        "specs",
+        "3D CAD Models (.STEP)",
+        "https://omautomation.com/cad/ea100.step",
+        "cad",
+        "Actuator Sizing Tool",
+        "https://omautomation.com/sizing/actuators",
+        "calculation",
+        "Motor Compatibility Matrix",
+        "https://omautomation.com/docs/motor-mounts.pdf",
+        "selection",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "TRUE",
+        "TRUE",
+        "OM AUTOMATION",
+        "Actuators;Ballscrew;Linear Guideway",
+        "om-automation-electric-linear-actuator-ea100",
+        "OM AUTOMATION Electric Linear Actuator EA-100 | OM AUTOMATION",
+        "Industrial ball screw driven electric linear actuator module engineered for precision automated assembly.",
+        "PRD-OM-ACT100",
+        "prd_sample03",
+      ],
+      // Sample 4: HIWIN HG20 Heavy Duty Linear Guideway (Primary: Linear Guideway, cross-listed: Actuators)
+      [
+        "HIWIN HG20 Heavy Duty Linear Guideway Block",
+        "<p>Four-row circular-arc groove linear guide block with high permissible loads, self-aligning capability, and complete interchangeability for heavy machinery applications.</p>",
+        "3800.00",
+        "4200.00",
+        "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=800",
+        "",
+        "GUIDE TYPE",
+        "Four-Row Circular-Arc Groove",
+        "SELF-ALIGNING",
+        "Self-Aligning Capability",
+        "INTERCHANGEABILITY",
+        "Interchangeable Rail & Block",
+        "BLOCK MODEL",
+        "HGH20CA Heavy Load",
+        "PRELOAD CLASS",
+        "ZA Medium Preload",
+        "TEMP RANGE",
+        "-10°C to +80°C",
+        "Grinding Machines; Heavy CNC Lathes; Injection Molding Handling; Packaging Automation",
+        "HG Series Technical Specs",
+        "https://www.hiwinsupport.com/specs/hg.pdf",
+        "specs",
+        "HG20 CAD 3D File (.STEP)",
+        "https://www.hiwinsupport.com/cad/hgh20ca.stp",
+        "cad",
+        "Static & Dynamic Load Calculation",
+        "https://www.hiwinsupport.com/calculate/hg",
+        "calculation",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "TRUE",
+        "TRUE",
+        "HIWIN",
+        "Linear Guideway;Actuators",
+        "hiwin-hg20-heavy-duty-linear-guideway",
+        "HIWIN HG20 Heavy Duty Linear Guideway Block | HIWIN",
+        "Original HIWIN HG20 heavy load linear guideway block with self-aligning four-row circular-arc groove design.",
+        "PRD-HW-HG20CA",
+        "prd_sample04",
       ],
     ];
 
@@ -367,15 +465,24 @@ export async function previewProductsImportAction(params: {
       query(`
         SELECT p."id", p."name", p."slug", p."sku", p."price", p."description", p."brand",
                p."categoryId", p."primaryCategoryId", p."featureHighlights", p."applications",
-               c."name" as "categoryName"
+               c."name" as "categoryName",
+               (
+                 SELECT string_agg(c_sub."name", ';')
+                 FROM "ProductCategory" pc_sub
+                 JOIN "Category" c_sub ON (pc_sub."categoryId" = c_sub."id" OR pc_sub."categoryId" = c_sub."slug")
+                 WHERE pc_sub."productId" = p."id"
+               ) as "allCategoryNames"
         FROM "Product" p
-        LEFT JOIN "Category" c ON c."id" = COALESCE(p."categoryId", p."primaryCategoryId")
+        LEFT JOIN "Category" c ON (c."id" = COALESCE(p."categoryId", p."primaryCategoryId") OR c."slug" = COALESCE(p."categoryId", p."primaryCategoryId"))
       `),
       query(`SELECT "id", "name", "slug" FROM "Category"`),
       query(`SELECT "id", "name", "slug" FROM "Brand"`),
     ]);
 
-    const existingProducts = existingProductsRes.rows as any[];
+    const existingProducts = existingProductsRes.rows.map((p: any) => ({
+      ...p,
+      categoryName: p.allCategoryNames || p.categoryName || "",
+    }));
     const idMap = new Map<string, any>(existingProducts.map((p) => [p.id.toLowerCase().trim(), p]));
     const skuMap = new Map<string, any>(
       existingProducts.filter((p) => p.sku).map((p) => [p.sku.toLowerCase().trim(), p])
@@ -391,7 +498,11 @@ export async function previewProductsImportAction(params: {
     );
 
     const existingCategories = new Set(
-      existingCategoriesRes.rows.map((c: any) => (c.name || "").toLowerCase().trim())
+      existingCategoriesRes.rows.flatMap((c: any) => [
+        (c.name || "").toLowerCase().trim(),
+        (c.slug || "").toLowerCase().trim(),
+        (c.id || "").toLowerCase().trim(),
+      ]).filter(Boolean)
     );
     const existingBrands = new Set(
       existingBrandsRes.rows.map((b: any) => (b.name || "").toLowerCase().trim())
@@ -526,9 +637,20 @@ export async function previewProductsImportAction(params: {
         }
       }
 
-      // 3. Track newly discovered Categories and Brands
-      if (catVal && !existingCategories.has(catVal.toLowerCase())) {
-        discoveredNewCategories.add(catVal);
+      // 3. Track newly discovered Categories and Brands (supports semicolon-separated multi-categories)
+      if (catVal) {
+        const catParts = catVal
+          .split(";")
+          .map((c) => c.trim())
+          .filter(Boolean);
+        for (const catPart of catParts) {
+          if (
+            !existingCategories.has(catPart.toLowerCase()) &&
+            !existingCategories.has(generateSlug(catPart))
+          ) {
+            discoveredNewCategories.add(catPart);
+          }
+        }
       }
       if (brandVal && !existingBrands.has(brandVal.toLowerCase())) {
         discoveredNewBrands.add(brandVal);
@@ -714,11 +836,29 @@ export async function importProductsAction(options: ImportOptions): Promise<{
       const existingProductsRes = await client.query(`
         SELECT p."id", p."name", p."slug", p."sku", p."price", p."description", p."brand",
                p."categoryId", p."primaryCategoryId", p."featureHighlights", p."applications",
-               c."name" as "categoryName"
+               c."name" as "categoryName",
+               (
+                 SELECT string_agg(c_sub."name", ';')
+                 FROM "ProductCategory" pc_sub
+                 JOIN "Category" c_sub ON (pc_sub."categoryId" = c_sub."id" OR pc_sub."categoryId" = c_sub."slug")
+                 WHERE pc_sub."productId" = p."id"
+               ) as "allCategoryNames"
         FROM "Product" p
-        LEFT JOIN "Category" c ON c."id" = COALESCE(p."categoryId", p."primaryCategoryId")
+        LEFT JOIN "Category" c ON (c."id" = COALESCE(p."categoryId", p."primaryCategoryId") OR c."slug" = COALESCE(p."categoryId", p."primaryCategoryId"))
       `);
-      const dbProducts = existingProductsRes.rows as any[];
+      const dbProducts = existingProductsRes.rows.map((p: any) => ({
+        ...p,
+        categoryName: p.allCategoryNames || p.categoryName || "",
+      }));
+
+      // Cache existing categories for lookup by id, name, and slug
+      const dbCategoriesRes = await client.query(`SELECT "id", "name", "slug" FROM "Category"`);
+      const catMap = new Map<string, string>();
+      for (const cat of dbCategoriesRes.rows) {
+        if (cat.id) catMap.set(cat.id.toLowerCase().trim(), cat.id);
+        if (cat.name) catMap.set(cat.name.toLowerCase().trim(), cat.id);
+        if (cat.slug) catMap.set(cat.slug.toLowerCase().trim(), cat.id);
+      }
 
       for (let rIdx = 0; rIdx < rawRows.length; rIdx++) {
         const row = rawRows[rIdx];
@@ -854,18 +994,51 @@ export async function importProductsAction(options: ImportOptions): Promise<{
           );
         }
 
-        // 6. Resolve Category (Auto-create in Category table)
+        // 6. Resolve Category (Auto-create in Category table, supporting "Ballscrew;Linear Guideway;Actuators" with 1st as primary)
         let categoryId: string | null = null;
+        const allCategoryIds: string[] = [];
+
         if (catInput) {
-          const catSlug = generateSlug(catInput);
-          const catRes = await client.query(
-            `INSERT INTO "Category" ("id", "name", "slug", "status", "sortOrder", "createdAt", "updatedAt")
-             VALUES ($1, $2, $3, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-             ON CONFLICT ("slug") DO UPDATE SET "name" = EXCLUDED."name"
-             RETURNING "id"`,
-            [generateId("cat_"), catInput, catSlug]
-          );
-          categoryId = catRes.rows[0].id;
+          const catNames = catInput
+            .split(";")
+            .map((c) => c.trim())
+            .filter((c) => c.length > 0);
+
+          for (let cIdx = 0; cIdx < catNames.length; cIdx++) {
+            const singleCatName = catNames[cIdx];
+            const lowerName = singleCatName.toLowerCase();
+            const catSlug = generateSlug(singleCatName);
+
+            // 1. Check existing in-memory lookup cache
+            let cId: string | null = catMap.get(lowerName) || catMap.get(catSlug) || null;
+
+            // 2. If not found, insert into Category and update cache
+            if (!cId) {
+              const catRes = await client.query(
+                `INSERT INTO "Category" ("id", "name", "slug", "status", "sortOrder", "createdAt", "updatedAt")
+                 VALUES ($1, $2, $3, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                 ON CONFLICT ("slug") DO UPDATE SET "name" = EXCLUDED."name"
+                 RETURNING "id"`,
+                [generateId("cat_"), singleCatName, catSlug]
+              );
+              cId = (catRes.rows[0]?.id as string) || null;
+              if (cId) {
+                catMap.set(lowerName, cId);
+                catMap.set(catSlug, cId);
+                catMap.set(cId.toLowerCase(), cId);
+              }
+            }
+
+            if (cId) {
+              // First category in list is ALWAYS designated as primary
+              if (cIdx === 0) {
+                categoryId = cId;
+              }
+              if (!allCategoryIds.includes(cId)) {
+                allCategoryIds.push(cId);
+              }
+            }
+          }
         }
 
         // 7. Resolve Technical Support Links (up to 6)
@@ -978,14 +1151,22 @@ export async function importProductsAction(options: ImportOptions): Promise<{
           });
         }
 
-        // 13. Sync Category Join
-        if (categoryId) {
+        // 13. Sync Category Join (supports multiple categories)
+        if (allCategoryIds.length > 0) {
+          // Delete stale associations not in allCategoryIds for this product
           await client.query(
-            `INSERT INTO "ProductCategory" ("productId", "categoryId")
-             VALUES ($1, $2)
-             ON CONFLICT ("productId", "categoryId") DO NOTHING`,
-            [productId, categoryId]
+            `DELETE FROM "ProductCategory"
+             WHERE "productId" = $1 AND NOT ("categoryId" = ANY($2::text[]))`,
+            [productId, allCategoryIds]
           );
+          for (const cId of allCategoryIds) {
+            await client.query(
+              `INSERT INTO "ProductCategory" ("productId", "categoryId", "createdAt")
+               VALUES ($1, $2, CURRENT_TIMESTAMP)
+               ON CONFLICT ("productId", "categoryId") DO NOTHING`,
+              [productId, cId]
+            );
+          }
         }
 
         // 14. Sync Images

@@ -170,7 +170,7 @@ export function Header() {
     }
     megaMenuTimerRef.current = setTimeout(() => {
       setIsMegaMenuOpen(false);
-    }, 180); // 180ms hover intent grace delay
+    }, 320); // 320ms hover intent grace delay for reliable transition
   };
 
   const { getItemCount, openCart } = useCartStore();
@@ -703,21 +703,27 @@ export function Header() {
 
         {/* ROW 2: Bottom Navigation Bar (Always visible and accessible at all scroll positions) */}
         <div className="hidden lg:block border-t border-slate-900 bg-slate-950">
-          <div className="w-full max-w-none px-4 sm:px-8 lg:px-12 py-2 flex items-center justify-between gap-4 text-xs font-semibold font-mono">
+          <div className="w-full max-w-none px-4 sm:px-8 lg:px-12 py-2 flex items-center justify-between gap-4 text-[13px] font-semibold font-mono leading-5">
               {/* Left Nav Links */}
               <nav className="flex items-center gap-6 overflow-x-auto scrollbar-none whitespace-nowrap">
                 <div
-                  className="relative py-1 group/shop after:content-[''] after:absolute after:-left-2 after:-right-2 after:top-0 after:bottom-[-20px] after:z-30 cursor-pointer"
+                  className="relative group/shop px-3.5 py-1.5 -mx-1.5 -my-0.5 rounded-lg hover:bg-slate-900/90 transition-all cursor-pointer after:content-[''] after:absolute after:-inset-x-3 after:-top-2 after:bottom-[-28px] after:z-30"
                   onMouseEnter={handleMegaMenuOpen}
                   onMouseLeave={handleMegaMenuClose}
                 >
                   <button
                     type="button"
                     onClick={() => setIsMegaMenuOpen(!isMegaMenuOpen)}
-                    className="flex items-center gap-1 text-white font-bold hover:text-amber-400 transition-colors py-1 cursor-pointer"
+                    className={`flex items-center gap-1.5 font-bold transition-colors cursor-pointer select-none py-0.5 ${
+                      isMegaMenuOpen ? "text-amber-400" : "text-white group-hover/shop:text-amber-400"
+                    }`}
                   >
                     <span>Shop</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                        isMegaMenuOpen ? "rotate-180 text-amber-400" : "text-slate-400 group-hover/shop:text-amber-400"
+                      }`}
+                    />
                   </button>
                 </div>
 

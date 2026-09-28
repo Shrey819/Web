@@ -2,36 +2,36 @@ import { Category } from "@/types";
 
 export const CATEGORIES: Category[] = [
   {
-    id: "sensors",
-    name: "Sensors & Perception",
-    slug: "sensors",
-    description: "High-precision inductive, photoelectric, ultrasonic, and pressure sensors engineered for harsh industrial environments.",
-    itemCount: 680,
-    accentColor: "from-blue-600/20 via-cyan-500/10 to-transparent",
-    badge: "IP69K Rated",
-    image: "/images/categories/sensors.svg",
-    subcategories: ["Inductive Proximity", "Photoelectric Beam", "Laser Distance", "Ultrasonic Transducers", "Pressure & Flow Transmitters"]
+    id: "ballscrew",
+    name: "Ballscrew",
+    slug: "ballscrew",
+    description: "High-rigidity precision ground and rolled ballscrews, preloaded ball nuts, and support units engineered for smooth linear transmission and zero backlash.",
+    itemCount: 16,
+    accentColor: "from-sky-600/20 via-cyan-500/10 to-transparent",
+    badge: "Zero Backlash",
+    image: "/images/categories/ballscrew.svg",
+    subcategories: ["Precision Ground Ballscrews", "Rolled Ball Screws", "Flanged Ball Nuts", "BK/BF End Support Units", "Rigid Couplings"]
   },
   {
-    id: "plcs",
-    name: "PLCs & Controllers",
-    slug: "plcs",
-    description: "Modular programmable logic controllers, industrial IPCs, remote I/O systems, and high-speed motion CPUs.",
-    itemCount: 520,
+    id: "linear-guideway",
+    name: "Linear Guideway",
+    slug: "linear-guideway",
+    description: "Heavy-duty linear guideways and ground guide rail systems engineered for sub-micron precision, high moment rigidity, and smooth low-friction machine travel.",
+    itemCount: 25,
     accentColor: "from-emerald-600/20 via-teal-500/10 to-transparent",
-    badge: "IEC 61131-3",
-    image: "/images/categories/plcs.svg",
-    subcategories: ["Modular PLCs", "Compact Micro Controllers", "Distributed I/O Blocks", "Safety PLCs", "Industrial IPCs & HMIs"]
+    badge: "Class P Precision",
+    image: "/images/categories/guideway.svg",
+    subcategories: ["Linear Guide Rails", "Flange Slider Blocks", "Square Runner Carriages", "End Dust Seals", "Preloaded Carriages"]
   },
   {
-    id: "drives",
-    name: "Drives & Servo Motors",
-    slug: "drives",
-    description: "Variable frequency drives, brushless servo drives, high-torque industrial motors, and precision planetary gearboxes.",
-    itemCount: 440,
+    id: "actuators",
+    name: "Actuators",
+    slug: "actuators",
+    description: "High-speed electric linear actuators, CNC motorized slide stages, and precision positioning modules built for automated handling and robotic machinery.",
+    itemCount: 12,
     accentColor: "from-amber-500/20 via-orange-500/10 to-transparent",
-    badge: "Heavy Duty",
-    image: "/images/categories/drives.svg",
-    subcategories: ["Variable Frequency Drives (VFD)", "AC Servo Amplifiers", "Precision Servo Motors", "Soft Starters", "Planetary Gearboxes"]
+    badge: "High Repeatability",
+    image: "/images/categories/actuators.svg",
+    subcategories: ["Electric Linear Actuators", "Motorized Slide Stages", "Belt-Driven Linear Modules", "Rod-Style Cylinders", "Multi-Axis Positioning"]
   }
 ];

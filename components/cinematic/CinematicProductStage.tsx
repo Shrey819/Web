@@ -10,6 +10,62 @@ interface CinematicProductStageProps {
   isReducedMotion?: boolean;
 }
 
+function getLocalFallback(src: string): string {
+  if (!src) return "/cinematic-products/carbide-cutter-endmill.png";
+  if (src.includes("carbide-endmill") || src.includes("endmill")) {
+    return "/cinematic-products/carbide-cutter-endmill.png";
+  }
+  if (src.includes("carbide-insert") || src.includes("iscar-insert") || src.includes("insert")) {
+    return "/cinematic-products/carbide-insert.png";
+  }
+  if (src.includes("spindle") || src.includes("servo") || src.includes("enclosure")) {
+    return "/cinematic-products/spindle-servo-actuator.png";
+  }
+  if (src.includes("torx") || src.includes("screw") || src.includes("fastener")) {
+    return "/cinematic-products/torx-screw-assembly.png";
+  }
+  if (src.includes("linear-rail") || src.includes("linear-guide") || src.includes("rail")) {
+    return "/cinematic-products/linear-guide-rail.png";
+  }
+  if (src.includes("ballnose") || src.includes("router")) {
+    return "/cinematic-products/ballnose-router-tool.png";
+  }
+  return "/cinematic-products/carbide-cutter-endmill.png";
+}
+
+const SafeStageImage: React.FC<{
+  src: string;
+  alt: string;
+  className?: string;
+  sizes?: string;
+  priority?: boolean;
+}> = ({ src, alt, className, sizes, priority }) => {
+  const [imgSrc, setImgSrc] = useState<string>(src || "/cinematic-products/carbide-cutter-endmill.png");
+  const [hasError, setHasError] = useState<boolean>(false);
+
+  useEffect(() => {
+    setImgSrc(src || "/cinematic-products/carbide-cutter-endmill.png");
+    setHasError(false);
+  }, [src]);
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={alt}
+      fill
+      sizes={sizes}
+      className={className}
+      priority={priority}
+      onError={() => {
+        if (!hasError) {
+          setHasError(true);
+          setImgSrc(getLocalFallback(src));
+        }
+      }}
+    />
+  );
+};
+
 // System A — Main Hero Products 3D Horizontal Circle / Sine-Cosine Orbit Engine
 function getCenterHeroStyle(dist: number) {
   const absDist = Math.abs(dist);
@@ -88,18 +144,55 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
     };
   }, []);
 
-  // Launch Inertial Fling Physics Loop with Dynamic Stage Bounds & Frame-Rate Independent Damping
-  const startFlingPhysics = (initialVx: number, initialVy: number) => {
+  // Launch Inertial Fling Physics Loop with Progressive Dynamic Resistance & Upper/Lower Wall Bound Protection
+  const startFlingPhysics = (
+    initialVx: number,
+    initialVy: number,
+    previousLocation: { x: number; y: number }
+  ) => {
     setIsSliding(true);
     let vx = initialVx;
     let vy = initialVy;
     let lastTime = performance.now();
+    const flingStartTime = performance.now();
+    let bounceCount = 0;
 
-    const damping = 4.2; // Exponential velocity decay rate (s^-1)
-    const restitution = 0.35; // Softened wall reflection bounce coefficient
+    // Resistance progression formula:
+    // Base resistance = 2.5
+    // If not steady within 2s, double resistance (5.0)
+    // If still not stopped, add new + old resistance continuously (7.5, 12.5, 20.0...)
+    const getDynamicResistance = (elapsedSec: number): number => {
+      const R_BASE = 2.5;
+      if (elapsedSec < 2.0) {
+        return R_BASE;
+      }
+      let prevR = R_BASE; // 2.5
+      let currR = R_BASE * 2; // 5.0 (doubled after 2 sec)
+      let s = 2;
+      while (s < Math.floor(elapsedSec) && s < 10) {
+        const nextR = currR + prevR; // new + old resistance
+        prevR = currR;
+        currR = nextR;
+        s++;
+      }
+      const frac = elapsedSec - Math.floor(elapsedSec);
+      const nextTarget = currR + prevR;
+      return currR + (nextTarget - currR) * frac;
+    };
 
     const physicsStep = (now: number) => {
-      const dt = Math.min((now - lastTime) / 1000, 0.05); // Cap max dt to 50ms
+      const elapsedSec = (now - flingStartTime) / 1000;
+
+      // 10-Second Safety Rule: if it runs for more than 10 seconds and still hasn't stopped,
+      // directly halt at the previous location!
+      if (elapsedSec >= 10.0) {
+        setBaseOffset(previousLocation);
+        physicsAnimRef.current = null;
+        setIsSliding(false);
+        return;
+      }
+
+      const dt = Math.min((now - lastTime) / 1000, 0.04); // Cap max dt to 40ms
       lastTime = now;
 
       // 1. Dynamic Stage Boundaries Calculation (Responsive to screen size)
@@ -111,8 +204,8 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
 
       if (stageElement) {
         const rect = stageElement.getBoundingClientRect();
-        const halfW = rect.width / 2 - 80;
-        const halfH = rect.height / 2 - 55;
+        const halfW = Math.max(120, rect.width / 2 - 80);
+        const halfH = Math.max(80, rect.height / 2 - 55);
         minX = -halfW - initialBaseX;
         maxX = halfW - initialBaseX;
         minY = -halfH - initialBaseY;
@@ -123,38 +216,44 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
         let newX = prev.x + vx * dt;
         let newY = prev.y + vy * dt;
 
-        // Calculate speed-proportional dynamic bounce restitution (0.20 for slow to 0.70 for high speed impact)
-        const impactSpeed = Math.hypot(vx, vy);
-        const impactRatio = Math.max(0.2, Math.min(1.0, impactSpeed / 1200));
-        const dynamicRestitution = 0.20 + impactRatio * 0.50;
+        // Energy-dissipating restitution to eliminate infinite loops between upper and lower walls:
+        // First collision has a clean rebound (0.85); consecutive bounces lose energy rapidly (0.65 -> 0.3)
+        const restitution = bounceCount === 0 ? 0.85 : Math.max(0.3, 0.65 - bounceCount * 0.12);
 
-        // 2. Dynamic Frame Wall Reflection Bounce Logic
+        // Horizontal wall collision
         if (newX > maxX) {
           newX = maxX;
-          vx = -Math.abs(vx) * dynamicRestitution;
+          vx = -Math.abs(vx) * restitution;
+          bounceCount++;
         } else if (newX < minX) {
           newX = minX;
-          vx = Math.abs(vx) * dynamicRestitution;
+          vx = Math.abs(vx) * restitution;
+          bounceCount++;
         }
 
+        // Upper and lower wall collision (prevents vertical ping-pong infinite loop)
         if (newY > maxY) {
           newY = maxY;
-          vy = -Math.abs(vy) * dynamicRestitution;
+          vy = -Math.abs(vy) * restitution;
+          bounceCount++;
         } else if (newY < minY) {
           newY = minY;
-          vy = Math.abs(vy) * dynamicRestitution;
+          vy = Math.abs(vy) * restitution;
+          bounceCount++;
         }
 
         return { x: newX, y: newY };
       });
 
-      // 3. Frame-Rate Independent Damping
-      const dampFactor = Math.exp(-damping * dt);
+      // Progressive aerodynamic resistance:
+      // Smoothly doubles at 2 sec, then continuously adds (new + old resistance)
+      const currentResistance = getDynamicResistance(elapsedSec);
+      const dampFactor = Math.exp(-currentResistance * dt);
       vx *= dampFactor;
       vy *= dampFactor;
 
       const currentSpeed = Math.hypot(vx, vy);
-      if (currentSpeed > 12) {
+      if (currentSpeed > 10) {
         physicsAnimRef.current = requestAnimationFrame(physicsStep);
       } else {
         physicsAnimRef.current = null;
@@ -169,7 +268,7 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
     e.stopPropagation();
     e.preventDefault();
 
-    // Cancel any active fling slide
+    // Cancel any active fling slide immediately
     if (physicsAnimRef.current !== null) {
       cancelAnimationFrame(physicsAnimRef.current);
       physicsAnimRef.current = null;
@@ -180,10 +279,24 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
       e.currentTarget.setPointerCapture(pointerId);
     } catch {}
 
+    // Calculate exact visual coordinates at the moment of touch to eliminate any pickup jump
+    const currentOrganicX = hasBeenMoved ? 0 : Math.sin(progress * freqX + phaseX) * amplitudeX;
+    const currentOrganicY = hasBeenMoved ? 0 : Math.cos(progress * freqY + phaseY) * amplitudeY;
+
+    const visualX = initialBaseX + baseOffset.x + currentOrganicX;
+    const visualY = initialBaseY + baseOffset.y + currentOrganicY;
+
+    // Freeze this exact location into baseOffset so the tile does not snap or teleport
+    const frozenOffsetX = visualX - initialBaseX;
+    const frozenOffsetY = visualY - initialBaseY;
+
+    setBaseOffset({ x: frozenOffsetX, y: frozenOffsetY });
+    setHasBeenMoved(true);
+
     const startPX = e.clientX;
     const startPY = e.clientY;
-    const startOffsetX = baseOffset.x;
-    const startOffsetY = baseOffset.y;
+    const startOffsetX = frozenOffsetX;
+    const startOffsetY = frozenOffsetY;
 
     pointerHistoryRef.current = [{ t: performance.now(), x: startPX, y: startPY }];
     setIsDragging(true);
@@ -196,13 +309,14 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
       const px = moveEv.clientX;
       const py = moveEv.clientY;
 
-      // Buffer last 100ms pointer samples for velocity estimation
+      // Buffer last 80ms pointer samples for velocity estimation
       const history = pointerHistoryRef.current;
       history.push({ t: now, x: px, y: py });
-      while (history.length > 1 && now - history[0].t > 100) {
+      while (history.length > 2 && now - history[0].t > 80) {
         history.shift();
       }
 
+      // Exact 1:1 mouse movement: if mouse moves (+100, +250), tile moves (+100, +250)
       const dx = px - startPX;
       const dy = py - startPY;
 
@@ -224,7 +338,6 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
       window.removeEventListener("pointercancel", handlePointerUp);
 
       setIsDragging(false);
-      setHasBeenMoved(true);
 
       // Estimate release velocity
       const history = pointerHistoryRef.current;
@@ -237,17 +350,26 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
           let vy = (last.y - first.y) / dt;
 
           const speed = Math.hypot(vx, vy);
-          const maxSpeed = 1800; // Clamp max launch speed
-          if (speed > maxSpeed) {
-            vx = (vx / speed) * maxSpeed;
-            vy = (vy / speed) * maxSpeed;
+          const maxInitialSpeed = 1600;
+          if (speed > maxInitialSpeed) {
+            vx = (vx / speed) * maxInitialSpeed;
+            vy = (vy / speed) * maxInitialSpeed;
           }
 
-          if (speed > 60) {
-            startFlingPhysics(vx, vy);
+          if (speed > 70) {
+            const previousLocation = {
+              x: startOffsetX + (last.x - startPX),
+              y: startOffsetY + (last.y - startPY),
+            };
+            startFlingPhysics(vx, vy, previousLocation);
+            return;
           }
         }
       }
+
+      // If released gently, tile stays exactly at this stopped position without any bounce or jump
+      physicsAnimRef.current = null;
+      setIsSliding(false);
     };
 
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
@@ -255,10 +377,13 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
     window.addEventListener("pointercancel", handlePointerUp);
   };
 
-  // Autonomous float pauses ONLY FOR THIS TILE while it is actively being dragged or fling-sliding
-  const isMovingUser = isDragging || isSliding;
-  const organicX = isMovingUser ? 0 : Math.sin(progress * freqX + phaseX) * amplitudeX;
-  const organicY = isMovingUser ? 0 : Math.cos(progress * freqY + phaseY) * amplitudeY;
+  // Once moved or while user is manipulating, organic float is zero so the tile stops and stays exactly at the user's chosen position
+  const organicX = hasBeenMoved || isDragging || isSliding
+    ? 0
+    : Math.sin(progress * freqX + phaseX) * amplitudeX;
+  const organicY = hasBeenMoved || isDragging || isSliding
+    ? 0
+    : Math.cos(progress * freqY + phaseY) * amplitudeY;
 
   // Rendered Position = Base Position + User Drag/Fling Offset + Organic Float
   const finalX = initialBaseX + baseOffset.x + organicX;
@@ -271,12 +396,12 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
       suppressHydrationWarning
       aria-label={`Draggable background product ${product.name}`}
       onPointerDown={handlePointerDown}
-      className={`absolute w-32 sm:w-40 h-20 sm:h-26 rounded-2xl border transition-colors shadow-2xl hidden sm:flex items-center justify-center pointer-events-auto select-none group touch-none ${
+      className={`absolute w-32 sm:w-40 h-20 sm:h-26 rounded-2xl border shadow-2xl hidden sm:flex items-center justify-center pointer-events-auto select-none group touch-none ${
         isDragging
-          ? "border-amber-400 bg-slate-900/95 cursor-grabbing ring-2 ring-amber-400/60 shadow-[0_0_30px_rgba(245,158,11,0.5)] scale-110"
+          ? "border-amber-400 bg-slate-900/95 cursor-grabbing ring-2 ring-amber-400/60 shadow-[0_0_30px_rgba(245,158,11,0.5)]"
           : isSliding
-          ? "border-amber-400/80 bg-slate-900/90 ring-1 ring-amber-400/30 shadow-[0_0_20px_rgba(245,158,11,0.3)]"
-          : "border-amber-500/35 bg-slate-900/85 backdrop-blur-md cursor-grab hover:border-amber-400 hover:scale-105"
+          ? "border-amber-400/80 bg-slate-900/90 ring-1 ring-amber-400/30 shadow-[0_0_20px_rgba(245,158,11,0.3)] cursor-grab"
+          : "border-amber-500/35 bg-slate-900/85 backdrop-blur-md cursor-grab hover:border-amber-400"
       }`}
       style={{
         transform: `translate3d(${finalX.toFixed(1)}px, ${finalY.toFixed(1)}px, 0px) scale(${
@@ -286,12 +411,12 @@ const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
         zIndex: isDragging ? 100 : isSliding ? 80 : 15,
         touchAction: "none",
         willChange: "transform",
+        transition: isDragging ? "none" : "border-color 0.2s, box-shadow 0.2s, opacity 0.2s",
       }}
     >
-      <Image
+      <SafeStageImage
         src={product.image}
         alt={product.name}
-        fill
         className="object-contain p-2.5 opacity-90 group-hover:opacity-100 transition-opacity filter drop-shadow-md pointer-events-none"
       />
       {/* Drop Status Indicator Dot */}
@@ -361,10 +486,9 @@ export const CinematicProductStage: React.FC<CinematicProductStageProps> = ({
     return (
       <div className="relative w-full h-full flex items-center justify-center bg-slate-950 p-6">
         <div className="relative w-72 sm:w-96 aspect-square rounded-3xl overflow-hidden border border-amber-500/30 bg-slate-900/90 shadow-2xl p-6 flex items-center justify-center">
-          <Image
+          <SafeStageImage
             src={currentProduct.image}
             alt={currentProduct.name}
-            fill
             className="object-contain p-4"
             priority
           />
@@ -468,10 +592,9 @@ export const CinematicProductStage: React.FC<CinematicProductStageProps> = ({
                     isActive ? "opacity-100" : "opacity-80"
                   }`}
                 >
-                  <Image
+                  <SafeStageImage
                     src={product.image}
                     alt={product.name}
-                    fill
                     sizes="(max-width: 640px) 280px, 380px"
                     className={`object-contain transition-transform duration-300 ${
                       isActive

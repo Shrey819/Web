@@ -141,10 +141,10 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                       <div className="pt-2">
                         <Link
                           href={slide.ctaUrl}
-                          className="inline-flex items-center gap-2 px-6 py-3 sm:px-8 sm:py-3.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-bold text-sm shadow-xl shadow-amber-500/20 transition-all transform hover:scale-[1.03] active:scale-95 font-mono"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-8 sm:py-3.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-bold text-xs sm:text-sm shadow-xl shadow-amber-500/20 transition-all transform hover:scale-[1.03] active:scale-95"
                         >
                           <span>{slide.ctaText}</span>
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </Link>
                       </div>
                     )}
@@ -166,10 +166,10 @@ export function HeroSlider({ slides }: HeroSliderProps) {
               goToPrev();
               startAutoplayTimer();
             }}
-            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-slate-950/60 hover:bg-slate-950 text-white backdrop-blur-md border border-slate-700/80 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl focus:outline-none"
+            className="absolute left-2.5 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-slate-950/60 hover:bg-slate-950 text-white backdrop-blur-md border border-slate-700/80 flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 shadow-xl focus:outline-none"
             aria-label="Previous Hero Slide"
           >
-            <ChevronLeft className="w-6 h-6 text-white" />
+            <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
           </button>
 
           <button
@@ -179,10 +179,10 @@ export function HeroSlider({ slides }: HeroSliderProps) {
               goToNext();
               startAutoplayTimer();
             }}
-            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-slate-950/60 hover:bg-slate-950 text-white backdrop-blur-md border border-slate-700/80 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl focus:outline-none"
+            className="absolute right-2.5 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-slate-950/60 hover:bg-slate-950 text-white backdrop-blur-md border border-slate-700/80 flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 shadow-xl focus:outline-none"
             aria-label="Next Hero Slide"
           >
-            <ChevronRight className="w-6 h-6 text-white" />
+            <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
           </button>
         </>
       )}

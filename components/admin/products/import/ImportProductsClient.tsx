@@ -406,16 +406,7 @@ export function ImportProductsClient() {
                 <li className="flex items-start gap-2">
                   <span className="text-slate-400 font-bold">•</span>
                   <span>
-                    To import new products, download our template:{" "}
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadTemplate("csv")}
-                      disabled={isDownloadingTemplate}
-                      className="text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer inline-flex items-center gap-1"
-                    >
-                      Download CSV Template
-                    </button>
-                    <span className="text-slate-400 mx-1">or</span>
+                    To import new products, download our official sample template:{" "}
                     <button
                       type="button"
                       onClick={() => handleDownloadTemplate("xlsx")}
@@ -424,13 +415,45 @@ export function ImportProductsClient() {
                     >
                       Download Excel (.xlsx) Template
                     </button>
+                    <span className="text-slate-400 mx-1">or</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadTemplate("csv")}
+                      disabled={isDownloadingTemplate}
+                      className="text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer inline-flex items-center gap-1"
+                    >
+                      Download CSV Template
+                    </button>
                   </span>
                 </li>
 
                 <li className="flex items-start gap-2">
                   <span className="text-slate-400 font-bold">•</span>
                   <span>
-                    To update existing products, export your products.{" "}
+                    Need a pre-filled sample with realistic store products?{" "}
+                    <a
+                      href="/demo_product_import.xlsx"
+                      download="demo_product_import.xlsx"
+                      className="text-emerald-600 hover:text-emerald-700 font-semibold underline inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Download Demo Product Excel (.xlsx)
+                    </a>
+                    <span className="text-slate-400 mx-1">or</span>
+                    <a
+                      href="/demo_product_import.csv"
+                      download="demo_product_import.csv"
+                      className="text-emerald-600 hover:text-emerald-700 font-semibold underline inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      Download Demo CSV
+                    </a>
+                  </span>
+                </li>
+
+                <li className="flex items-start gap-2">
+                  <span className="text-slate-400 font-bold">•</span>
+                  <span>
+                    To update existing products, export your current catalog first:{" "}
                     <button
                       type="button"
                       onClick={() => setIsExportModalOpen(true)}
@@ -444,8 +467,7 @@ export function ImportProductsClient() {
                 <li className="flex items-start gap-2">
                   <span className="text-slate-400 font-bold">•</span>
                   <span>
-                    Fill in the file with your product details. Each file can have up to 10,000 rows
-                    and weigh up to 40 MB.
+                    Fill in the file with your product details. Each file can have up to 1,000 product rows per batch.
                   </span>
                 </li>
 
@@ -454,6 +476,23 @@ export function ImportProductsClient() {
                   <span>Come back here and continue to upload your file.</span>
                 </li>
               </ul>
+
+              {/* Multi-Category Format Highlight Callout */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50/80 to-indigo-50/50 border border-blue-100 text-xs space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-blue-900">
+                  <span className="inline-block w-2 h-2 rounded-full bg-blue-600"></span>
+                  Multi-Category Import Support
+                </div>
+                <p className="text-slate-600 leading-relaxed">
+                  You can assign multiple categories to a single product by separating them with a semicolon (<code className="px-1 py-0.5 bg-white border border-blue-200 rounded text-blue-700 font-mono text-[11px] font-bold">;</code>).
+                  For example: <span className="font-semibold text-slate-800">&quot;Ballscrew;Linear Guideway;Actuators&quot;</span>.
+                </p>
+                <p className="text-slate-500 leading-relaxed text-[11px]">
+                  • The <strong className="text-slate-700">first category</strong> listed is automatically designated as the product&apos;s <strong className="text-slate-700">Primary Category</strong>.<br />
+                  • The product will automatically be linked and discoverable across all listed category views on the storefront.<br />
+                  • Any new categories not yet in your database will be automatically created.
+                </p>
+              </div>
 
               <div className="pt-8 border-t border-slate-100">
                 <p className="text-xs text-slate-500">

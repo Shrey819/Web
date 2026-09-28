@@ -30,44 +30,44 @@ export function HomepageCategoryShowcase({
     `Browse our certified, high-performance line of ${categoryName} hardware components.`;
 
   return (
-    <section className="py-8 sm:py-12 border-b border-slate-200/60 last:border-b-0">
-      <div className="content-shell space-y-6">
+    <section className="py-6 sm:py-10 border-b border-slate-200/60 last:border-b-0">
+      <div className="content-shell space-y-4 sm:space-y-6">
         {/* Category Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200/80 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 sm:gap-4 border-b border-slate-200/80 pb-3 sm:pb-4">
           <div>
-            <div className="flex items-center gap-2 text-sky-600 font-mono text-xs font-bold uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-1.5 text-sky-600 text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-1">
               <Sparkles className="w-3.5 h-3.5" />
               <span>{eyebrowText}</span>
             </div>
-            <h2 className="type-section-title font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight">
               {displayTitle}
             </h2>
           </div>
 
           <Link
             href={viewAllLink}
-            className="inline-flex items-center gap-2 font-mono text-xs font-bold text-sky-600 hover:text-sky-800 transition-colors group/link shrink-0"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:text-sky-800 transition-colors group/link shrink-0"
           >
             <span>{viewAllLabel}</span>
-            <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+            <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform" />
           </Link>
         </div>
 
         {/* Category Hero Image (Admin Controlled) */}
         {showcase.heroImage && (
-          <div className="relative w-full h-40 sm:h-52 md:h-64 rounded-3xl overflow-hidden shadow-lg border border-slate-200/80 group">
+          <div className="relative w-full h-36 sm:h-52 md:h-64 rounded-2xl sm:rounded-3xl overflow-hidden shadow-md border border-slate-200/80 group">
             <img
               src={showcase.heroImage}
               alt={`${displayTitle} Banner`}
               className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-700"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/40 to-transparent flex items-center p-6 sm:p-10">
-              <div className="max-w-lg text-white space-y-2">
-                <span className="bg-amber-400 text-slate-950 font-mono text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-widest shadow">
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-950/45 to-transparent flex items-center p-4 sm:p-8 md:p-10">
+              <div className="max-w-lg text-white space-y-1.5 sm:space-y-2">
+                <span className="bg-amber-400 text-slate-950 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow">
                   {bannerBadgeText}
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow font-heading">
+                <h3 className="text-base sm:text-xl md:text-2xl font-black text-white tracking-tight drop-shadow font-heading">
                   {bannerTitleText}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-200 line-clamp-2">

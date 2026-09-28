@@ -149,7 +149,7 @@ export async function createProduct(input: ProductFormValues): Promise<
         `, [brandId, brandName, brandSlug]);
       }
 
-      const primaryCat = validated.primaryCategoryId || validated.categoryIds[0] || validated.categoryId;
+      const primaryCat = validated.primaryCategoryId || validated.categoryIds[0] || validated.categoryId || null;
 
       // 2. Insert Core Product
       await client.query(`
@@ -171,7 +171,7 @@ export async function createProduct(input: ProductFormValues): Promise<
         )
       `, [
         productId, validated.name, slug, sku, sanitizeRichHtml(validated.description), validated.visible ? 'ACTIVE' : 'DRAFT', validated.visible, validated.showInPos,
-        primaryCat, primaryCat, validated.primaryRibbon || null, brandName || null,
+        primaryCat || null, primaryCat || null, validated.primaryRibbon || null, brandName || null,
         priceInPaise, priceInPaise, strikethroughInPaise, strikethroughInPaise, costInPaise,
         validated.showPricePerUnit, validated.baseUnit, validated.baseUnitMeasurement, validated.totalUnits || null, validated.totalUnitsMeasurement, validated.taxGroup,
         JSON.stringify(validated.featureHighlights || []),
@@ -183,8 +183,9 @@ export async function createProduct(input: ProductFormValues): Promise<
         validated.seoDesc || null
       ]);
 
-      // 3. Insert Category Join Table
-      const allCats = Array.from(new Set([primaryCat, ...validated.categoryIds])).filter(Boolean);
+      // 3. Insert Category Join Table (supports multiple or 0 categories)
+      const allCats = Array.from(new Set([primaryCat, ...(validated.categoryIds || [])]))
+        .filter((c): c is string => Boolean(c && typeof c === 'string' && c.trim() !== ''));
       for (const catId of allCats) {
         await client.query(`
           INSERT INTO "ProductCategory" ("productId", "categoryId")
@@ -321,7 +322,7 @@ export async function updateProduct(productId: string, input: ProductFormValues)
         `, [brandId, brandName, brandSlug]);
       }
 
-      const primaryCat = validated.primaryCategoryId || validated.categoryIds[0] || validated.categoryId;
+      const primaryCat = validated.primaryCategoryId || validated.categoryIds[0] || validated.categoryId || null;
 
       // 1. Update Core Product
       await client.query(`
@@ -335,7 +336,7 @@ export async function updateProduct(productId: string, input: ProductFormValues)
         WHERE "id" = $29
       `, [
         validated.name, slug, sanitizeRichHtml(validated.description), validated.visible ? 'ACTIVE' : 'DRAFT', validated.visible, validated.showInPos,
-        primaryCat, primaryCat, validated.primaryRibbon || null, brandName || null,
+        primaryCat || null, primaryCat || null, validated.primaryRibbon || null, brandName || null,
         priceInPaise, priceInPaise, strikethroughInPaise, strikethroughInPaise, costInPaise,
         validated.showPricePerUnit, validated.baseUnit, validated.baseUnitMeasurement, validated.totalUnits || null, validated.totalUnitsMeasurement, validated.taxGroup,
         JSON.stringify(validated.featureHighlights || []),
@@ -348,9 +349,10 @@ export async function updateProduct(productId: string, input: ProductFormValues)
         productId
       ]);
 
-      // 2. Categories
+      // 2. Categories (supports multiple or 0 categories)
       await client.query(`DELETE FROM "ProductCategory" WHERE "productId" = $1`, [productId]);
-      const allCats = Array.from(new Set([primaryCat, ...validated.categoryIds])).filter(Boolean);
+      const allCats = Array.from(new Set([primaryCat, ...(validated.categoryIds || [])]))
+        .filter((c): c is string => Boolean(c && typeof c === 'string' && c.trim() !== ''));
       for (const catId of allCats) {
         await client.query(`
           INSERT INTO "ProductCategory" ("productId", "categoryId")
@@ -591,7 +593,7 @@ export async function getProductForEdit(productId: string) {
 export async function getAdminProductsList(params?: { search?: string; category?: string; status?: string }) {
   try {
     await requireAdmin();
-    let whereClause = `WHERE 1=1`;
+    let whereClause = `WHERE (p."status" IS NULL OR p."status" != 'DELETED') AND p."deletedAt" IS NULL`;
     const queryParams: any[] = [];
 
     if (params?.search && params.search.trim()) {
@@ -723,18 +725,323 @@ export async function duplicateProduct(productId: string): Promise<
 }
 
 /**
- * DELETE PRODUCT
+ * DELETE PRODUCT (SOFT-DELETE / MOVE TO RECYCLE BIN)
+ * Immediately hides product from public storefront and active admin list without destroying data.
  */
 export async function deleteProduct(productId: string): Promise<
   { success: true; error?: never } | { success: false; error: string }
 > {
   try {
     await requireAdmin();
-    await query(`DELETE FROM "Product" WHERE "id" = $1`, [productId]);
+    await query(
+      `UPDATE "Product" 
+       SET "status" = 'DELETED', "deletedAt" = CURRENT_TIMESTAMP, "updatedAt" = CURRENT_TIMESTAMP 
+       WHERE "id" = $1`,
+      [productId]
+    );
     safeRevalidate("/admin/products");
     safeRevalidate("/products");
     return { success: true };
   } catch (error: unknown) {
     return safeActionResponse(error, "Failed to delete product");
+  }
+}
+
+/**
+ * BULK SET PRODUCT VISIBILITY
+ * Sets visibility and corresponding status for multiple products at once.
+ */
+export async function bulkSetProductVisibility(
+  productIds: string[],
+  visible: boolean
+): Promise<{ success: true; count: number; error?: never } | { success: false; error: string }> {
+  try {
+    await requireAdmin();
+    if (!productIds || productIds.length === 0) {
+      return { success: false, error: "No products selected" };
+    }
+
+    const res = await query(
+      `UPDATE "Product" 
+       SET "visible" = $1, "status" = $2, "updatedAt" = CURRENT_TIMESTAMP 
+       WHERE "id" = ANY($3) 
+         AND ("status" IS NULL OR "status" != 'DELETED') 
+         AND "deletedAt" IS NULL`,
+      [visible, visible ? "ACTIVE" : "DRAFT", productIds]
+    );
+
+    safeRevalidate("/admin/products");
+    safeRevalidate("/products");
+    return { success: true, count: res.rowCount ?? productIds.length };
+  } catch (error: unknown) {
+    return safeActionResponse(error, "Failed to update products visibility");
+  }
+}
+
+/**
+ * BULK MOVE TO RECYCLE BIN (SOFT DELETE MULTIPLE PRODUCTS)
+ */
+export async function bulkMoveToRecycleBin(
+  productIds: string[]
+): Promise<{ success: true; count: number; error?: never } | { success: false; error: string }> {
+  try {
+    await requireAdmin();
+    if (!productIds || productIds.length === 0) {
+      return { success: false, error: "No products selected" };
+    }
+
+    const res = await query(
+      `UPDATE "Product" 
+       SET "status" = 'DELETED', "deletedAt" = CURRENT_TIMESTAMP, "updatedAt" = CURRENT_TIMESTAMP, "visible" = false 
+       WHERE "id" = ANY($1) 
+         AND ("status" IS NULL OR "status" != 'DELETED') 
+         AND "deletedAt" IS NULL`,
+      [productIds]
+    );
+
+    safeRevalidate("/admin/products");
+    safeRevalidate("/products");
+    return { success: true, count: res.rowCount ?? productIds.length };
+  } catch (error: unknown) {
+    return safeActionResponse(error, "Failed to move products to recycle bin");
+  }
+}
+
+/**
+ * RESTORE PRODUCT FROM RECYCLE BIN
+ * Re-activates the product so it immediately reappears on both storefront and active admin list.
+ */
+export async function restoreProduct(productId: string): Promise<
+  { success: true; error?: never } | { success: false; error: string }
+> {
+  try {
+    await requireAdmin();
+    await query(
+      `UPDATE "Product" 
+       SET "status" = 'ACTIVE', "deletedAt" = NULL, "updatedAt" = CURRENT_TIMESTAMP 
+       WHERE "id" = $1`,
+      [productId]
+    );
+    safeRevalidate("/admin/products");
+    safeRevalidate("/products");
+    return { success: true };
+  } catch (error: unknown) {
+    return safeActionResponse(error, "Failed to restore product");
+  }
+}
+
+/**
+ * RATE LIMITER FOR PERMANENT DELETION
+ * Enforces a strict limit of 5 wrong password trials per minute for a particular user.
+ */
+interface DeleteRateLimitRecord {
+  wrongTimestamps: number[];
+}
+
+const permanentDeleteRateLimitMap = new Map<string, DeleteRateLimitRecord>();
+const MAX_PERMANENT_DELETE_TRIALS = 5;
+const PERMANENT_DELETE_WINDOW_MS = 60 * 1000; // 1 minute window
+
+function checkPermanentDeleteRateLimit(userKey: string): { allowed: boolean; secondsLeft?: number } {
+  const now = Date.now();
+  const record = permanentDeleteRateLimitMap.get(userKey);
+  if (!record) return { allowed: true };
+
+  // Retain only wrong attempts from within the sliding 1-minute window
+  record.wrongTimestamps = record.wrongTimestamps.filter(
+    (ts) => now - ts < PERMANENT_DELETE_WINDOW_MS
+  );
+
+  if (record.wrongTimestamps.length >= MAX_PERMANENT_DELETE_TRIALS) {
+    const oldest = record.wrongTimestamps[0];
+    const secondsLeft = Math.max(1, Math.ceil((oldest + PERMANENT_DELETE_WINDOW_MS - now) / 1000));
+    return { allowed: false, secondsLeft };
+  }
+
+  return { allowed: true };
+}
+
+function recordPermanentDeleteWrongAttempt(userKey: string): { remaining: number; secondsLeft: number; locked: boolean } {
+  const now = Date.now();
+  let record = permanentDeleteRateLimitMap.get(userKey);
+  if (!record) {
+    record = { wrongTimestamps: [] };
+    permanentDeleteRateLimitMap.set(userKey, record);
+  }
+
+  record.wrongTimestamps = record.wrongTimestamps.filter(
+    (ts) => now - ts < PERMANENT_DELETE_WINDOW_MS
+  );
+  record.wrongTimestamps.push(now);
+
+  const locked = record.wrongTimestamps.length >= MAX_PERMANENT_DELETE_TRIALS;
+  const remaining = Math.max(0, MAX_PERMANENT_DELETE_TRIALS - record.wrongTimestamps.length);
+  const oldest = record.wrongTimestamps[0];
+  const secondsLeft = Math.max(1, Math.ceil((oldest + PERMANENT_DELETE_WINDOW_MS - now) / 1000));
+
+  return { remaining, secondsLeft, locked };
+}
+
+function resetPermanentDeleteRateLimit(userKey: string): void {
+  permanentDeleteRateLimitMap.delete(userKey);
+}
+
+/**
+ * PERMANENTLY DELETE PRODUCT
+ * Strictly requires the dedicated PERMANENT_DELETE_PASSWORD from .env.
+ * Rate limited to maximum 5 wrong password attempts per minute per user.
+ */
+export async function permanentlyDeleteProduct(
+  productId: string,
+  securityPassword: string
+): Promise<
+  | { success: true; error?: never }
+  | { success: false; error: string; locked?: boolean; retryAfter?: number; remaining?: number }
+> {
+  try {
+    const adminUser = await requireAdmin();
+    const userKey = adminUser.id || adminUser.email || "admin_user";
+
+    // 1. Check if user is currently locked out by rate limit
+    const rateCheck = checkPermanentDeleteRateLimit(userKey);
+    if (!rateCheck.allowed) {
+      return {
+        success: false,
+        error: `Too many incorrect attempts. Please wait ${rateCheck.secondsLeft}s before trying again.`,
+        locked: true,
+        retryAfter: rateCheck.secondsLeft,
+      };
+    }
+
+    const configuredPassword = process.env.PERMANENT_DELETE_PASSWORD;
+    if (!configuredPassword) {
+      return {
+        success: false,
+        error: "Security password is not configured on the server. Deletion prevented for safety.",
+      };
+    }
+
+    // 2. Validate security password
+    if (!securityPassword || securityPassword.trim() !== configuredPassword.trim()) {
+      const { secondsLeft, locked } = recordPermanentDeleteWrongAttempt(userKey);
+      if (locked) {
+        return {
+          success: false,
+          error: `Too many incorrect attempts. Please wait ${secondsLeft}s before trying again.`,
+          locked: true,
+          retryAfter: secondsLeft,
+        };
+      }
+      return {
+        success: false,
+        error: "Incorrect password.",
+        locked: false,
+      };
+    }
+
+    // 3. Password correct -> Reset rate limit and permanently delete
+    resetPermanentDeleteRateLimit(userKey);
+
+    await transaction(async (client) => {
+      // 1. Delete all relational foreign key dependencies
+      await client.query(`DELETE FROM "ProductImage" WHERE "productId" = $1`, [productId]);
+      await client.query(`DELETE FROM "ProductCategory" WHERE "productId" = $1`, [productId]);
+      await client.query(`DELETE FROM "ProductTagAssignment" WHERE "productId" = $1`, [productId]);
+      await client.query(
+        `DELETE FROM "ProductOptionChoice" WHERE "optionId" IN (SELECT id FROM "ProductOption" WHERE "productId" = $1)`,
+        [productId]
+      );
+      await client.query(`DELETE FROM "ProductOption" WHERE "productId" = $1`, [productId]);
+      await client.query(`DELETE FROM "ProductVariant" WHERE "productId" = $1`, [productId]);
+      await client.query(`DELETE FROM "ProductAssignedInfoSection" WHERE "productId" = $1`, [productId]);
+      await client.query(`DELETE FROM "Inventory" WHERE "productId" = $1`, [productId]);
+      await client.query(`DELETE FROM "CartItem" WHERE "productId" = $1`, [productId]);
+      await client.query(`DELETE FROM "WishlistItem" WHERE "productId" = $1`, [productId]);
+
+      // 2. Permanently delete the core product row
+      await client.query(`DELETE FROM "Product" WHERE "id" = $1`, [productId]);
+    });
+
+    safeRevalidate("/admin/products");
+    safeRevalidate("/products");
+    return { success: true };
+  } catch (error: unknown) {
+    return safeActionResponse(error, "Failed to permanently delete product");
+  }
+}
+
+export interface RecycleBinProductItem {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string;
+  brand: string;
+  priceNumber: number;
+  imageUrl: string;
+  deletedAt: string;
+}
+
+/**
+ * GET RECYCLE BIN PRODUCTS
+ * Returns all soft-deleted products currently in the Recycle Bin.
+ */
+export async function getRecycleBinProducts(): Promise<RecycleBinProductItem[]> {
+  try {
+    await requireAdmin();
+    const res = await query(`
+      SELECT 
+        p."id",
+        p."name",
+        p."slug",
+        p."sku",
+        p."basePrice",
+        p."price",
+        p."brand",
+        p."deletedAt",
+        p."createdAt",
+        COALESCE(
+          (
+            SELECT img."url" 
+            FROM "ProductImage" img 
+            WHERE img."productId" = p."id" 
+            ORDER BY img."isPrimary" DESC, img."order" ASC 
+            LIMIT 1
+          ),
+          'https://res.cloudinary.com/hecyltpu/image/upload/v1788819936/products/v86fzl3rk6h4o0psjucv.jpg'
+        ) as "imageUrl"
+      FROM "Product" p
+      WHERE p."status" = 'DELETED' OR p."deletedAt" IS NOT NULL
+      ORDER BY p."deletedAt" DESC NULLS LAST, p."updatedAt" DESC
+    `);
+
+    return res.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      sku: row.sku || "",
+      brand: row.brand || "Industrial Standard",
+      priceNumber: (row.price || row.basePrice || 0) / 100,
+      imageUrl: row.imageUrl,
+      deletedAt: row.deletedAt ? new Date(row.deletedAt).toISOString() : new Date().toISOString(),
+    }));
+  } catch (error) {
+    console.error("Failed to load recycle bin products:", error);
+    return [];
+  }
+}
+
+/**
+ * GET RECYCLE BIN PRODUCT COUNT
+ */
+export async function getRecycleBinCount(): Promise<number> {
+  try {
+    const res = await query(`
+      SELECT COUNT(*)::int as count 
+      FROM "Product" 
+      WHERE "status" = 'DELETED' OR "deletedAt" IS NOT NULL
+    `);
+    return res.rows[0]?.count || 0;
+  } catch {
+    return 0;
   }
 }

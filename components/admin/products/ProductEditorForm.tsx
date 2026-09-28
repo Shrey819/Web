@@ -39,6 +39,7 @@ import {
   Tag,
   ChevronDown,
   IndianRupee,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { WixRichTextEditor } from "./WixRichTextEditor";
@@ -74,6 +75,8 @@ export function ProductEditorForm({
   initialData,
   categories = [],
   allBrands = [],
+  defaultCategoryIds = [],
+  defaultPrimaryCategoryId = "",
   isEdit = false,
 }: ProductEditorFormProps) {
   const router = useRouter();
@@ -159,9 +162,9 @@ export function ProductEditorForm({
       visible: initialData?.visible !== false,
       status: initialData?.status || "ACTIVE",
       brand: initialData?.brand || "HIWIN",
-      categoryId: initialData?.categoryId || categories[0]?.id || "",
-      categoryIds: initialData?.categoryIds || (categories[0]?.id ? [categories[0].id] : []),
-      primaryCategoryId: initialData?.primaryCategoryId || categories[0]?.id || "",
+      categoryId: initialData?.categoryId ?? initialData?.categoryIds?.[0] ?? defaultPrimaryCategoryId ?? "",
+      categoryIds: initialData?.categoryIds ?? (initialData?.categoryId ? [initialData.categoryId] : defaultCategoryIds ?? []),
+      primaryCategoryId: initialData?.primaryCategoryId ?? initialData?.categoryId ?? defaultPrimaryCategoryId ?? "",
 
       // SEO
       seoTitle: initialData?.seoTitle || "",
@@ -191,8 +194,44 @@ export function ProductEditorForm({
   const currentVisible = watch("visible");
   const currentBrand = watch("brand");
   const currentCategoryId = watch("categoryId");
+  const currentCategoryIds: string[] = watch("categoryIds") || [];
   const currentSeoTitle = watch("seoTitle");
   const currentSeoDesc = watch("seoDesc");
+
+  // Category Multi-Select & Search State
+  const [categorySearchQuery, setCategorySearchQuery] = useState("");
+
+  const filteredCategories = useMemo(() => {
+    if (!categorySearchQuery.trim()) return categories;
+    const q = categorySearchQuery.toLowerCase().trim();
+    return categories.filter((c) => c.name.toLowerCase().includes(q));
+  }, [categories, categorySearchQuery]);
+
+  const handleToggleCategory = (catId: string) => {
+    const isChecked = currentCategoryIds.includes(catId);
+    const nextCategoryIds = isChecked
+      ? currentCategoryIds.filter((id) => id !== catId)
+      : [...currentCategoryIds, catId];
+
+    setValue("categoryIds", nextCategoryIds, { shouldValidate: true, shouldDirty: true });
+    const nextPrimary = nextCategoryIds[0] || "";
+    setValue("categoryId", nextPrimary, { shouldValidate: true, shouldDirty: true });
+    setValue("primaryCategoryId", nextPrimary, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const handleClearCategories = () => {
+    setValue("categoryIds", [], { shouldValidate: true, shouldDirty: true });
+    setValue("categoryId", "", { shouldValidate: true, shouldDirty: true });
+    setValue("primaryCategoryId", "", { shouldValidate: true, shouldDirty: true });
+  };
+
+  const handleSelectAllCategories = () => {
+    const allCatIds = categories.map((c) => c.id);
+    setValue("categoryIds", allCatIds, { shouldValidate: true, shouldDirty: true });
+    const nextPrimary = allCatIds[0] || "";
+    setValue("categoryId", nextPrimary, { shouldValidate: true, shouldDirty: true });
+    setValue("primaryCategoryId", nextPrimary, { shouldValidate: true, shouldDirty: true });
+  };
 
   // User custom modification tracking
   const [isSlugCustom, setIsSlugCustom] = useState(Boolean(initialData?.slug));
@@ -603,13 +642,14 @@ export function ProductEditorForm({
   const onSubmit = async (values: ProductFormValues) => {
     setIsSubmitting(true);
     try {
-      // Ensure primary category
-      const primaryCat = values.categoryId || categories[0]?.id || "";
+      // Support multi-category selection or 0 categories (none selected)
+      const selectedCatIds = Array.isArray(values.categoryIds) ? values.categoryIds : [];
+      const primaryCat = selectedCatIds[0] || values.categoryId || "";
       const payload: ProductFormValues = {
         ...values,
         categoryId: primaryCat,
         primaryCategoryId: primaryCat,
-        categoryIds: [primaryCat],
+        categoryIds: selectedCatIds,
         status: values.visible ? "ACTIVE" : "DRAFT",
       };
 
@@ -640,7 +680,7 @@ export function ProductEditorForm({
 
   const handleDelete = async () => {
     if (!initialData?.id) return;
-    if (!confirm(`Are you sure you want to delete "${initialData.name}"? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete "${initialData.name}"? It will be moved to the Recycle Bin and hidden from the storefront.`)) {
       return;
     }
 
@@ -648,7 +688,7 @@ export function ProductEditorForm({
     try {
       const res = await deleteProduct(initialData.id);
       if (res.success) {
-        addToast("info", "Product Deleted", "Product removed successfully.");
+        addToast("info", "Moved to Recycle Bin", "Product hidden from store. You can restore it from the Recycle Bin.");
         router.push("/admin/products");
       } else {
         addToast("error", "Delete Failed", res.error || "Could not delete product.");
@@ -689,9 +729,10 @@ export function ProductEditorForm({
               onClick={handleDelete}
               disabled={isDeleting || isSubmitting}
               className="px-4 py-2 text-sm font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg border border-rose-200 dark:border-rose-800/50 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              title="Move to Recycle Bin"
             >
               {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-              <span>Delete</span>
+              <span>Move to Recycle Bin</span>
             </button>
           )}
 
@@ -1463,25 +1504,119 @@ export function ProductEditorForm({
             </p>
           </div>
 
-          {/* 10. Category */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-3">
-            <label htmlFor="product-category" className="block text-sm font-bold text-slate-900 dark:text-white">
-              10) Category
-            </label>
-            <select
-              id="product-category"
-              {...form.register("categoryId")}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00a651] focus:ring-2 focus:ring-[#00a651]/20 bg-white dark:bg-slate-950"
-            >
-              <option value="" className="dark:bg-slate-900 dark:text-white">Select a Category</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id} className="dark:bg-slate-900 dark:text-white">
-                  {c.name}
-                </option>
-              ))}
-            </select>
+          {/* 10. Category (Multi-Select with Checkboxes & Optional None) */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-3.5">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <label className="block text-sm font-bold text-slate-900 dark:text-white">
+                  10) Category
+                </label>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Select one or multiple categories, or leave unselected.
+                </p>
+              </div>
+              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                currentCategoryIds.length > 0
+                  ? "bg-emerald-50 dark:bg-emerald-950/50 text-[#00a651] dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60"
+                  : "bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+              }`}>
+                {currentCategoryIds.length === 0
+                  ? "None selected"
+                  : currentCategoryIds.length === 1
+                  ? "1 selected"
+                  : `${currentCategoryIds.length} selected`}
+              </span>
+            </div>
+
+            {/* Quick search & Action buttons */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                {/* Search category */}
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={categorySearchQuery}
+                    onChange={(e) => setCategorySearchQuery(e.target.value)}
+                    placeholder="Search categories..."
+                    className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:border-[#00a651] focus:ring-1 focus:ring-[#00a651]"
+                  />
+                  {categorySearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setCategorySearchQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick actions: Select All / Clear All */}
+                <div className="flex items-center gap-1.5 shrink-0 text-[11px]">
+                  {currentCategoryIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleClearCategories}
+                      className="px-2 py-1 font-medium text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                    >
+                      Clear ({currentCategoryIds.length})
+                    </button>
+                  )}
+                  {categories.length > 0 && currentCategoryIds.length < categories.length && (
+                    <button
+                      type="button"
+                      onClick={handleSelectAllCategories}
+                      className="px-2 py-1 font-medium text-[#00a651] dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded transition-colors cursor-pointer"
+                    >
+                      Select All
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Scrollable Checkbox List */}
+              <div className="max-h-60 overflow-y-auto space-y-1.5 rounded-lg border border-slate-200 dark:border-slate-800 p-2 bg-slate-50/50 dark:bg-slate-950/50">
+                {filteredCategories.length === 0 ? (
+                  <div className="py-4 text-center text-xs text-slate-400 dark:text-slate-500">
+                    {categorySearchQuery ? "No matching categories found." : "No categories created yet."}
+                  </div>
+                ) : (
+                  filteredCategories.map((c) => {
+                    const isChecked = currentCategoryIds.includes(c.id);
+                    const isPrimary = currentCategoryIds[0] === c.id;
+                    return (
+                      <label
+                        key={c.id}
+                        className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all text-xs select-none ${
+                          isChecked
+                            ? "bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-400/60 dark:border-emerald-600/50 text-slate-900 dark:text-white font-medium shadow-2xs"
+                            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleToggleCategory(c.id)}
+                            className="w-4 h-4 rounded text-[#00a651] focus:ring-[#00a651] border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 accent-[#00a651] cursor-pointer"
+                          />
+                          <span className="truncate">{c.name}</span>
+                        </div>
+                        {isPrimary && (
+                          <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-[#00a651] dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                            Primary
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Organizes the product under the appropriate catalog collection and breadcrumbs.
+              Products can belong to multiple categories or none. When multiple categories are checked, the first selected is used as primary for breadcrumbs.
             </p>
           </div>
 

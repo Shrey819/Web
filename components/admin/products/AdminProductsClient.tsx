@@ -30,7 +30,14 @@ import {
   Filter,
   X,
 } from "lucide-react";
-import { toggleProductVisibility, duplicateProduct, deleteProduct } from "@/app/actions/product";
+import {
+  toggleProductVisibility,
+  duplicateProduct,
+  deleteProduct,
+  getRecycleBinCount,
+  bulkSetProductVisibility,
+  bulkMoveToRecycleBin,
+} from "@/app/actions/product";
 import { useToastStore } from "@/store/useToastStore";
 import { CustomizeColumnsDrawer, ColumnConfig } from "./modals/CustomizeColumnsDrawer";
 import { ManageBrandsModal } from "./modals/ManageBrandsModal";
@@ -41,6 +48,7 @@ import { EditInfoSectionModal } from "./modals/EditInfoSectionModal";
 import { ManageGlobalOptionsModal } from "./modals/ManageGlobalOptionsModal";
 import { ApplyOptionPresetModal } from "./modals/ApplyOptionPresetModal";
 import { ExportProductsModal } from "./modals/ExportProductsModal";
+import { RecycleBinModal } from "./modals/RecycleBinModal";
 import {
   FilterProductsDrawer,
   ProductFilters,
@@ -105,7 +113,27 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [filters, setFilters] = useState<ProductFilters>(DEFAULT_PRODUCT_FILTERS);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false);
+  const [recycleCount, setRecycleCount] = useState<number>(0);
+  const [isBulkOperating, setIsBulkOperating] = useState(false);
   const moreActionsRef = useRef<HTMLDivElement>(null);
+
+  const fetchRecycleCount = async () => {
+    try {
+      const count = await getRecycleBinCount();
+      setRecycleCount(count);
+    } catch (e) {
+      console.error("Error fetching recycle bin count:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecycleCount();
+  }, []);
+
+  useEffect(() => {
+    setProducts(initialProducts);
+  }, [initialProducts]);
 
   // Active filters count
   let activeFilterCount = 0;
@@ -249,13 +277,69 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+    if (!confirm("Are you sure you want to delete this product? It will be moved to the Recycle Bin and hidden from the storefront.")) return;
     const res = await deleteProduct(id);
     if (res.success) {
       setProducts((prev) => prev.filter((p) => p.id !== id));
-      addToast("info", "Product Deleted", "Removed from store.");
+      fetchRecycleCount();
+      addToast("info", "Moved to Recycle Bin", "Product is hidden from store and products list.");
     } else {
       addToast("error", "Failed", res.error || "Could not delete product.");
+    }
+  };
+
+  const handleBulkVisibility = async (visible: boolean) => {
+    if (selectedIds.length === 0 || isBulkOperating) return;
+    setIsBulkOperating(true);
+    try {
+      const res = await bulkSetProductVisibility(selectedIds, visible);
+      if (res.success) {
+        setProducts((prev) =>
+          prev.map((p) => (selectedIds.includes(p.id) ? { ...p, visible } : p))
+        );
+        addToast(
+          "success",
+          "Visibility Updated",
+          `${selectedIds.length} product${selectedIds.length > 1 ? "s are" : " is"} now ${
+            visible ? "shown in store" : "hidden from store"
+          }.`
+        );
+      } else {
+        addToast("error", "Action Failed", res.error || "Could not update visibility.");
+      }
+    } catch {
+      addToast("error", "Error", "Failed to update product visibility.");
+    } finally {
+      setIsBulkOperating(false);
+    }
+  };
+
+  const handleBulkMoveToRecycleBin = async () => {
+    if (selectedIds.length === 0 || isBulkOperating) return;
+    const confirmMessage = `Are you sure you want to move ${selectedIds.length} selected product${
+      selectedIds.length > 1 ? "s" : ""
+    } to the Recycle Bin? They will be hidden from the storefront.`;
+    if (!confirm(confirmMessage)) return;
+
+    setIsBulkOperating(true);
+    try {
+      const res = await bulkMoveToRecycleBin(selectedIds);
+      if (res.success) {
+        setProducts((prev) => prev.filter((p) => !selectedIds.includes(p.id)));
+        fetchRecycleCount();
+        setSelectedIds([]);
+        addToast(
+          "info",
+          "Moved to Recycle Bin",
+          `${res.count} product${res.count > 1 ? "s were" : " was"} moved to the Recycle Bin.`
+        );
+      } else {
+        addToast("error", "Action Failed", res.error || "Could not move products to Recycle Bin.");
+      }
+    } catch {
+      addToast("error", "Error", "Failed to move products to Recycle Bin.");
+    } finally {
+      setIsBulkOperating(false);
     }
   };
 
@@ -273,6 +357,22 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Recycle Bin Button */}
+          <button
+            type="button"
+            onClick={() => setIsRecycleBinOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-slate-900 hover:bg-rose-50/70 dark:hover:bg-rose-950/20 text-slate-700 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-800 hover:border-rose-200 dark:hover:border-rose-900/50 rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+            title="Recycle Bin (Deleted Products)"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+            <span>Recycle Bin</span>
+            {recycleCount > 0 && (
+              <span className="px-1.5 py-0.5 bg-rose-500 text-white rounded-full text-[10px] font-bold leading-none">
+                {recycleCount}
+              </span>
+            )}
+          </button>
+
           {/* Global Tables More Actions Dropdown */}
           <div ref={moreActionsRef} className="relative">
             <button
@@ -412,6 +512,25 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                       <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono">
                         Presets
                       </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMoreActionsOpen(false);
+                        setIsRecycleBinOpen(true);
+                      }}
+                      className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50/70 dark:hover:bg-slate-800 rounded-lg font-medium transition-colors cursor-pointer text-left"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Trash2 className="w-4 h-4 text-rose-500" />
+                        <span>Recycle Bin</span>
+                      </div>
+                      {recycleCount > 0 && (
+                        <span className="text-[10px] bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded-full">
+                          {recycleCount}
+                        </span>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -629,6 +748,62 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
           </div>
         )}
 
+        {/* Bulk Action Header Bar */}
+        {selectedIds.length > 0 && (
+          <div className="px-4 py-3 bg-blue-50/90 dark:bg-slate-800/90 border-b border-blue-200/80 dark:border-slate-700 flex items-center justify-between flex-wrap gap-3 animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="flex items-center gap-2.5">
+              <span className="px-2.5 py-1 rounded-md bg-blue-600 text-white text-xs font-bold shadow-2xs">
+                {selectedIds.length} {selectedIds.length === 1 ? "product" : "products"} selected
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedIds([])}
+                className="text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white font-medium hover:underline cursor-pointer"
+              >
+                Deselect all
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Show in Store */}
+              <button
+                type="button"
+                onClick={() => handleBulkVisibility(true)}
+                disabled={isBulkOperating}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                title="Show selected products in storefront"
+              >
+                <Eye className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Show in Store</span>
+              </button>
+
+              {/* Hide from Store */}
+              <button
+                type="button"
+                onClick={() => handleBulkVisibility(false)}
+                disabled={isBulkOperating}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 text-xs font-semibold shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                title="Hide selected products from storefront"
+              >
+                <EyeOff className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>Hide from Store</span>
+              </button>
+
+              {/* Move to Recycle Bin */}
+              <button
+                type="button"
+                onClick={handleBulkMoveToRecycleBin}
+                disabled={isBulkOperating}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                title="Move selected products to Recycle Bin"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Move to Recycle Bin</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Products Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs divide-y divide-slate-100 dark:divide-slate-800">
@@ -709,10 +884,17 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                             >
                               {prod.name}
                             </Link>
-                            <div className="text-[11px] text-slate-400 font-medium mt-0.5">
-                              {prod.variantCount > 0
-                                ? `${prod.variantCount} variants`
-                                : "No variants"}
+                            <div className="flex items-center gap-2 text-[11px] text-slate-400 font-medium mt-0.5 flex-wrap">
+                              <span>
+                                {prod.variantCount > 0
+                                  ? `${prod.variantCount} variants`
+                                  : "No variants"}
+                              </span>
+                              {!prod.visible && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800 rounded text-[10px] font-semibold">
+                                  <EyeOff className="w-2.5 h-2.5" /> Hidden from store
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -859,9 +1041,9 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                               handleDelete(prod.id);
                               setActiveMenuId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+                            className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
                           >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                            <Trash2 className="w-3.5 h-3.5" /> Move to Recycle Bin
                           </button>
                         </div>
                       )}
@@ -973,6 +1155,76 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
         filters={filters}
         onFiltersChange={setFilters}
       />
+
+      <RecycleBinModal
+        isOpen={isRecycleBinOpen}
+        onClose={() => setIsRecycleBinOpen(false)}
+        onProductsChanged={() => {
+          fetchRecycleCount();
+          router.refresh();
+        }}
+      />
+
+      {/* Floating Bulk Action Bar for quick action while scrolling */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 max-w-xl w-[92%] sm:w-auto animate-in fade-in slide-in-from-bottom-5 duration-200">
+          <div className="bg-slate-900/95 dark:bg-slate-800/95 backdrop-blur-md text-white border border-slate-700/80 shadow-2xl rounded-2xl p-2.5 sm:px-4 sm:py-2.5 flex items-center justify-between sm:justify-start gap-2.5 sm:gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-600 text-white shrink-0">
+                {selectedIds.length} Selected
+              </span>
+            </div>
+
+            <div className="h-5 w-px bg-slate-700 hidden sm:block" />
+
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <button
+                type="button"
+                onClick={() => handleBulkVisibility(true)}
+                disabled={isBulkOperating}
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                title="Show in Store"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Show in Store</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleBulkVisibility(false)}
+                disabled={isBulkOperating}
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                title="Hide from Store"
+              >
+                <EyeOff className="w-3.5 h-3.5" />
+                <span>Hide from Store</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleBulkMoveToRecycleBin}
+                disabled={isBulkOperating}
+                className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                title="Move to Recycle Bin"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Move to Recycle Bin</span>
+              </button>
+            </div>
+
+            <div className="h-5 w-px bg-slate-700" />
+
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Deselect all"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

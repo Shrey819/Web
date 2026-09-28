@@ -41,11 +41,21 @@ export function AddressLocationSelector({
   const allIndiaStates = useMemo(() => getIndiaStates(), []);
   const availableCities = useMemo(() => (isIndia ? getCitiesForState(state) : []), [isIndia, state]);
 
+  const [isZipFocused, setIsZipFocused] = useState(false);
+  const [zipTouched, setZipTouched] = useState(false);
+
   // Real-time mismatch validation for India
   const pinValidation = useMemo(() => {
     if (!isIndia || !zip || zip.trim().length < 6) return null;
     return validatePincodeWithState(zip, state);
   }, [isIndia, zip, state]);
+
+  const isZipIncomplete =
+    isIndia &&
+    zipTouched &&
+    !isZipFocused &&
+    zip.trim().length > 0 &&
+    zip.trim().length < 6;
 
   const handlePincodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isIndia) {
@@ -238,22 +248,34 @@ export function AddressLocationSelector({
           </label>
           <input
             type="text"
+            inputMode={isIndia ? "numeric" : "text"}
             value={zip}
             onChange={handlePincodeChange}
+            onFocus={() => setIsZipFocused(true)}
+            onBlur={() => {
+              setIsZipFocused(false);
+              setZipTouched(true);
+            }}
             placeholder={isIndia ? "e.g. 382028, 700144" : "e.g. 94103, 80331"}
             maxLength={isIndia ? 6 : 12}
             disabled={disabled}
             className={`w-full p-3 rounded-2xl border bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none transition-all font-mono tracking-wider ${
-              (isFieldMissing && isFieldMissing(zip)) || (pinValidation && !pinValidation.isValid)
+              (isFieldMissing && isFieldMissing(zip)) || isZipIncomplete || (pinValidation && !pinValidation.isValid)
                 ? "border-rose-500 bg-rose-50/20 ring-2 ring-rose-500/20"
                 : "border-slate-200 dark:border-slate-700 focus:border-sky-500"
             }`}
             required
           />
 
-          {isFieldMissing && isFieldMissing(zip) && (
+          {((isFieldMissing && isFieldMissing(zip)) || (!isZipFocused && zipTouched && zip.trim().length === 0)) && (
             <span className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" /> PIN Code is required
+              <AlertCircle className="w-3 h-3 shrink-0" /> PIN Code is required
+            </span>
+          )}
+
+          {isZipIncomplete && (
+            <span className="text-[10px] text-rose-500 font-bold mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3 shrink-0" /> Indian PIN code must be exactly 6 digits ({zip.trim().length}/6 entered)
             </span>
           )}
         </div>

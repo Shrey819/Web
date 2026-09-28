@@ -298,21 +298,21 @@ export function ProfileClient({
   const userAvatarUrl = currentUser.image || currentUser.avatar;
 
   return (
-    <div className="bg-[#faf9f5] min-h-screen py-10 border-b border-slate-200">
-      <div className="content-shell space-y-8">
+    <div className="bg-[#faf9f5] min-h-screen py-4 sm:py-10 border-b border-slate-200">
+      <div className="content-shell space-y-4 sm:space-y-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 type-body-small text-slate-500 font-mono">
+        <nav className="flex items-center gap-1.5 sm:gap-2 text-xs text-slate-500">
           <Link href="/" className="hover:text-slate-900">
             Home
           </Link>
           <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-slate-900 font-bold">User Workspace & Profile</span>
+          <span className="text-slate-900 font-semibold">User Profile</span>
         </nav>
 
         {/* User Hero Banner */}
-        <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white text-xl sm:text-2xl font-bold font-mono shadow-inner overflow-hidden border-2 border-white/20">
+        <div className="bg-slate-900 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3.5 sm:gap-6">
+            <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white text-lg sm:text-2xl font-bold shadow-inner overflow-hidden border-2 border-white/20 shrink-0">
               {userAvatarUrl ? (
                 <img src={userAvatarUrl} alt={currentUser.name || "User"} className="w-full h-full object-cover" />
               ) : (
@@ -321,33 +321,32 @@ export function ProfileClient({
             </div>
 
             <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-mono font-bold">{currentUser.name || "Enterprise Customer"}</h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono border border-emerald-500/40">
-                  Verified B2B Account
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-2xl font-bold">{currentUser.name || "Customer"}</h1>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold border border-emerald-500/40">
+                  Verified
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-300 font-mono mt-0.5">{currentUser.email}</p>
+              <p className="text-xs sm:text-sm text-slate-300 mt-0.5">{currentUser.email}</p>
               {currentUser.companyName && (
-                <p className="text-xs text-sky-400 font-mono mt-1 flex items-center gap-1.5">
+                <p className="text-xs text-sky-400 mt-0.5 flex items-center gap-1">
                   <Building2 className="w-3.5 h-3.5" /> {currentUser.companyName}
                 </p>
               )}
             </div>
           </div>
 
-
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2.5 sm:gap-3 w-full sm:w-auto">
             <Link
               href="/orders"
-              className="px-5 py-2.5 rounded-full bg-sky-600 hover:bg-sky-500 text-white type-button shadow-md flex items-center gap-2"
+              className="flex-1 sm:flex-initial px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl sm:rounded-full bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs sm:text-sm shadow-md flex items-center justify-center gap-1.5"
             >
               <Package className="w-4 h-4" />
               <span>My Orders</span>
             </Link>
             <button
               onClick={handleSignOut}
-              className="px-5 py-2.5 rounded-full bg-slate-800 hover:bg-rose-600/20 text-slate-300 hover:text-rose-400 type-button border border-slate-700 transition-colors flex items-center gap-2 cursor-pointer"
+              className="flex-1 sm:flex-initial px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl sm:rounded-full bg-slate-800 hover:bg-rose-600/20 text-slate-300 hover:text-rose-400 font-semibold text-xs sm:text-sm border border-slate-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out</span>
@@ -355,27 +354,27 @@ export function ProfileClient({
           </div>
         </div>
 
-        {/* Workspace Selector Cards (4 Tabs) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Workspace Selector Cards (4 Tabs - 2x2 Grid on Mobile) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-5">
           {/* 1. My Orders */}
           <button
             onClick={() => setActiveTab("orders")}
-            className={`p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer ${
+            className={`p-3 sm:p-5 rounded-xl sm:rounded-3xl border text-left transition-all duration-300 cursor-pointer ${
               activeTab === "orders"
-                ? "bg-white border-sky-500 shadow-xl ring-2 ring-sky-500/20"
-                : "bg-white/80 border-slate-200 hover:border-sky-300 hover:shadow-md"
+                ? "bg-white border-sky-500 shadow-md sm:shadow-xl ring-2 ring-sky-500/20"
+                : "bg-white/80 border-slate-200 hover:border-sky-300 hover:shadow-sm"
             }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
-                <Package className="w-5 h-5" />
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
+                <Package className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <span className="bg-sky-100 text-sky-700 text-xs font-mono font-bold px-3 py-1 rounded-full">
+              <span className="bg-sky-100 text-sky-700 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
                 {orders.length} Orders
               </span>
             </div>
-            <h3 className="font-bold text-base text-slate-900 font-mono">My Orders</h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <h3 className="font-bold text-xs sm:text-base text-slate-900">My Orders</h3>
+            <p className="hidden sm:block text-xs text-slate-500 mt-1">
               View purchase history, COD status, and freight tracking.
             </p>
           </button>
@@ -383,45 +382,45 @@ export function ProfileClient({
           {/* 2. Saved Addresses */}
           <button
             onClick={() => setActiveTab("addresses")}
-            className={`p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer ${
+            className={`p-3 sm:p-5 rounded-xl sm:rounded-3xl border text-left transition-all duration-300 cursor-pointer ${
               activeTab === "addresses"
-                ? "bg-white border-amber-500 shadow-xl ring-2 ring-amber-500/20"
-                : "bg-white/80 border-slate-200 hover:border-amber-300 hover:shadow-md"
+                ? "bg-white border-amber-500 shadow-md sm:shadow-xl ring-2 ring-amber-500/20"
+                : "bg-white/80 border-slate-200 hover:border-amber-300 hover:shadow-sm"
             }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-                <MapPin className="w-5 h-5" />
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <span className="bg-amber-100 text-amber-700 text-xs font-mono font-bold px-3 py-1 rounded-full">
+              <span className="bg-amber-100 text-amber-700 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
                 {addresses.length} Addresses
               </span>
             </div>
-            <h3 className="font-bold text-base text-slate-900 font-mono">Delivery Addresses</h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Maintain Home, Office & Factory delivery details for 1-click checkout.
+            <h3 className="font-bold text-xs sm:text-base text-slate-900">Addresses</h3>
+            <p className="hidden sm:block text-xs text-slate-500 mt-1">
+              Maintain Home, Office & Factory delivery details.
             </p>
           </button>
 
           {/* 3. Liked Products */}
           <button
             onClick={() => setActiveTab("wishlist")}
-            className={`p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer ${
+            className={`p-3 sm:p-5 rounded-xl sm:rounded-3xl border text-left transition-all duration-300 cursor-pointer ${
               activeTab === "wishlist"
-                ? "bg-white border-rose-500 shadow-xl ring-2 ring-rose-500/20"
-                : "bg-white/80 border-slate-200 hover:border-rose-300 hover:shadow-md"
+                ? "bg-white border-rose-500 shadow-md sm:shadow-xl ring-2 ring-rose-500/20"
+                : "bg-white/80 border-slate-200 hover:border-rose-300 hover:shadow-sm"
             }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
-                <Heart className="w-5 h-5 fill-rose-500" />
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 fill-rose-500" />
               </div>
-              <span className="bg-rose-500 text-white text-xs font-mono font-bold px-3 py-1 rounded-full">
+              <span className="bg-rose-500 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
                 {wishlistItems.length} Liked
               </span>
             </div>
-            <h3 className="font-bold text-base text-slate-900 font-mono">Liked Products</h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <h3 className="font-bold text-xs sm:text-base text-slate-900">Wishlist</h3>
+            <p className="hidden sm:block text-xs text-slate-500 mt-1">
               Saved hardware components in your wishlist collection.
             </p>
           </button>
@@ -429,29 +428,29 @@ export function ProfileClient({
           {/* 4. Cart Products */}
           <button
             onClick={() => setActiveTab("cart")}
-            className={`p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer ${
+            className={`p-3 sm:p-5 rounded-xl sm:rounded-3xl border text-left transition-all duration-300 cursor-pointer ${
               activeTab === "cart"
-                ? "bg-white border-emerald-500 shadow-xl ring-2 ring-emerald-500/20"
-                : "bg-white/80 border-slate-200 hover:border-emerald-300 hover:shadow-md"
+                ? "bg-white border-emerald-500 shadow-md sm:shadow-xl ring-2 ring-emerald-500/20"
+                : "bg-white/80 border-slate-200 hover:border-emerald-300 hover:shadow-sm"
             }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                <ShoppingBag className="w-5 h-5 text-emerald-600" />
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
               </div>
-              <span className="bg-emerald-100 text-emerald-700 text-xs font-mono font-bold px-3 py-1 rounded-full">
+              <span className="bg-emerald-100 text-emerald-700 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
                 {cartItems.reduce((s, i) => s + i.quantity, 0)} Items
               </span>
             </div>
-            <h3 className="font-bold text-base text-slate-900 font-mono">Procurement Cart</h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Active bill of materials ready for quotation or purchase order.
+            <h3 className="font-bold text-xs sm:text-base text-slate-900">Cart</h3>
+            <p className="hidden sm:block text-xs text-slate-500 mt-1">
+              Active bill of materials ready for checkout.
             </p>
           </button>
         </div>
 
         {/* Tab Content Display Area */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200 shadow-md sm:shadow-xl">
           {/* TAB 1: MY ORDERS */}
           {activeTab === "orders" && (
             <div className="space-y-6">

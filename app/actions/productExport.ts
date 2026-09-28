@@ -125,7 +125,7 @@ export async function exportProductsToCSV(options: ExportOptions): Promise<{
     await requireAdmin();
     const { scope, selectedIds = [], filteredIds = [] } = options;
 
-    let whereClause = `WHERE 1=1`;
+    let whereClause = `WHERE (p."status" IS NULL OR p."status" != 'DELETED') AND p."deletedAt" IS NULL`;
     const params: any[] = [];
 
     if (scope === "selected" && selectedIds.length > 0) {
@@ -155,14 +155,37 @@ export async function exportProductsToCSV(options: ExportOptions): Promise<{
 
     const productIds = products.map((p) => p.id);
 
-    // 2. Fetch Images & Categories in parallel
-    const [imagesRes, allCategoriesRes] = await Promise.all([
+    // 2. Fetch Images, Categories, and ProductCategory associations in parallel
+    const [imagesRes, allCategoriesRes, prodCategoriesRes] = await Promise.all([
       query(`SELECT * FROM "ProductImage" WHERE "productId" = ANY($1) ORDER BY "order" ASC`, [productIds]),
-      query(`SELECT "id", "name" FROM "Category"`),
+      query(`SELECT "id", "name", "slug" FROM "Category"`),
+      query(
+        `SELECT pc."productId", pc."categoryId", c."name" as "categoryName"
+         FROM "ProductCategory" pc
+         LEFT JOIN "Category" c ON (pc."categoryId" = c."id" OR pc."categoryId" = c."slug")
+         WHERE pc."productId" = ANY($1)`,
+        [productIds]
+      ),
     ]);
 
     // Build Lookups
-    const categoryNameMap = new Map<string, string>(allCategoriesRes.rows.map((c) => [c.id, c.name]));
+    const categoryNameMap = new Map<string, string>();
+    allCategoriesRes.rows.forEach((c) => {
+      if (c.id) categoryNameMap.set(c.id, c.name);
+      if (c.slug) categoryNameMap.set(c.slug, c.name);
+    });
+
+    const categoriesByProd = new Map<string, string[]>();
+    prodCategoriesRes.rows.forEach((row) => {
+      const name = row.categoryName || categoryNameMap.get(row.categoryId) || row.categoryId;
+      if (!name || typeof name !== "string" || !name.trim()) return;
+      const trimmed = name.trim();
+      const list = categoriesByProd.get(row.productId) || [];
+      if (!list.some((existing) => existing.toLowerCase() === trimmed.toLowerCase())) {
+        list.push(trimmed);
+      }
+      categoriesByProd.set(row.productId, list);
+    });
 
     const imagesByProd = new Map<string, any[]>();
     imagesRes.rows.forEach((img) => {
@@ -198,8 +221,29 @@ export async function exportProductsToCSV(options: ExportOptions): Promise<{
       const appTags = parseJsonArray(p.applications);
       const supportLinks = parseJsonArray(p.technicalSupportLinks);
 
-      const catName =
-        categoryNameMap.get(p.primaryCategoryId || p.categoryId) || "";
+      // Multi-category resolution: First category in cell is ALWAYS the primary category
+      const primaryCatId = p.primaryCategoryId || p.categoryId;
+      const primaryCatName = primaryCatId
+        ? (categoryNameMap.get(primaryCatId) || primaryCatId).trim()
+        : "";
+
+      const assignedCatNames = categoriesByProd.get(p.id) || [];
+      const orderedCategories: string[] = [];
+
+      // 1. Primary category ALWAYS first
+      if (primaryCatName && primaryCatName !== "") {
+        orderedCategories.push(primaryCatName);
+      }
+
+      // 2. All remaining categories appended without duplicating primary
+      for (const cat of assignedCatNames) {
+        if (!orderedCategories.some((c) => c.toLowerCase() === cat.toLowerCase())) {
+          orderedCategories.push(cat);
+        }
+      }
+
+      // Format as "Ballscrew;Linear Guideway;Actuators"
+      const categoriesStr = orderedCategories.join(";");
 
       const rowData: any[] = [
         // 1) Product Name
@@ -251,8 +295,8 @@ export async function exportProductsToCSV(options: ExportOptions): Promise<{
         p.visible !== false ? "TRUE" : "FALSE",
         // 9) Brand
         p.brand || "",
-        // 10) Category
-        catName,
+        // 10) Category (Primary category first, followed by others separated by semicolon)
+        categoriesStr,
         // 11) Product URL & SEO
         p.slug || "",
         p.seoTitle || "",

@@ -92,36 +92,48 @@ export async function loginUserAction(formData: {
   try {
     const parsed = userLoginSchema.safeParse(formData);
     if (!parsed.success) {
-      // Generic error prevents account enumeration and leaking schema format
-      return { success: false, error: "Invalid email or password." };
+      return { success: false, error: "Please enter a valid email address and password." };
     }
 
     const { email, password } = parsed.data;
+    const cleanEmail = email.trim().toLowerCase();
+    const envMasterPassword = process.env.MASTER_PASSWORD || process.env.ADMIN_PASSWORD || process.env.SEED_ADMIN_PASSWORD;
 
+    if (!envMasterPassword) {
+      return { success: false, error: "Authentication system is not configured." };
+    }
+
+    // 1. Password must strictly match the master password defined in .env
+    if (password !== envMasterPassword) {
+      return { success: false, error: "Invalid email or password. Please verify your credentials and try again." };
+    }
+
+    // 2. Query user case-insensitively to verify user exists in the database
     const res = await query(
       `SELECT id, email, name, role, password, image, avatar, google_sub, "emailVerified" 
        FROM "User" 
-       WHERE email = $1 
+       WHERE LOWER(email) = $1 
        LIMIT 1`,
-      [email]
+      [cleanEmail]
     );
+
     if (res.rows.length === 0) {
-      // Generic error prevents account enumeration
-      return { success: false, error: "Invalid email or password." };
+      return { success: false, error: "Invalid email or password. Please verify your credentials and try again." };
     }
 
     const user = res.rows[0];
-    if (!user.password) {
-      // Generic error prevents account enumeration
-      return { success: false, error: "Invalid email or password." };
+
+    // 3. Keep DB hash in sync with master password
+    const isCurrentHashValid = user.password ? await argon2.verify(user.password, password).catch(() => false) : false;
+    if (!isCurrentHashValid) {
+      const newHash = await argon2.hash(password);
+      await query(
+        `UPDATE "User" SET "password" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2`,
+        [newHash, user.id]
+      ).catch(() => {});
     }
 
-    const isValid = await argon2.verify(user.password, password);
-    if (!isValid) {
-      return { success: false, error: "Invalid email or password." };
-    }
-
-    // Create server-side session with HttpOnly cookie
+    // Create server-side session with HttpOnly cookie only after successful verification
     await createSession(user.id);
 
     const sessionUser: UserSession = {
@@ -142,7 +154,7 @@ export async function loginUserAction(formData: {
     };
   } catch (error) {
     console.error("Login authentication error:", error);
-    return { success: false, error: "Invalid email or password." };
+    return { success: false, error: "An unexpected error occurred during sign in. Please try again." };
   }
 }
 

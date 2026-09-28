@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, ShoppingBag, Eye, Heart } from "lucide-react";
 import { Product } from "@/types";
-import { formatCurrency, calculateDiscount } from "@/lib/utils";
+import { formatCurrency, calculateDiscount, getOptimizedThumbnail } from "@/lib/utils";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useQuickViewStore } from "@/store/useQuickViewStore";
@@ -106,10 +106,11 @@ export function CategoryProductCarousel({ products }: CategoryProductCarouselPro
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {products.map((product) => {
-          const primaryImage =
+          const rawPrimaryImage =
             product.images?.find((img) => img.isPrimary)?.url ||
             product.images?.[0]?.url ||
             "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80";
+          const primaryImage = getOptimizedThumbnail(rawPrimaryImage, 240);
 
           const discountPercent = product.compareAtPrice
             ? calculateDiscount(product.basePrice, product.compareAtPrice)
@@ -120,7 +121,7 @@ export function CategoryProductCarousel({ products }: CategoryProductCarouselPro
           return (
             <div
               key={product.id}
-              className="shrink-0 w-[68vw] min-w-[210px] max-w-[240px] sm:w-[220px] md:w-[210px] lg:w-[220px] xl:w-[230px] group/card bg-white rounded-2xl border border-slate-200/80 hover:border-sky-500/50 hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden"
+              className="shrink-0 w-[44vw] min-w-[150px] max-w-[185px] sm:w-[220px] sm:min-w-[210px] sm:max-w-[240px] group/card bg-white rounded-xl sm:rounded-2xl border border-slate-200/80 hover:border-sky-500/50 hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden"
             >
               <div>
                 {/* Product Image Box */}
@@ -129,26 +130,26 @@ export function CategoryProductCarousel({ products }: CategoryProductCarouselPro
                     src={primaryImage}
                     alt={product.name}
                     fill
-                    sizes="(max-width: 640px) 70vw, 240px"
+                    sizes="(max-width: 640px) 45vw, 240px"
                     className="object-cover group-hover/card:scale-108 transition-transform duration-500"
                     unoptimized
                   />
 
                   {/* Badges */}
-                  <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                  <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 flex flex-col gap-1 z-10">
                     {discountPercent > 0 ? (
-                      <span className="bg-rose-600 text-white font-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow">
+                      <span className="bg-rose-600 text-white text-[9px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full uppercase tracking-wider shadow">
                         -{discountPercent}%
                       </span>
                     ) : product.stockStatus === "in-stock" ? (
-                      <span className="bg-slate-900/80 text-emerald-400 backdrop-blur-sm font-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                        LIMITED STOCK
+                      <span className="bg-slate-900/80 text-emerald-400 backdrop-blur-sm text-[8px] sm:text-[9px] font-bold px-1.5 sm:px-2 py-0.5 rounded uppercase tracking-wider">
+                        STOCK
                       </span>
                     ) : null}
                   </div>
 
                   {/* Actions overlay */}
-                  <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-100 sm:opacity-0 sm:group-hover/card:opacity-100 transition-all duration-200 z-10">
+                  <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 flex flex-col gap-1 opacity-100 sm:opacity-0 sm:group-hover/card:opacity-100 transition-all duration-200 z-10">
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -160,7 +161,7 @@ export function CategoryProductCarousel({ products }: CategoryProductCarouselPro
                           product.name
                         );
                       }}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center backdrop-blur-md transition-colors ${
+                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center backdrop-blur-md transition-colors ${
                         isWishlisted
                           ? "bg-rose-500 text-white"
                           : "bg-slate-900/80 hover:bg-slate-900 text-white"
@@ -168,7 +169,7 @@ export function CategoryProductCarousel({ products }: CategoryProductCarouselPro
                       aria-label="Wishlist"
                     >
                       <Heart
-                        className={`w-3.5 h-3.5 ${
+                        className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${
                           isWishlisted ? "fill-white" : ""
                         }`}
                       />
@@ -180,22 +181,22 @@ export function CategoryProductCarousel({ products }: CategoryProductCarouselPro
                         e.stopPropagation();
                         openQuickView(product);
                       }}
-                      className="w-7 h-7 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white flex items-center justify-center backdrop-blur-md transition-colors"
+                      className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white flex items-center justify-center backdrop-blur-md transition-colors"
                       aria-label="Quick View"
                     >
-                      <Eye className="w-3.5 h-3.5" />
+                      <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     </button>
                   </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-3 space-y-1">
-                  <div className="text-[10px] font-mono font-bold text-sky-600 uppercase tracking-wider line-clamp-1">
+                <div className="p-2 sm:p-3 space-y-0.5 sm:space-y-1">
+                  <div className="text-[9px] sm:text-[10px] font-bold text-sky-600 uppercase tracking-wider line-clamp-1">
                     {product.brand}
                   </div>
 
                   <Link href={`/product/${product.slug}`}>
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover/card:text-sky-600 transition-colors line-clamp-2 leading-snug min-h-[2.4rem]">
+                    <h4 className="text-xs sm:text-sm font-semibold text-slate-900 group-hover/card:text-sky-600 transition-colors line-clamp-2 leading-snug min-h-[2rem] sm:min-h-[2.4rem]">
                       {product.name}
                     </h4>
                   </Link>
@@ -203,14 +204,14 @@ export function CategoryProductCarousel({ products }: CategoryProductCarouselPro
               </div>
 
               {/* Footer / Price & Add */}
-              <div className="p-3 pt-0 flex items-center justify-between gap-2 border-t border-slate-100/60 mt-2">
-                <div>
-                  <div className="font-mono text-xs sm:text-sm font-bold text-slate-900">
+              <div className="p-2 sm:p-3 pt-0 flex items-center justify-between gap-1.5 border-t border-slate-100/60 mt-1 sm:mt-2">
+                <div className="min-w-0">
+                  <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">
                     {formatCurrency(product.basePrice)}
                   </div>
                   {product.compareAtPrice &&
                     product.compareAtPrice > product.basePrice && (
-                      <div className="font-mono text-[10px] text-slate-400 line-through">
+                      <div className="text-[9px] sm:text-[10px] text-slate-400 line-through truncate">
                         {formatCurrency(product.compareAtPrice)}
                       </div>
                     )}
@@ -223,7 +224,7 @@ export function CategoryProductCarousel({ products }: CategoryProductCarouselPro
                     addItem(product, 1);
                     addToast("success", "Added to Cart", product.name);
                   }}
-                  className="p-2 rounded-full bg-slate-900 hover:bg-sky-600 text-white transition-colors flex items-center justify-center shadow"
+                  className="p-1.5 sm:p-2 rounded-lg sm:rounded-full bg-slate-900 hover:bg-sky-600 text-white transition-colors flex items-center justify-center shadow-sm shrink-0 active:scale-95"
                   aria-label="Add to cart"
                 >
                   <ShoppingBag className="w-3.5 h-3.5" />

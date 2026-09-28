@@ -337,6 +337,25 @@ function OrbitStageVisualSection({
               </div>
             ))}
           </div>
+
+          {/* Active Product Image Quick Switcher / Cloudinary Uploader */}
+          <div className="flex items-center justify-center gap-2 pt-1.5">
+            <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Showcase Image:</span>
+            <div className="relative w-12 h-12 rounded-lg border border-amber-500/30 bg-slate-900/90 overflow-hidden flex items-center justify-center cursor-pointer group hover:border-amber-400 transition-colors">
+              <EditableImage
+                src={activeOrbitProd.image}
+                alt={activeOrbitProd.name}
+                fill
+                imgClassName="object-contain p-1"
+                label={`Change image for ${activeOrbitProd.name}`}
+                onChange={(newSrc) => {
+                  const prods = [...(orbitData.products || DEFAULT_ORBIT_STAGE.products || [])];
+                  prods[activeOrbitIdx] = { ...prods[activeOrbitIdx], image: newSrc };
+                  updateSectionContent(secId, { ...orbitData, products: prods }, "Change Orbit Product Image");
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Controls */}

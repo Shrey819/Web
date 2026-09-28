@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Space_Grotesk, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { CartDrawer } from "@/components/layout/CartDrawer";
@@ -91,7 +92,9 @@ export default function RootLayout({
             __html: safeJsonLdStringify(websiteJsonLd),
           }}
         />
-        <script
+        <Script
+          id="remove-fdprocessedid"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

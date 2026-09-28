@@ -346,18 +346,22 @@ export async function getCategoryProducts(categoryIdOrSlug: string): Promise<{ s
             ORDER BY img."isPrimary" DESC, img."order" ASC 
             LIMIT 1
           ),
-          'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80'
+          'https://res.cloudinary.com/hecyltpu/image/upload/v1788819936/products/v86fzl3rk6h4o0psjucv.jpg'
         ) as "primaryImage"
       FROM "Product" p
       LEFT JOIN "ProductCategory" pc ON p.id = pc."productId"
       LEFT JOIN "Brand" b ON p."brandId" = b."id"
       LEFT JOIN "Inventory" i ON p."id" = i."productId"
-      WHERE p."categoryId" = $1 
-         OR p."primaryCategoryId" = $1 
-         OR pc."categoryId" = $1 
-         OR p."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1 OR id = $1) 
-         OR p."primaryCategoryId" IN (SELECT id FROM "Category" WHERE slug = $1 OR id = $1) 
-         OR pc."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1 OR id = $1)
+      WHERE (p."status" IS NULL OR p."status" != 'DELETED')
+        AND p."deletedAt" IS NULL
+        AND (
+          p."categoryId" = $1 
+          OR p."primaryCategoryId" = $1 
+          OR pc."categoryId" = $1 
+          OR p."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1 OR id = $1) 
+          OR p."primaryCategoryId" IN (SELECT id FROM "Category" WHERE slug = $1 OR id = $1) 
+          OR pc."categoryId" IN (SELECT id FROM "Category" WHERE slug = $1 OR id = $1)
+        )
       ORDER BY p."createdAt" DESC
     `;
 
@@ -407,9 +411,208 @@ export async function getCategoryProducts(categoryIdOrSlug: string): Promise<{ s
       stockStatus: p.stockStatus === "out-of-stock" ? "OUT_OF_STOCK" : "IN_STOCK",
       createdAt: p.createdAt || new Date().toISOString(),
       brand: p.brand,
-      primaryImage: p.images[0]?.url || "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80",
+      primaryImage: p.images[0]?.url || "https://res.cloudinary.com/hecyltpu/image/upload/v1788819936/products/v86fzl3rk6h4o0psjucv.jpg",
     })),
   };
 }
+
+/**
+ * REMOVE A PRODUCT DIRECTLY FROM A CATEGORY
+ */
+export async function removeProductFromCategory(
+  categoryId: string,
+  productId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    if (!categoryId || !productId) {
+      return { success: false, error: "Category ID and Product ID are required." };
+    }
+
+    await transaction(async (client) => {
+      // 1. Resolve real Category ID and slug
+      const catRes = await client.query(`SELECT id, slug FROM "Category" WHERE id = $1 OR slug = $1 LIMIT 1`, [categoryId]);
+      const catRow = catRes.rows[0];
+      const targetIds = catRow ? [catRow.id, catRow.slug] : [categoryId];
+
+      // 2. Remove association from ProductCategory join table
+      await client.query(`
+        DELETE FROM "ProductCategory"
+        WHERE "categoryId" = ANY($1::text[])
+          AND "productId" = $2
+      `, [targetIds, productId]);
+
+      // 3. If Product.categoryId was this category, reassign to next available category or null
+      await client.query(`
+        UPDATE "Product"
+        SET "categoryId" = (
+              SELECT "categoryId" 
+              FROM "ProductCategory" 
+              WHERE "productId" = $1 
+              LIMIT 1
+            ),
+            "primaryCategoryId" = (
+              SELECT "categoryId" 
+              FROM "ProductCategory" 
+              WHERE "productId" = $1 
+              LIMIT 1
+            ),
+            "updatedAt" = CURRENT_TIMESTAMP
+        WHERE "id" = $1 AND (
+          "categoryId" = ANY($2::text[])
+          OR "primaryCategoryId" = ANY($2::text[])
+        )
+      `, [productId, targetIds]);
+    });
+
+    revalidatePath("/admin/categories");
+    revalidatePath("/admin/products");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to remove product from category:", error);
+    return { success: false, error: "Failed to remove product from category." };
+  }
+}
+
+/**
+ * ADD A PRODUCT TO A CATEGORY
+ */
+export async function addProductToCategory(
+  categoryId: string,
+  productId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    if (!categoryId || !productId) {
+      return { success: false, error: "Category ID and Product ID are required." };
+    }
+
+    await transaction(async (client) => {
+      // 1. Resolve real category ID
+      const catRes = await client.query(`SELECT id, slug FROM "Category" WHERE id = $1 OR slug = $1 LIMIT 1`, [categoryId]);
+      if (catRes.rows.length === 0) {
+        throw new Error("Category not found");
+      }
+      const realCatId = catRes.rows[0].id;
+
+      // 2. Insert into ProductCategory join table
+      await client.query(`
+        INSERT INTO "ProductCategory" ("productId", "categoryId")
+        VALUES ($1, $2)
+        ON CONFLICT ("productId", "categoryId") DO NOTHING
+      `, [productId, realCatId]);
+
+      // 3. If product has no primary category, set it
+      await client.query(`
+        UPDATE "Product"
+        SET "categoryId" = COALESCE(NULLIF("categoryId", ''), $2),
+            "primaryCategoryId" = COALESCE(NULLIF("primaryCategoryId", ''), $2),
+            "updatedAt" = CURRENT_TIMESTAMP
+        WHERE "id" = $1 AND ("categoryId" IS NULL OR "categoryId" = '')
+      `, [productId, realCatId]);
+    });
+
+    revalidatePath("/admin/categories");
+    revalidatePath("/admin/products");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to add product to category:", error);
+    return { success: false, error: "Failed to add product to category." };
+  }
+}
+
+export interface AvailableProductItem {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string;
+  basePrice: number;
+  brand: string;
+  primaryImage: string;
+}
+
+/**
+ * GET CANDIDATE PRODUCTS THAT ARE NOT CURRENTLY ASSIGNED TO THIS CATEGORY
+ */
+export async function getAvailableProductsForCategory(
+  categoryId: string,
+  searchQuery = ""
+): Promise<{ success: boolean; products: AvailableProductItem[] }> {
+  try {
+    await requireAdmin();
+
+    // Resolve real category ID and slug so both UUID and slug match accurately
+    const catRes = await query(`SELECT id, slug FROM "Category" WHERE id = $1 OR slug = $1 LIMIT 1`, [categoryId]);
+    const catRow = catRes.rows[0];
+    const targetCatIds = catRow ? [catRow.id, catRow.slug] : [categoryId];
+
+    const params: any[] = [targetCatIds];
+    let searchClause = "";
+    if (searchQuery && searchQuery.trim()) {
+      params.push(`%${searchQuery.trim()}%`);
+      searchClause = `AND (p."name" ILIKE $${params.length} OR p."sku" ILIKE $${params.length} OR COALESCE(b."name", '') ILIKE $${params.length})`;
+    }
+
+    const sql = `
+      SELECT DISTINCT
+        p."id",
+        p."name",
+        p."slug",
+        p."sku",
+        p."basePrice",
+        p."createdAt",
+        COALESCE(b."name", 'Industrial Brand') as "brand",
+        COALESCE(
+          (
+            SELECT img."url" 
+            FROM "ProductImage" img 
+            WHERE img."productId" = p."id" 
+            ORDER BY img."isPrimary" DESC, img."order" ASC 
+            LIMIT 1
+          ),
+          'https://res.cloudinary.com/hecyltpu/image/upload/v1788819936/products/v86fzl3rk6h4o0psjucv.jpg'
+        ) as "primaryImage"
+      FROM "Product" p
+      LEFT JOIN "Brand" b ON p."brandId" = b."id"
+      WHERE (p."status" IS NULL OR p."status" != 'DELETED')
+      AND p."deletedAt" IS NULL
+      AND p."id" NOT IN (
+        SELECT pc."productId" 
+        FROM "ProductCategory" pc 
+        WHERE pc."categoryId" = ANY($1::text[])
+      )
+      AND (
+        p."categoryId" IS NULL 
+        OR NOT (p."categoryId" = ANY($1::text[]))
+      )
+      AND (
+        p."primaryCategoryId" IS NULL 
+        OR NOT (p."primaryCategoryId" = ANY($1::text[]))
+      )
+      ${searchClause}
+      ORDER BY p."createdAt" DESC
+      LIMIT 50
+    `;
+
+    const res = await query(sql, params);
+
+    return {
+      success: true,
+      products: res.rows.map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        slug: r.slug,
+        sku: r.sku,
+        basePrice: Number(r.basePrice || 0),
+        brand: r.brand,
+        primaryImage: r.primaryImage,
+      })),
+    };
+  } catch (error) {
+    console.error("Failed to fetch available products for category:", error);
+    return { success: false, products: [] };
+  }
+}
+
 
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { notFound, useRouter } from "next/navigation";
 import {
@@ -19,7 +19,10 @@ import {
   Download,
   ExternalLink,
   ShieldCheck,
-  Share2
+  Share2,
+  SlidersHorizontal,
+  Info,
+  Zap
 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useToastStore } from "@/store/useToastStore";
@@ -187,12 +190,49 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
     setSelectedImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
-  // Keyboard navigation for Lightbox
+  // Touch swipe handlers (Finger left and right swap)
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+
+    const deltaX = touchStartX.current - touchEndX;
+    const deltaY = touchStartY.current - touchEndY;
+
+    // Minimum swipe threshold (30px) and must be predominantly horizontal
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
+      if (deltaX > 0) {
+        // Swiped Left -> go to Next image
+        setSelectedImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+      } else {
+        // Swiped Right -> go to Previous image
+        setSelectedImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+      }
+    }
+
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
+  // Keyboard navigation & vertical scroll prevention for Lightbox
   useEffect(() => {
     if (!isLightboxOpen) return;
 
-    const originalOverflow = document.body.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -204,10 +244,21 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
       }
     };
 
+    const preventTouchMove = (e: TouchEvent) => {
+      if (!(e.target as HTMLElement)?.closest?.(".lightbox-scrollable")) {
+        e.preventDefault();
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("touchmove", preventTouchMove, { passive: false });
+
     return () => {
-      document.body.style.overflow = originalOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.touchAction = originalTouchAction;
       window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("touchmove", preventTouchMove);
     };
   }, [isLightboxOpen, images.length]);
 
@@ -245,18 +296,18 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
     router.push("/checkout");
   };
 
-  const renderSupportIcon = (type?: string) => {
+  const renderSupportIcon = (type?: string, className = "w-3.5 h-3.5 sm:w-4 sm:h-4") => {
     switch (type) {
       case "specs":
-        return <FileDown className="w-4 h-4 text-[#00a651]" />;
+        return <FileDown className={className} />;
       case "selection":
-        return <Wrench className="w-4 h-4 text-[#00a651]" />;
+        return <Wrench className={className} />;
       case "calculation":
-        return <Calculator className="w-4 h-4 text-[#00a651]" />;
+        return <Calculator className={className} />;
       case "cad":
-        return <Download className="w-4 h-4 text-[#00a651]" />;
+        return <Download className={className} />;
       default:
-        return <ExternalLink className="w-4 h-4 text-[#00a651]" />;
+        return <ExternalLink className={className} />;
     }
   };
 
@@ -290,7 +341,7 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
           
           {/* Left: Product Image & Gallery */}
-          <div className="lg:col-span-6 flex flex-col-reverse sm:flex-row gap-4 items-start sticky top-24">
+          <div className="lg:col-span-6 flex flex-col-reverse sm:flex-row gap-4 items-start relative lg:sticky lg:top-24">
             {/* Vertical Thumbnail Strip */}
             {images.length > 1 && (
               <div className="flex sm:flex-col gap-2.5 overflow-x-auto sm:overflow-y-auto max-h-[500px] pb-2 sm:pb-0 scrollbar-thin">
@@ -311,21 +362,46 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
               </div>
             )}
 
-            {/* Main Image Viewport with Click-to-Zoom */}
+            {/* Main Image Viewport with Click-to-Zoom & Touch Swipe */}
             <div
               onClick={() => setIsLightboxOpen(true)}
-              className="group/hero flex-1 aspect-square w-full bg-white border border-slate-200 rounded-lg overflow-hidden flex items-center justify-center p-8 relative cursor-zoom-in hover:shadow-md transition-shadow"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              className="group/hero flex-1 aspect-square w-full bg-white border border-slate-200 rounded-lg overflow-hidden flex items-center justify-center p-8 relative cursor-zoom-in hover:shadow-md transition-shadow select-none"
             >
               <img
                 src={images[selectedImageIndex]?.url || images[0]?.url}
                 alt={product.name}
-                className="max-w-full max-h-[420px] object-contain group-hover/hero:scale-105 transition-all duration-300"
+                className="max-w-full max-h-[420px] object-contain group-hover/hero:scale-105 transition-all duration-300 pointer-events-none select-none"
               />
               {product.primaryRibbon && (
                 <span className="absolute top-4 left-4 px-3 py-1 bg-[#00a651] text-white text-xs font-bold uppercase tracking-wider rounded shadow-xs">
                   {product.primaryRibbon}
                 </span>
               )}
+
+              {/* Prev / Next navigation arrows on main image */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handlePrevImage}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 border border-slate-200 text-slate-700 hover:text-black hover:bg-white shadow-md flex items-center justify-center transition-all opacity-90 sm:opacity-0 sm:group-hover/hero:opacity-100 cursor-pointer active:scale-90"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextImage}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 border border-slate-200 text-slate-700 hover:text-black hover:bg-white shadow-md flex items-center justify-center transition-all opacity-90 sm:opacity-0 sm:group-hover/hero:opacity-100 cursor-pointer active:scale-90"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+                  </button>
+                </>
+              )}
+
               <div className="absolute bottom-4 right-4 p-2.5 rounded-full bg-white/90 border border-slate-200 text-slate-700 opacity-80 group-hover/hero:opacity-100 group-hover/hero:scale-110 transition-all shadow-sm">
                 <ZoomIn className="w-4 h-4 text-[#00a651]" />
               </div>
@@ -414,96 +490,128 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
             </div>
 
             {/* 5. Brand Technical Support (4 redirecting tool boxes) */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-[#1a1a1a]">{brandName} Technical Support</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {supportLinks
-                  .filter((link) => isSafeUrl(link.url))
-                  .map((link, idx) => (
-                    <a
-                      key={idx}
-                      href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 py-2.5 px-4 border-2 border-[#00a651] bg-white text-[#00a651] hover:bg-[#00a651] hover:text-white rounded-md text-xs sm:text-sm font-semibold transition-all shadow-2xs group cursor-pointer"
-                  >
-                    <span className="group-hover:text-white transition-colors">
-                      {renderSupportIcon(link.icon)}
-                    </span>
-                    <span className="truncate">{link.title}</span>
-                  </a>
-                ))}
+            {supportLinks.filter((link) => isSafeUrl(link.url)).length > 0 && (
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm sm:text-base font-bold text-[#1a1a1a]">
+                    {brandName} Technical Support
+                  </h2>
+                  <span className="text-[11px] text-slate-400 font-medium">Engineering Tools</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                  {supportLinks
+                    .filter((link) => isSafeUrl(link.url))
+                    .map((link, idx) => (
+                      <a
+                        key={idx}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 py-2 px-2.5 sm:py-2.5 sm:px-3 border border-emerald-300/80 bg-emerald-50/50 hover:bg-[#00a651] text-emerald-900 hover:text-white rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-2xs group cursor-pointer active:scale-[0.98]"
+                      >
+                        <span className="w-6 h-6 rounded-md bg-white group-hover:bg-white/20 border border-emerald-200/60 group-hover:border-transparent flex items-center justify-center shrink-0 transition-colors shadow-2xs text-[#00a651] group-hover:text-white">
+                          {renderSupportIcon(link.icon)}
+                        </span>
+                        <span className="truncate">{link.title}</span>
+                      </a>
+                    ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* 6. Custom Field for Buyer (Model Preference / Special Note) - Controlled by enableBuyerNote */}
             {product.enableBuyerNote !== false && (
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="buyer-order-note" className="block text-sm font-bold text-slate-900">
-                    Model Preference / Custom Requirements <span className="text-xs font-normal text-slate-500">(Optional)</span>
-                  </label>
-                  <span className="text-[11px] text-slate-400 font-mono">Custom Note</span>
+              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 sm:p-3.5 transition-all focus-within:border-[#00a651] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#00a651]/15">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    <label htmlFor="buyer-order-note" className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                      Model Preference / Custom Requirements
+                    </label>
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full bg-slate-200/80 text-slate-600 shrink-0">
+                    Optional
+                  </span>
                 </div>
+
                 <textarea
                   id="buyer-order-note"
                   value={buyerNote}
                   onChange={(e) => setBuyerNote(e.target.value)}
-                  placeholder="Enter required model number (e.g. E2-15-C), custom length, preload, or any specific instructions for this order..."
+                  placeholder="e.g. Model E2-15-C, custom stroke length, carriage preload, or specific instructions..."
                   rows={2}
-                  className="w-full px-3.5 py-2.5 rounded-md border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#00a651] focus:ring-2 focus:ring-[#00a651]/20 transition-all resize-y"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#00a651] focus:ring-0 transition-all resize-none shadow-2xs"
                 />
-                <p className="text-[11px] text-slate-500">
-                  Buyers can specify exact stroke length, carriage type, or special instructions that attach to this order.
+
+                <p className="flex items-start sm:items-center gap-1.5 mt-1.5 text-[11px] text-slate-500 leading-normal">
+                  <Info className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5 sm:mt-0" />
+                  <span>Custom specs, stroke lengths, or instructions attach directly to your order.</span>
                 </p>
               </div>
             )}
 
             {/* 7 & 8. Quantity, Add to Cart & Buy Now Buttons */}
-            <div className="space-y-3 pt-2">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                {/* Quantity Stepper */}
-                <div className="flex items-center border border-slate-300 rounded-md bg-white w-full sm:w-36 h-12 shrink-0">
+            <div className="space-y-2.5 pt-1">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                {/* Mobile Row 1 (Stepper + Add to Cart) / Desktop Left items */}
+                <div className="flex items-center gap-2.5 flex-1">
+                  {/* Quantity Stepper */}
+                  <div className="flex items-center justify-between border border-slate-200 rounded-xl bg-slate-50 p-1 w-32 sm:w-36 h-12 shrink-0 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      className="w-9 h-9 rounded-lg bg-white border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-all active:scale-95 shadow-2xs cursor-pointer disabled:opacity-40"
+                      aria-label="Decrease quantity"
+                      disabled={quantity <= 1}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="flex-1 text-center font-bold text-base text-slate-900 font-mono select-none">
+                      {quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity((q) => q + 1)}
+                      className="w-9 h-9 rounded-lg bg-white border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      aria-label="Increase quantity"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Add to Cart Button */}
                   <button
                     type="button"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="w-10 h-full flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors rounded-l-md cursor-pointer"
-                    aria-label="Decrease quantity"
+                    onClick={handleAddToCart}
+                    className="flex-1 h-12 px-4 rounded-xl bg-[#00a651] hover:bg-[#008f45] active:scale-[0.98] text-white font-bold text-sm sm:text-base shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="flex-1 text-center font-bold text-sm text-slate-900 font-mono">
-                    {quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((q) => q + 1)}
-                    className="w-10 h-full flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors rounded-r-md cursor-pointer"
-                    aria-label="Increase quantity"
-                  >
-                    <Plus className="w-4 h-4" />
+                    <ShoppingBag className="w-4 h-4 shrink-0" />
+                    <span className="truncate">Add to Cart</span>
                   </button>
                 </div>
 
-                {/* 7. Add to Cart Button */}
-                <button
-                  type="button"
-                  onClick={handleAddToCart}
-                  className="flex-1 h-12 px-6 rounded-md bg-[#00a651] hover:bg-[#008a41] text-white font-bold text-sm sm:text-base shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Add to Cart</span>
-                </button>
-
-                {/* 8. Buy Now Button */}
+                {/* Buy Now Button */}
                 <button
                   type="button"
                   onClick={handleBuyNow}
-                  className="flex-1 h-12 px-6 rounded-md bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-sm sm:text-base shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                  className="w-full sm:flex-1 h-12 px-5 rounded-xl bg-[#0f172a] hover:bg-[#1e293b] active:scale-[0.98] text-white font-bold text-sm sm:text-base shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <ArrowRight className="w-4 h-4" />
+                  <Zap className="w-4 h-4 text-emerald-400 fill-emerald-400 shrink-0" />
                   <span>Buy Now</span>
                 </button>
+              </div>
+
+              {/* Trust Badges */}
+              <div className="flex items-center justify-between sm:justify-start gap-4 pt-1 px-1 text-[11px] text-slate-500">
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#00a651]" />
+                  <span>Genuine Brand Guarantee</span>
+                </span>
+                <span className="text-slate-300">•</span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-[#00a651]" />
+                  <span>Ready for Dispatch</span>
+                </span>
               </div>
             </div>
 
@@ -568,8 +676,10 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
       {/* 4. Lightbox Zoom Modal */}
       {isLightboxOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 select-none animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100000] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-2 sm:p-4 select-none touch-none overscroll-none overflow-hidden animate-in fade-in duration-200"
           onClick={() => setIsLightboxOpen(false)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
           {/* Close button in top right corner */}
           <button
@@ -578,10 +688,10 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
               e.stopPropagation();
               setIsLightboxOpen(false);
             }}
-            className="absolute top-5 right-5 z-50 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 z-[100010] p-2.5 sm:p-3 rounded-full bg-slate-900/85 hover:bg-slate-950 text-white border border-white/20 transition-all cursor-pointer backdrop-blur-md shadow-xl active:scale-95"
             aria-label="Close image popup"
           >
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.5]" />
           </button>
 
           {/* Left Navigation Arrow */}
@@ -589,32 +699,32 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
             <button
               type="button"
               onClick={handlePrevImage}
-              className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all hover:scale-110 cursor-pointer shadow-lg"
+              className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-[100010] p-2.5 sm:p-3.5 rounded-full bg-slate-900/85 hover:bg-slate-950 text-white border-2 border-white/40 shadow-2xl transition-all hover:scale-110 active:scale-90 cursor-pointer backdrop-blur-md"
               aria-label="Previous image"
             >
-              <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
+              <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8 stroke-[2.5]" />
             </button>
           )}
 
           {/* Center Image Container */}
           <div
-            className="relative max-w-4xl max-h-[85vh] flex flex-col items-center justify-center"
+            className="relative max-w-4xl max-h-[85vh] w-full flex flex-col items-center justify-center px-6 sm:px-12"
             onClick={(e) => e.stopPropagation()}
           >
             <img
               src={images[selectedImageIndex]?.url || images[0]?.url}
               alt={product.name}
-              className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl transition-all duration-200"
+              className="max-w-full max-h-[70vh] sm:max-h-[75vh] object-contain rounded-xl shadow-2xl transition-all duration-200 pointer-events-none select-none"
             />
 
             {/* Bottom Indicator & Thumbnails */}
-            <div className="mt-4 flex flex-col items-center gap-2">
-              <span className="text-xs font-semibold text-white/80 tracking-wider">
+            <div className="mt-4 flex flex-col items-center gap-2 lightbox-scrollable">
+              <span className="text-xs sm:text-sm font-semibold text-white/90 tracking-wider bg-white/10 px-3 py-1 rounded-full backdrop-blur-xs">
                 {selectedImageIndex + 1} / {images.length}
               </span>
 
               {images.length > 1 && (
-                <div className="flex items-center gap-2 overflow-x-auto max-w-md py-1 px-2">
+                <div className="flex items-center gap-2 overflow-x-auto max-w-md py-1.5 px-3 scrollbar-none">
                   {images.map((img, idx) => (
                     <button
                       key={idx}
@@ -623,13 +733,13 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
                         e.stopPropagation();
                         setSelectedImageIndex(idx);
                       }}
-                      className={`w-10 h-10 rounded-md overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                      className={`w-11 h-11 rounded-lg overflow-hidden border-2 transition-all shrink-0 cursor-pointer p-0.5 bg-white ${
                         selectedImageIndex === idx
-                          ? "border-white scale-105 shadow-md"
-                          : "border-transparent opacity-50 hover:opacity-100"
+                          ? "border-[#00a651] scale-105 shadow-lg ring-2 ring-[#00a651]/50"
+                          : "border-transparent opacity-60 hover:opacity-100"
                       }`}
                     >
-                      <img src={img.url} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                      <img src={img.url} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-contain pointer-events-none" />
                     </button>
                   ))}
                 </div>
@@ -642,10 +752,10 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
             <button
               type="button"
               onClick={handleNextImage}
-              className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all hover:scale-110 cursor-pointer shadow-lg"
+              className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-[100010] p-2.5 sm:p-3.5 rounded-full bg-slate-900/85 hover:bg-slate-950 text-white border-2 border-white/40 shadow-2xl transition-all hover:scale-110 active:scale-90 cursor-pointer backdrop-blur-md"
               aria-label="Next image"
             >
-              <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
+              <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8 stroke-[2.5]" />
             </button>
           )}
         </div>

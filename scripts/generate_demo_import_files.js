@@ -1,0 +1,293 @@
+const fs = require('fs');
+const path = require('path');
+const XLSX = require('xlsx');
+
+const headers = [
+  // 1) Product Name
+  "Product Name",
+  // 2) Feature Description & Pricing
+  "Feature Description",
+  "Selling Price (₹)",
+  "Original Price (₹)",
+  // 3) Images and Videos
+  "Images URL",
+  "Product Video URL",
+  // 4) Custom Feature Cards (up to 6)
+  "Feature 1 Label",
+  "Feature 1 Value",
+  "Feature 2 Label",
+  "Feature 2 Value",
+  "Feature 3 Label",
+  "Feature 3 Value",
+  "Feature 4 Label",
+  "Feature 4 Value",
+  "Feature 5 Label",
+  "Feature 5 Value",
+  "Feature 6 Label",
+  "Feature 6 Value",
+  // 5) Applications (Tags)
+  "Applications",
+  // 6) Brand Technical Support Links (up to 6)
+  "Support Link 1 Title",
+  "Support Link 1 URL",
+  "Support Link 1 Icon",
+  "Support Link 2 Title",
+  "Support Link 2 URL",
+  "Support Link 2 Icon",
+  "Support Link 3 Title",
+  "Support Link 3 URL",
+  "Support Link 3 Icon",
+  "Support Link 4 Title",
+  "Support Link 4 URL",
+  "Support Link 4 Icon",
+  "Support Link 5 Title",
+  "Support Link 5 URL",
+  "Support Link 5 Icon",
+  "Support Link 6 Title",
+  "Support Link 6 URL",
+  "Support Link 6 Icon",
+  // 7) Custom Field for Buyer Note
+  "Enable Buyer Note",
+  // 8) Visibility
+  "Visibility",
+  // 9) Brand
+  "Brand",
+  // 10) Category
+  "Category",
+  // 11) Product URL & SEO
+  "Product URL Slug",
+  "SEO Meta Title",
+  "SEO Meta Description",
+  // Identifiers
+  "SKU",
+  "Product ID",
+];
+
+const sampleRows = [
+  headers,
+  // Sample 1: HIWIN Precision Ground Ballscrew (Primary: Ballscrew, cross-listed: Linear Guideway, Actuators)
+  [
+    "HIWIN Precision Ground Ballscrew R40-10B2-FSW",
+    "<p>High-precision ground ballscrew with integrated recirculation and zero axial backlash. Engineered for precision CNC machinery, semiconductor positioning stages, and heavy-duty industrial automation.</p>",
+    "18500.00",
+    "22000.00",
+    "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800;https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800",
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "ACCURACY GRADE",
+    "JIS C5 Precision Ground",
+    "SHAFT DIAMETER",
+    "40mm Diameter / 10mm Lead",
+    "FLANGE TYPE",
+    "FSW Double Nut Preload",
+    "SURFACE TREATMENT",
+    "Raydent Anti-Rust Plating",
+    "AXIAL PLAY",
+    "Zero Backlash Preloaded",
+    "MAX RUNOUT",
+    "0.008 mm",
+    "CNC Milling Centers; Precision Lathes; Aerospace Actuation Systems; Semiconductor Positioning Stages; Industrial Automation",
+    "Ballscrew CAD 3D (.STEP)",
+    "https://www.hiwinsupport.com/cad/r40-10b2.stp",
+    "cad",
+    "Engineering Sizing Calculation",
+    "https://www.hiwinsupport.com/calculate/ballscrew",
+    "calculation",
+    "Technical Catalog PDF",
+    "https://www.hiwinsupport.com/catalog/ballscrews.pdf",
+    "specs",
+    "Preload Selection Guide",
+    "https://www.hiwinsupport.com/guide/preload",
+    "selection",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "TRUE",
+    "TRUE",
+    "HIWIN",
+    "Ballscrew;Linear Guideway;Actuators",
+    "hiwin-precision-ground-ballscrew-r40-10",
+    "HIWIN Precision Ground Ballscrew R40-10B2-FSW | HIWIN",
+    "Genuine HIWIN JIS C5 precision ground ballscrew with zero backlash preloaded double nut for industrial motion control.",
+    "PRD-HW-BS4010",
+    "prd_sample01",
+  ],
+  // Sample 2: THK HSR25A Heavy Load Linear Guideway (Primary: Linear Guideway, cross-listed: Ballscrew)
+  [
+    "THK HSR25A Heavy Load Linear Motion Guide Block",
+    "<p>World standard 4-way equal load linear motion guide block offering high rigidity, ultra-smooth movement, and prolonged service life under extreme industrial shop conditions.</p>",
+    "4800.00",
+    "5500.00",
+    "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800;https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=800",
+    "",
+    "LOAD RATING",
+    "4-Way Equal Load Structure",
+    "BLOCK SIZE",
+    "25mm Rail Width",
+    "MOTION TYPE",
+    "High Rigidity Linear Motion",
+    "SEALING TYPE",
+    "Double Lip Dust End Seals",
+    "LUBRICATION",
+    "QZ Lubricator Compatible",
+    "ACCURACY GRADE",
+    "Super Precision SP Grade",
+    "CNC Machining Centers; Packaging Machinery; Semiconductor Fabrication; Pick and Place Gantry Systems",
+    "Technical Catalog PDF",
+    "https://www.thk.com/catalog/hsr.pdf",
+    "specs",
+    "HSR 3D CAD Download",
+    "https://www.thk.com/cad/hsr25a.step",
+    "cad",
+    "Life Expectancy Calculation",
+    "https://www.thk.com/calculate/hsr",
+    "calculation",
+    "Rail Selection Tool",
+    "https://www.thk.com/selection/guideways",
+    "selection",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "TRUE",
+    "TRUE",
+    "THK",
+    "Linear Guideway;Ballscrew",
+    "thk-hsr25a-linear-motion-guide-block",
+    "THK HSR25A Heavy Load Linear Motion Guide Block | THK",
+    "Original THK HSR25A linear guide block with 4-way equal load structure and super precision SP accuracy grade.",
+    "PRD-THK-HSR25A",
+    "prd_sample02",
+  ],
+  // Sample 3: OM AUTOMATION Electric Linear Actuator (Primary: Actuators, cross-listed: Ballscrew, Linear Guideway)
+  [
+    "OM AUTOMATION Electric Linear Actuator EA-100",
+    "<p>Industrial-grade ball screw driven linear actuator module delivering high thrust force, high repeatability, and effortless mounting for automated production lines.</p>",
+    "34500.00",
+    "39000.00",
+    "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800;https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800",
+    "",
+    "DRIVE MECHANISM",
+    "Integrated Ball Screw Drive",
+    "STROKE LENGTH",
+    "100mm to 1000mm Available",
+    "REPEATABILITY",
+    "±0.01 mm Repeatable Precision",
+    "MAX THRUST",
+    "1500 N Continuous Force",
+    "MOTOR ADAPTOR",
+    "NEMA 23 / 57mm Servo Compatible",
+    "ENCLOSURE",
+    "Anodized Aluminum IP54",
+    "Automated Assembly Lines; Cartesian Robot Gantry; Inspection Stations; Medical Dispensing Equipment",
+    "Datasheet & Dimensions PDF",
+    "https://omautomation.com/docs/ea100-datasheet.pdf",
+    "specs",
+    "3D CAD Models (.STEP)",
+    "https://omautomation.com/cad/ea100.step",
+    "cad",
+    "Actuator Sizing Tool",
+    "https://omautomation.com/sizing/actuators",
+    "calculation",
+    "Motor Compatibility Matrix",
+    "https://omautomation.com/docs/motor-mounts.pdf",
+    "selection",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "TRUE",
+    "TRUE",
+    "OM AUTOMATION",
+    "Actuators;Ballscrew;Linear Guideway",
+    "om-automation-electric-linear-actuator-ea100",
+    "OM AUTOMATION Electric Linear Actuator EA-100 | OM AUTOMATION",
+    "Industrial ball screw driven electric linear actuator module engineered for precision automated assembly.",
+    "PRD-OM-ACT100",
+    "prd_sample03",
+  ],
+  // Sample 4: HIWIN HG20 Heavy Duty Linear Guideway (Primary: Linear Guideway, cross-listed: Actuators)
+  [
+    "HIWIN HG20 Heavy Duty Linear Guideway Block",
+    "<p>Four-row circular-arc groove linear guide block with high permissible loads, self-aligning capability, and complete interchangeability for heavy machinery applications.</p>",
+    "3800.00",
+    "4200.00",
+    "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=800",
+    "",
+    "GUIDE TYPE",
+    "Four-Row Circular-Arc Groove",
+    "SELF-ALIGNING",
+    "Self-Aligning Capability",
+    "INTERCHANGEABILITY",
+    "Interchangeable Rail & Block",
+    "BLOCK MODEL",
+    "HGH20CA Heavy Load",
+    "PRELOAD CLASS",
+    "ZA Medium Preload",
+    "TEMP RANGE",
+    "-10°C to +80°C",
+    "Grinding Machines; Heavy CNC Lathes; Injection Molding Handling; Packaging Automation",
+    "HG Series Technical Specs",
+    "https://www.hiwinsupport.com/specs/hg.pdf",
+    "specs",
+    "HG20 CAD 3D File (.STEP)",
+    "https://www.hiwinsupport.com/cad/hgh20ca.stp",
+    "cad",
+    "Static & Dynamic Load Calculation",
+    "https://www.hiwinsupport.com/calculate/hg",
+    "calculation",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "TRUE",
+    "TRUE",
+    "HIWIN",
+    "Linear Guideway;Actuators",
+    "hiwin-hg20-heavy-duty-linear-guideway",
+    "HIWIN HG20 Heavy Duty Linear Guideway Block | HIWIN",
+    "Original HIWIN HG20 heavy load linear guideway block with self-aligning four-row circular-arc groove design.",
+    "PRD-HW-HG20CA",
+    "prd_sample04",
+  ],
+];
+
+function escapeCell(val) {
+  if (val === null || val === undefined) return "";
+  const str = String(val);
+  if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r") || str.includes(";")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+const publicDir = path.join(__dirname, '../public');
+if (!fs.existsSync(publicDir)) {
+  fs.mkdirSync(publicDir, { recursive: true });
+}
+
+// 1. Generate XLSX
+const ws = XLSX.utils.aoa_to_sheet(sampleRows);
+ws["!cols"] = headers.map(() => ({ wch: 22, width: 22 }));
+const wb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb, ws, "Products");
+const xlsxPath = path.join(publicDir, "demo_product_import.xlsx");
+XLSX.writeFile(wb, xlsxPath);
+console.log("Created:", xlsxPath);
+
+// 2. Generate CSV
+const csvContent = sampleRows.map((r) => r.map(escapeCell).join(",")).join("\r\n");
+const csvPath = path.join(publicDir, "demo_product_import.csv");
+fs.writeFileSync(csvPath, "\ufeff" + csvContent, "utf8");
+console.log("Created:", csvPath);
