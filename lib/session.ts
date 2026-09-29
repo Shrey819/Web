@@ -117,6 +117,23 @@ export async function invalidateSession(): Promise<void> {
       maxAge: 0,
       expires: new Date(0),
     });
+
+    const nextAuthCookies = [
+      "authjs.session-token",
+      "__Secure-authjs.session-token",
+      "next-auth.session-token",
+      "__Secure-next-auth.session-token",
+    ];
+    for (const cookieName of nextAuthCookies) {
+      cookieStore.set(cookieName, "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 0,
+        expires: new Date(0),
+      });
+    }
   } catch (error) {
     console.error("Error invalidating session:", error);
   }

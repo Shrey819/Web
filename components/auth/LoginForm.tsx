@@ -82,11 +82,7 @@ export function LoginForm({ returnUrl = "/profile" }: LoginFormProps) {
       if (res.success && res.user) {
         login(res.user);
         addToast("success", "Welcome Back!", `Signed in as ${res.user.name}`);
-        if (res.user.role === "ADMIN" && safeReturnUrl === "/profile") {
-          router.push("/admin");
-        } else {
-          router.push(safeReturnUrl);
-        }
+        router.push(safeReturnUrl);
         router.refresh();
       } else {
         const errorMsg = res.error || "Invalid email or password. Please verify your credentials.";

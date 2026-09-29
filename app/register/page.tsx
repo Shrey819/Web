@@ -23,9 +23,6 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   // If user is already authenticated, redirect to destination immediately
   const existingUser = await getOptionalAuthenticatedUser();
   if (existingUser) {
-    if (existingUser.role === "ADMIN" && safeTarget === "/profile") {
-      redirect("/admin");
-    }
     redirect(safeTarget);
   }
 
