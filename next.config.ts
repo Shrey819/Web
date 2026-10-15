@@ -50,6 +50,8 @@ export function buildContentSecurityPolicy(isDevEnv: boolean = isDev): string {
       "'self'",
       "data:",
       "blob:",
+      "https:",
+      "http:",
       "https://res.cloudinary.com",
       "https://images.unsplash.com",
       "https://lh3.googleusercontent.com",
@@ -145,6 +147,18 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.shreeautotech.com",
+      },
+      {
+        protocol: "https",
+        hostname: "www.shreeautotech.com",
+      },
+      {
+        protocol: "https",
+        hostname: "shreeautotech.com",
       },
     ],
   },

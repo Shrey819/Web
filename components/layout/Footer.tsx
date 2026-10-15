@@ -412,11 +412,18 @@ export function Footer() {
         <div className="pt-5 sm:pt-7 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
           <p>© 2026 OM Automation. All rights reserved.</p>
 
-          <div className="flex items-center gap-3 text-xs text-slate-400">
+          <div className="flex items-center gap-4 text-xs text-slate-400">
             <span className="flex items-center gap-1.5 text-slate-300">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
               <span>Secure Industrial Automation Store</span>
             </span>
+            <span className="text-slate-700">|</span>
+            <Link
+              href="/admin"
+              className="text-slate-500 hover:text-amber-400 transition-colors"
+            >
+              Admin Portal
+            </Link>
           </div>
         </div>
       </div>

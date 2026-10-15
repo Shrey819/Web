@@ -49,6 +49,7 @@ import { ManageGlobalOptionsModal } from "./modals/ManageGlobalOptionsModal";
 import { ApplyOptionPresetModal } from "./modals/ApplyOptionPresetModal";
 import { ExportProductsModal } from "./modals/ExportProductsModal";
 import { RecycleBinModal } from "./modals/RecycleBinModal";
+import { UrlExtractSpreadsheetModal } from "./modals/UrlExtractSpreadsheetModal";
 import {
   FilterProductsDrawer,
   ProductFilters,
@@ -111,6 +112,7 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
   const [isManageOptionsOpen, setIsManageOptionsOpen] = useState(false);
   const [isApplyPresetOpen, setIsApplyPresetOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isUrlExtractModalOpen, setIsUrlExtractModalOpen] = useState(false);
   const [filters, setFilters] = useState<ProductFilters>(DEFAULT_PRODUCT_FILTERS);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false);
@@ -424,6 +426,25 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                       </div>
                     </div>
                   </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMoreActionsOpen(false);
+                      setIsUrlExtractModalOpen(true);
+                    }}
+                    className="w-full flex items-start gap-2.5 px-2.5 py-2 text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer text-left"
+                  >
+                    <Sparkles className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                        Import from Web URL <span className="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[9px] px-1.5 py-0.2 rounded font-bold uppercase">Excel</span>
+                      </div>
+                      <div className="text-[11px] text-slate-400 font-normal leading-tight">
+                        Extract link, sync media to Cloudinary & edit prices in spreadsheet.
+                      </div>
+                    </div>
+                  </button>
                 </div>
 
                 {/* 2. Global Catalog Tables */}
@@ -537,6 +558,17 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
               </div>
             )}
           </div>
+
+          {/* URL Product Importer (Excel Mode) */}
+          <button
+            type="button"
+            onClick={() => setIsUrlExtractModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors cursor-pointer"
+            title="Extract product from web URL and review in Excel grid"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Import from URL</span>
+          </button>
 
           <Link
             href="/admin/products/new"
@@ -1161,6 +1193,14 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
         onClose={() => setIsRecycleBinOpen(false)}
         onProductsChanged={() => {
           fetchRecycleCount();
+          router.refresh();
+        }}
+      />
+
+      <UrlExtractSpreadsheetModal
+        isOpen={isUrlExtractModalOpen}
+        onClose={() => setIsUrlExtractModalOpen(false)}
+        onProductsSaved={() => {
           router.refresh();
         }}
       />

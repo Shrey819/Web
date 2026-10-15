@@ -225,14 +225,24 @@ export function LoginForm({ returnUrl = "/profile" }: LoginFormProps) {
             </button>
           </form>
 
-          <div className="pt-3 border-t border-slate-100 text-center text-xs text-slate-500">
-            Don&apos;t have a customer account yet?{" "}
-            <Link
-              href={safeReturnUrl !== "/profile" ? `/register?returnUrl=${encodeURIComponent(safeReturnUrl)}` : "/register"}
-              className="font-bold text-sky-600 hover:underline"
-            >
-              Create New Account
-            </Link>
+          <div className="pt-3 border-t border-slate-100 flex flex-col gap-2 text-center text-xs text-slate-500">
+            <div>
+              Don&apos;t have a customer account yet?{" "}
+              <Link
+                href={safeReturnUrl !== "/profile" ? `/register?returnUrl=${encodeURIComponent(safeReturnUrl)}` : "/register"}
+                className="font-bold text-sky-600 hover:underline"
+              >
+                Create New Account
+              </Link>
+            </div>
+            <div className="pt-2 border-t border-slate-50">
+              <Link
+                href="/admin/login"
+                className="text-slate-400 hover:text-slate-700 transition-colors inline-flex items-center gap-1"
+              >
+                <span>Authorized Personnel? Go to Admin Portal &rarr;</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
