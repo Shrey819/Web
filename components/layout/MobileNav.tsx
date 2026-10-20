@@ -80,6 +80,7 @@ export function MobileNav({
       document.body.style.width = "100%";
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
+      document.body.setAttribute("data-menu-open", "true");
     } else {
       const scrollY = document.body.style.top;
       document.body.style.position = "";
@@ -87,6 +88,7 @@ export function MobileNav({
       document.body.style.width = "";
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
+      document.body.removeAttribute("data-menu-open");
       if (scrollY) {
         window.scrollTo(0, parseInt(scrollY || "0") * -1);
       }
@@ -97,6 +99,7 @@ export function MobileNav({
       document.body.style.width = "";
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
+      document.body.removeAttribute("data-menu-open");
     };
   }, [isOpen]);
 
@@ -171,6 +174,7 @@ export function MobileNav({
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 250 }}
+            data-mobile-nav="open"
             className="fixed top-0 left-0 right-0 bottom-0 w-full h-full bg-white text-slate-800 z-[10000] lg:hidden flex flex-col overflow-y-auto"
           >
             <div>

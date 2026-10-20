@@ -9,6 +9,7 @@ import { registerUserAction } from "@/app/actions/userAuth";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Loader2 } from "lucide-react";
 import { sanitizeCallbackUrl, validatePersonName } from "@/lib/utils";
+import { AvatarMascot } from "@/components/avatar/AvatarMascot";
 
 interface RegisterFormProps {
   returnUrl?: string;
@@ -22,6 +23,7 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
   const { login } = useUserStore();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     companyName: "",
@@ -71,6 +73,24 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
     <div className="bg-[#faf9f5] min-h-screen py-6 sm:py-16 border-b border-slate-200 flex items-center justify-center">
       <div className="max-w-md w-full px-3.5 sm:px-4">
         <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-xl space-y-5">
+          {/* Avatar Mascot Companion */}
+          <div className="flex flex-col items-center justify-center -mt-1 -mb-1">
+            <AvatarMascot
+              mode="login"
+              isPasswordActive={isPasswordFocused}
+              animation={isSubmitting ? "working" : undefined}
+              speechBubble={
+                isPasswordFocused
+                  ? "Choose a secure password! 🔒"
+                  : isSubmitting
+                  ? "Creating your profile..."
+                  : "Join OM Automation! ✨"
+              }
+              size={78}
+              interactive={true}
+            />
+          </div>
+
           <div className="text-center space-y-1.5">
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
               Create Customer Account
@@ -158,6 +178,8 @@ export function RegisterForm({ returnUrl = "/profile" }: RegisterFormProps) {
                 placeholder="••••••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
+                onFocus={() => setIsPasswordFocused(true)}
+                onBlur={() => setIsPasswordFocused(false)}
                 className="w-full px-3.5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
               />
             </div>

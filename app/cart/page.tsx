@@ -7,6 +7,7 @@ import { useCartStore, getCartItemId } from "@/store/useCartStore";
 import { useToastStore } from "@/store/useToastStore";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ShieldCheck, Tag, ChevronRight, Truck } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { AvatarMascot } from "@/components/avatar/AvatarMascot";
 
 export default function FullCartPage() {
   const {
@@ -69,12 +70,18 @@ export default function FullCartPage() {
         </h1>
 
         {items.length === 0 ? (
-          <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center border border-slate-200 shadow-sm space-y-4 max-w-lg mx-auto">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
-              <ShoppingBag className="w-7 h-7 sm:w-8 sm:h-8" />
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center border border-slate-200 shadow-sm space-y-4 max-w-lg mx-auto flex flex-col items-center">
+            <div className="mb-2">
+              <AvatarMascot
+                mode="custom"
+                animation="bored"
+                size={78}
+                interactive={true}
+                speechBubble="Your cart is lonely! 🛒"
+              />
             </div>
             <h3 className="text-lg font-bold text-slate-900">Your cart is currently empty</h3>
-            <p className="text-xs sm:text-sm text-slate-500">
+            <p className="text-xs sm:text-sm text-slate-500 max-w-sm">
               Explore our sensors, PLCs, and drive components to build your industrial automation system.
             </p>
             <Link

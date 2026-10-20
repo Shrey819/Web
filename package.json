@@ -12,6 +12,8 @@
     "db:seed": "node --env-file=.env scripts/seed.js"
   },
   "dependencies": {
+    "@bible-strong/avatar-core": "file:packages/bible-strong-avatar-core-0.1.0.tgz",
+    "@bible-strong/avatar-react": "file:packages/bible-strong-avatar-react-0.1.0.tgz",
     "@hookform/resolvers": "^5.5.7",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@neondatabase/serverless": "^1.1.0",

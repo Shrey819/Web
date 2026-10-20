@@ -173,6 +173,10 @@ function QuoteForm() {
                   placeholder="Paste your BOM list or model numbers (e.g. Siemens S7-1200 CPU x 25 units, OMRON E2B Proximity Sensor x 100 units)..."
                   value={formData.partNumbers}
                   onChange={(e) => setFormData({ ...formData, partNumbers: e.target.value })}
+                  data-kilby-anchor="quote-part-numbers"
+                  data-kilby-prompt="Paste your BOM or SKU list here! We quote within 2–4 hours! 📋"
+                  data-kilby-mood="excited"
+                  data-kilby-position="right"
                   className="w-full p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200 focus:outline-none focus:border-sky-500"
                 />
               </div>

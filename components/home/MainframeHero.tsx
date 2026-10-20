@@ -384,6 +384,10 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
               <div className="mt-4 flex items-center justify-center lg:justify-start">
                 <Link
                   href={config?.ctaUrl || "/quote"}
+                  data-kilby-anchor="hero-primary-cta"
+                  data-kilby-prompt="Want an instant quote on precision motion parts? Click here! ⚡"
+                  data-kilby-mood="excited"
+                  data-kilby-position="right"
                   className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-slate-900 text-white hover:bg-sky-600 active:bg-sky-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group"
                 >
                   <span>{config.ctaText}</span>
@@ -462,6 +466,10 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
               <button
                 type="button"
                 onClick={handleCopyEmail}
+                data-kilby-anchor="hero-reach-sales"
+                data-kilby-prompt="Need engineering assistance or bulk quotation? Contact our sales desk! 📞"
+                data-kilby-mood="happy"
+                data-kilby-position="left"
                 className="w-full md:w-auto inline-flex items-center justify-center text-center text-slate-900 bg-transparent border border-slate-900/40 rounded-full text-[13px] sm:text-[14px] px-3.5 sm:px-5 py-[0.55em] gap-2 font-medium hover:bg-slate-950 hover:text-white hover:border-slate-950 transition-all duration-200 cursor-pointer group shadow-xs last:odd:col-span-2"
                 title={`Copy ${config?.salesEmail || "omautomation2012@gmail.com"}`}
               >

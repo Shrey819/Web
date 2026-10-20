@@ -7,6 +7,7 @@ import { useCartStore, getCartItemId } from "@/store/useCartStore";
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, ShieldCheck, Tag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatCurrency } from "@/lib/utils";
+import { AvatarMascot } from "@/components/avatar/AvatarMascot";
 
 export function CartDrawer() {
   const {
@@ -33,8 +34,10 @@ export function CartDrawer() {
     if (isOpen) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
+      document.body.setAttribute("data-cart-open", "true");
       return () => {
         document.body.style.overflow = originalOverflow;
+        document.body.removeAttribute("data-cart-open");
       };
     }
   }, [isOpen]);
@@ -80,6 +83,7 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 250 }}
+            data-cart-drawer="open"
             className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white text-slate-900 z-[10000] flex flex-col justify-between shadow-2xl overflow-hidden"
           >
             {/* Drawer Header */}
@@ -131,9 +135,15 @@ export function CartDrawer() {
             {/* Cart Items List */}
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
               {items.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center">
-                  <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
-                    <ShoppingBag className="w-8 h-8" />
+                <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center min-h-[320px]">
+                  <div className="mb-3">
+                    <AvatarMascot
+                      mode="custom"
+                      animation="bored"
+                      size={78}
+                      interactive={true}
+                      speechBubble="Your cart is lonely! 🛒"
+                    />
                   </div>
                   <h4 className="font-bold text-slate-800 text-base mb-1">
                     Your cart is currently empty

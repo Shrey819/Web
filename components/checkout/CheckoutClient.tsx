@@ -40,6 +40,7 @@ import { PhoneInput } from "@/components/ui/PhoneInput";
 import { AddressLocationSelector } from "@/components/ui/AddressLocationSelector";
 import { validatePincodeWithState } from "@/lib/indiaLocations";
 import { DeliveryRangeResult } from "@/lib/shiprocket";
+import { AvatarMascot } from "@/components/avatar/AvatarMascot";
 
 function loadRazorpayCheckoutScript(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -711,8 +712,13 @@ export function CheckoutClient({ settings }: CheckoutClientProps) {
     return (
       <div className="bg-[#faf9f5] min-h-screen py-8 sm:py-16 border-b border-slate-200">
         <div className="max-w-xl mx-auto px-4 text-center space-y-5 sm:space-y-6">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
-            <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10" />
+          <div className="flex flex-col items-center justify-center -mb-2">
+            <AvatarMascot
+              mode="celebrate"
+              size={90}
+              speechBubble="Woohoo! Order Confirmed! 🎉"
+              interactive={true}
+            />
           </div>
 
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">

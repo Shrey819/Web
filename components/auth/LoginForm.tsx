@@ -9,6 +9,7 @@ import { loginUserAction } from "@/app/actions/userAuth";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Lock, Mail, Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { sanitizeCallbackUrl, validateEmailAddress } from "@/lib/utils";
+import { AvatarMascot } from "@/components/avatar/AvatarMascot";
 
 interface LoginFormProps {
   returnUrl?: string;
@@ -28,6 +29,9 @@ export function LoginForm({ returnUrl = "/profile" }: LoginFormProps) {
   const [passwordError, setPasswordError] = useState("");
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleEmailBlur = () => {
     if (!email.trim()) return;
@@ -80,10 +84,13 @@ export function LoginForm({ returnUrl = "/profile" }: LoginFormProps) {
     try {
       const res = await loginUserAction({ email: trimmedEmail, password });
       if (res.success && res.user) {
+        setIsSuccess(true);
         login(res.user);
         addToast("success", "Welcome Back!", `Signed in as ${res.user.name}`);
-        router.push(safeReturnUrl);
-        router.refresh();
+        setTimeout(() => {
+          router.push(safeReturnUrl);
+          router.refresh();
+        }, 800);
       } else {
         const errorMsg = res.error || "Invalid email or password. Please verify your credentials.";
         setFormError(errorMsg);
@@ -103,10 +110,42 @@ export function LoginForm({ returnUrl = "/profile" }: LoginFormProps) {
     <div className="bg-[#faf9f5] min-h-screen py-6 sm:py-16 border-b border-slate-200 flex items-center justify-center">
       <div className="max-w-md w-full px-3.5 sm:px-4">
         <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-xl space-y-5">
+          {/* Avatar Mascot Companion */}
+          <div className="flex flex-col items-center justify-center -mt-1 -mb-1">
+            <AvatarMascot
+              mode="login"
+              isPasswordActive={isPasswordFocused}
+              showPassword={showPassword}
+              animation={
+                isSuccess
+                  ? "celebrate"
+                  : isSubmitting
+                  ? "thinking"
+                  : formError
+                  ? "confused"
+                  : isEmailFocused
+                  ? "curious"
+                  : undefined
+              }
+              speechBubble={
+                isSuccess
+                  ? "Welcome back! 🎉"
+                  : isPasswordFocused && !showPassword
+                  ? "I won't peek! 🙈"
+                  : isPasswordFocused && showPassword
+                  ? "Peeking at password! 👀"
+                  : isEmailFocused
+                  ? "Type your work email ✉️"
+                  : formError
+                  ? "Let's fix those details!"
+                  : null
+              }
+              size={78}
+              interactive={true}
+            />
+          </div>
+
           <div className="text-center space-y-1.5">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-900 text-amber-400 flex items-center justify-center mx-auto shadow-md font-bold text-base sm:text-lg">
-              OM
-            </div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
               Customer Sign In
             </h1>
@@ -150,7 +189,11 @@ export function LoginForm({ returnUrl = "/profile" }: LoginFormProps) {
                   placeholder="name@company.com"
                   value={email}
                   onChange={handleEmailChange}
-                  onBlur={handleEmailBlur}
+                  onFocus={() => setIsEmailFocused(true)}
+                  onBlur={() => {
+                    setIsEmailFocused(false);
+                    handleEmailBlur();
+                  }}
                   className={`w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border text-slate-900 placeholder:text-slate-400 focus:outline-none transition-colors ${
                     emailError
                       ? "border-red-400 bg-red-50/20 focus:border-red-500"
@@ -186,6 +229,8 @@ export function LoginForm({ returnUrl = "/profile" }: LoginFormProps) {
                   placeholder="••••••••••••"
                   value={password}
                   onChange={handlePasswordChange}
+                  onFocus={() => setIsPasswordFocused(true)}
+                  onBlur={() => setIsPasswordFocused(false)}
                   className={`w-full pl-10 pr-11 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border text-slate-900 placeholder:text-slate-400 focus:outline-none transition-colors ${
                     passwordError
                       ? "border-red-400 bg-red-50/20 focus:border-red-500"

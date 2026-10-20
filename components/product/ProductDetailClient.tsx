@@ -583,6 +583,10 @@ export function ProductDetailClient({ product, relatedProducts = [] }: ProductDe
                   <button
                     type="button"
                     onClick={handleAddToCart}
+                    data-kilby-anchor="product-add-to-cart"
+                    data-kilby-prompt="In stock with same-day dispatch across India! Ready to add to cart? 📦"
+                    data-kilby-mood="excited"
+                    data-kilby-position="right"
                     className="flex-1 h-12 px-4 rounded-xl bg-[#00a651] hover:bg-[#008f45] active:scale-[0.98] text-white font-bold text-sm sm:text-base shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <ShoppingBag className="w-4 h-4 shrink-0" />

@@ -316,6 +316,10 @@ export function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
+                data-kilby-anchor="header-search-bar"
+                data-kilby-prompt="Searching for a component? Type an SKU like 'S7-1200' or 'VFD'! 🔎"
+                data-kilby-mood="curious"
+                data-kilby-position="right"
                 className="w-full bg-slate-900/90 border border-slate-700/80 hover:border-slate-600 focus:border-amber-400 text-white rounded-full pl-11 pr-24 py-2.5 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none transition-all shadow-inner font-mono"
                 suppressHydrationWarning
               />

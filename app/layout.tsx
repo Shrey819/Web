@@ -92,9 +92,11 @@ export default function RootLayout({
             __html: safeJsonLdStringify(websiteJsonLd),
           }}
         />
+      </head>
+      <body className="min-h-full flex flex-col font-sans bg-[#faf9f5] text-slate-900 selection:bg-sky-500 selection:text-white" suppressHydrationWarning>
         <Script
           id="remove-fdprocessedid"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -115,8 +117,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className="min-h-full flex flex-col font-sans bg-[#faf9f5] text-slate-900 selection:bg-sky-500 selection:text-white" suppressHydrationWarning>
         <UserTracker />
         <HeaderFooterWrapper>
           {children}

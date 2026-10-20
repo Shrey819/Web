@@ -120,6 +120,10 @@ export function Footer() {
             <input
               type="email"
               placeholder="Enter corporate email..."
+              data-kilby-anchor="footer-newsletter-email"
+              data-kilby-prompt="Want our 2026 industrial automation price list & catalog sent to your inbox? 📩"
+              data-kilby-mood="happy"
+              data-kilby-position="left"
               className="flex-1 bg-slate-950 border border-slate-700 rounded-full px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500 active:border-amber-400 transition-colors"
               suppressHydrationWarning
             />
