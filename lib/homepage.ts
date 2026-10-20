@@ -355,12 +355,10 @@ export const DEFAULT_MAINFRAME_HERO: MainframeHeroConfig = {
 export const DEFAULT_HERO_SLIDES: HeroSlide[] = [
   {
     id: "slide-1",
-    desktopImage:
-      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1600&auto=format&fit=crop&q=80",
-    mobileImage:
-      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80",
+    desktopImage: "/images/banners/hero-banner-automation.jpg",
+    mobileImage: "/images/banners/hero-banner-automation.jpg",
     title: "NEXT-GEN INDUSTRIAL AUTOMATION",
-    subtitle: "Precision PLCs, VFDs & Sensors with Same-Day Dispatch",
+    subtitle: "Precision PLCs, Modular I/O & Drives with Same-Day Dispatch",
     ctaText: "Explore Catalog",
     ctaUrl: "/products",
     isActive: true,
@@ -368,27 +366,23 @@ export const DEFAULT_HERO_SLIDES: HeroSlide[] = [
   },
   {
     id: "slide-2",
-    desktopImage:
-      "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1600&auto=format&fit=crop&q=80",
-    mobileImage:
-      "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&auto=format&fit=crop&q=80",
-    title: "SMART FACTORY CONTROL HARDWARE",
-    subtitle: "Certified Heavy-Duty OEM Components for Industrial Operations",
-    ctaText: "Request a Quote",
-    ctaUrl: "/quote",
+    desktopImage: "/images/banners/banner-motion-control.jpg",
+    mobileImage: "/images/banners/banner-motion-control.jpg",
+    title: "HIGH-PRECISION SERVO & MOTION CONTROL",
+    subtitle: "Ultra-Fast Brushless AC Servos, Planetary Reducers & CNC Ballscrews",
+    ctaText: "View Hardware",
+    ctaUrl: "/products",
     isActive: true,
     sortOrder: 2,
   },
   {
     id: "slide-3",
-    desktopImage:
-      "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=1600&auto=format&fit=crop&q=80",
-    mobileImage:
-      "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800&auto=format&fit=crop&q=80",
-    title: "HIGH PERFORMANCE DRIVES & MOTORS",
-    subtitle: "Energy Efficient Industrial Controllers & Servo Drives",
-    ctaText: "View Hardware",
-    ctaUrl: "/products",
+    desktopImage: "/images/banners/banner-sensors-vision.jpg",
+    mobileImage: "/images/banners/banner-sensors-vision.jpg",
+    title: "SMART FACTORY SENSING & 3D VISION",
+    subtitle: "Laser Metrology, Optical Encoders & Quality Inspection Systems",
+    ctaText: "Request a Quote",
+    ctaUrl: "/quote",
     isActive: true,
     sortOrder: 3,
   },
