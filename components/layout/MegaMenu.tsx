@@ -62,8 +62,28 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setCategoriesList(data);
-          setActiveCategorySlug(data[0].slug);
+          // Deduplicate singular/plural categories and filter 0-item ghost duplicates
+          const seen = new Set<string>();
+          const cleaned = data.filter((c) => {
+            const canonical = (c.slug || c.id || "").toLowerCase().replace(/s$/, "");
+            if (seen.has(canonical)) return false;
+            if (
+              Number(c.itemCount || 0) > 0 ||
+              !data.some(
+                (d) =>
+                  (d.slug || d.id || "").toLowerCase().replace(/s$/, "") === canonical &&
+                  Number(d.itemCount || 0) > 0
+              )
+            ) {
+              seen.add(canonical);
+              return true;
+            }
+            return false;
+          });
+
+          const finalList = cleaned.length > 0 ? cleaned : data;
+          setCategoriesList(finalList);
+          setActiveCategorySlug(finalList[0].slug);
         } else {
           // Fallback to static CATEGORIES if DB is empty
           const fallback = CATEGORIES.map((c) => ({
@@ -107,11 +127,11 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
               p.categoryId?.toLowerCase() === activeCategorySlug.toLowerCase() ||
               p.subcategoryId?.toLowerCase() === activeCategorySlug.toLowerCase()
           );
-          setActiveProducts(matched.length > 0 ? matched : PRODUCTS.slice(0, 8));
+          setActiveProducts(matched.length > 0 ? matched : PRODUCTS);
         }
       })
       .catch(() => {
-        setActiveProducts(PRODUCTS.slice(0, 8));
+        setActiveProducts(PRODUCTS);
       })
       .finally(() => {
         setLoadingProducts(false);
@@ -137,7 +157,8 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
     categoriesList.find((c) => c.slug === activeCategorySlug) ||
     categoriesList[0];
 
-  const displayProducts = activeProducts.slice(0, 8);
+  // Show all products belonging to this category (no slice limit)
+  const displayProducts = activeProducts;
 
   return (
     <>
@@ -206,13 +227,13 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
         </div>
 
         {/* RIGHT PANEL: Live Category Products Grid with Smooth 0.2s Transparency Fade */}
-        <div className="flex-1 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 overflow-y-auto overscroll-contain max-h-[60vh] flex flex-col justify-between">
+        <div className="flex-1 bg-slate-900/50 rounded-2xl border border-slate-800 p-6 overflow-y-auto overscroll-contain max-h-[65vh] flex flex-col justify-between scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           <div>
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-5">
               <div>
                 <span className="text-[10px] font-mono uppercase text-amber-400 font-bold tracking-widest">
-                  Live Products from Admin Catalog
+                  Live Products from Admin Catalog ({displayProducts.length})
                 </span>
                 <h3 className="text-lg font-bold text-white tracking-tight font-heading">
                   {activeCategory?.name || "Category Products"}
@@ -225,7 +246,7 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
                   onClick={onClose}
                   className="text-xs font-mono font-bold text-sky-400 hover:text-sky-300 transition-colors flex items-center gap-1"
                 >
-                  <span>Go to {activeCategory.name} Category Page →</span>
+                  <span>Go to {activeCategory.name} Category Page ({displayProducts.length}) →</span>
                 </Link>
               )}
             </div>

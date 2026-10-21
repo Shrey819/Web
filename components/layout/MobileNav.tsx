@@ -56,7 +56,25 @@ export function MobileNav({
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          setCategories(data);
+          // Deduplicate singular/plural categories and filter 0-item ghost duplicates
+          const seen = new Set<string>();
+          const cleaned = data.filter((c) => {
+            const canonical = (c.slug || c.id || "").toLowerCase().replace(/s$/, "");
+            if (seen.has(canonical)) return false;
+            if (
+              Number(c.itemCount || 0) > 0 ||
+              !data.some(
+                (d) =>
+                  (d.slug || d.id || "").toLowerCase().replace(/s$/, "") === canonical &&
+                  Number(d.itemCount || 0) > 0
+              )
+            ) {
+              seen.add(canonical);
+              return true;
+            }
+            return false;
+          });
+          setCategories(cleaned.length > 0 ? cleaned : data);
         }
       })
       .catch(() => {});
@@ -118,7 +136,7 @@ export function MobileNav({
       setExpandedCategory(cat.id);
       if (!categoryProducts[cat.id]) {
         setLoadingCategory(cat.id);
-        fetch(`/api/products?category=${cat.slug}`)
+        fetch(`/api/products?category=${encodeURIComponent(cat.slug || cat.id)}`)
           .then((res) => res.json())
           .then((data) => {
             if (Array.isArray(data)) {
@@ -403,7 +421,7 @@ export function MobileNav({
                             )}
                           </button>
 
-                          {/* Accordion content: Product Cards Grid (Limit to max top 20 products) */}
+                          {/* Accordion content: All Product Cards in this Category (no limit) */}
                           {expandedCategory === cat.id && (
                             <div className="p-3 bg-slate-50 border-t border-b border-slate-100">
                               {loadingCategory === cat.id ? (
@@ -412,51 +430,57 @@ export function MobileNav({
                                 </div>
                               ) : (
                                 <>
-                                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                                    {((categoryProducts[cat.id] || []).slice(0, 20)).map((prod) => {
-                                      const rawImg =
-                                        (prod.images && prod.images[0]?.url) ||
-                                        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=180&h=180&auto=format&fit=crop&q=80";
-                                      const thumbImg = getOptimizedThumbnail(rawImg, 180, 180);
+                                  {(categoryProducts[cat.id] || []).length === 0 ? (
+                                    <div className="py-6 text-center text-slate-400 text-xs font-mono">
+                                      No active products found in this category.
+                                    </div>
+                                  ) : (
+                                    <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                                      {(categoryProducts[cat.id] || []).map((prod) => {
+                                        const rawImg =
+                                          (prod.images && prod.images[0]?.url) ||
+                                          "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=180&h=180&auto=format&fit=crop&q=80";
+                                        const thumbImg = getOptimizedThumbnail(rawImg, 180, 180);
 
-                                      return (
-                                        <Link
-                                          key={prod.id}
-                                          href={`/product/${prod.slug}`}
-                                          onClick={onClose}
-                                          className="bg-white p-2.5 rounded-xl border border-slate-200 hover:border-amber-400 transition-colors flex flex-col items-center justify-between shadow-sm group"
-                                        >
-                                          {/* Product Image */}
-                                          <div className="w-full h-20 sm:h-24 bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center p-1 border border-slate-100">
-                                            <img
-                                              src={thumbImg}
-                                              alt={prod.name}
-                                              loading="lazy"
-                                              decoding="async"
-                                              className="max-h-full max-w-full object-contain mix-blend-multiply transition-transform group-hover:scale-105"
-                                            />
-                                          </div>
-                                          {/* Product Name & Price */}
-                                          <div className="w-full flex flex-col items-center mt-2 px-0.5">
-                                            <span className="text-[11px] font-semibold text-slate-800 leading-tight text-center line-clamp-2">
-                                              {prod.name}
-                                            </span>
-                                            <span className="text-[11px] font-bold text-amber-600 mt-1">
-                                              {formatCurrency(prod.basePrice || prod.price || 0)}
-                                            </span>
-                                          </div>
-                                        </Link>
-                                      );
-                                    })}
-                                  </div>
+                                        return (
+                                          <Link
+                                            key={prod.id}
+                                            href={`/product/${prod.slug}`}
+                                            onClick={onClose}
+                                            className="bg-white p-2.5 rounded-xl border border-slate-200 hover:border-amber-400 transition-colors flex flex-col items-center justify-between shadow-sm group"
+                                          >
+                                            {/* Product Image */}
+                                            <div className="w-full h-20 sm:h-24 bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center p-1 border border-slate-100">
+                                              <img
+                                                src={thumbImg}
+                                                alt={prod.name}
+                                                loading="lazy"
+                                                decoding="async"
+                                                className="max-h-full max-w-full object-contain mix-blend-multiply transition-transform group-hover:scale-105"
+                                              />
+                                            </div>
+                                            {/* Product Name & Price */}
+                                            <div className="w-full flex flex-col items-center mt-2 px-0.5">
+                                              <span className="text-[11px] font-semibold text-slate-800 leading-tight text-center line-clamp-2">
+                                                {prod.name}
+                                              </span>
+                                              <span className="text-[11px] font-bold text-amber-600 mt-1">
+                                                {formatCurrency(prod.basePrice || prod.price || 0)}
+                                              </span>
+                                            </div>
+                                          </Link>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
 
                                   {/* Link to Category Page with Chevron-in-Circle Arrow Icon */}
                                   <Link
                                     href={`/category/${cat.slug}`}
                                     onClick={onClose}
-                                    className="flex items-center gap-2 text-slate-800 hover:text-amber-500 font-bold text-xs sm:text-sm pt-3 mt-3 border-t border-slate-200/80 group"
+                                    className="flex items-center justify-between text-slate-800 hover:text-amber-500 font-bold text-xs sm:text-sm pt-3 mt-3 border-t border-slate-200/80 group"
                                   >
-                                    <span>Go to {cat.name}</span>
+                                    <span>Go to {cat.name} ({(categoryProducts[cat.id] || []).length})</span>
                                     <ChevronRight className="w-4 h-4 bg-slate-200 text-slate-700 rounded-full p-0.5 group-hover:bg-amber-400 group-hover:text-slate-950 transition-all" />
                                   </Link>
                                 </>
