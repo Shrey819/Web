@@ -3,6 +3,7 @@ import { HeroSlider } from "@/components/home/HeroSlider";
 import { HomepageCategoryShowcase } from "@/components/home/HomepageCategoryShowcase";
 import { BrandMarquee } from "@/components/home/BrandMarquee";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
+import { CategoryDistribution3D } from "@/components/home/CategoryDistribution3D/CategoryDistribution3D";
 import { TopFundamentals } from "@/components/home/TopFundamentals";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { SolutionsShowcase } from "@/components/home/SolutionsShowcase";
@@ -70,6 +71,15 @@ export default async function HomePage() {
 
   const rawSectionOrder = homepageData.sectionOrder || DEFAULT_SECTION_ORDER;
   let sectionOrder = [...rawSectionOrder];
+  if (!sectionOrder.includes("sec-category-distribution-3d")) {
+    const catGridIndex = sectionOrder.indexOf("sec-categories-grid");
+    if (catGridIndex !== -1) {
+      sectionOrder.splice(catGridIndex + 1, 0, "sec-category-distribution-3d");
+    } else {
+      sectionOrder.push("sec-category-distribution-3d");
+    }
+  }
+
   if (!sectionOrder.includes("sec-top-fundamentals")) {
     const catGridIndex = sectionOrder.indexOf("sec-categories-grid");
     if (catGridIndex !== -1) {
@@ -147,6 +157,16 @@ export default async function HomePage() {
 
       case "sec-cinematic":
         return <CinematicProductSection key={id} config={instanceData} />;
+
+      case "sec-category-distribution-3d":
+        return (
+          <CategoryDistribution3D
+            key={id}
+            categories={dbCategories}
+            products={dbProducts}
+            config={instanceData}
+          />
+        );
 
       case "sec-categories-grid":
         return <CategoryGrid key={id} config={instanceData} />;

@@ -310,6 +310,7 @@ export const DEFAULT_SECTION_ORDER: string[] = [
   "sec-brand-marquee",
   "sec-cinematic",
   "sec-categories-grid",
+  "sec-category-distribution-3d",
   "sec-top-fundamentals",
   "sec-featured-catalog",
   "sec-solutions",
