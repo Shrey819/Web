@@ -328,17 +328,17 @@ function CategoryStation({
     <div
       ref={stationRef}
       onWheel={handleWheel}
-      className="relative w-full min-h-[300px] flex flex-col items-center justify-center my-8 sm:my-12"
+      className="relative w-full flex flex-col items-center justify-center"
     >
       {/* -------------------------------------------------------------------
-          1. CATEGORY NAME (Centered ABOVE image, shows ONLY between -20° and 20°)
+          1. CATEGORY NAME (Centered ABOVE image with exact 30px space to image)
          ------------------------------------------------------------------- */}
       <motion.div
         style={{
           opacity: detailsOpacity,
           pointerEvents: shouldReduceMotion ? "auto" : pointerEvents,
         }}
-        className="text-center px-4 mb-3 z-20"
+        className="text-center px-4 mb-[30px] z-20"
       >
         <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
           {category.name}
@@ -520,7 +520,7 @@ export function CategoryDistribution3D({
   return (
     <section
       data-scene="category-distribution-3d"
-      className="relative w-full min-h-[1500px] bg-gradient-to-b from-slate-100/70 via-white to-slate-100/70 text-slate-900 border-b border-slate-300/80 select-none py-10 overflow-hidden"
+      className="relative w-full bg-gradient-to-b from-slate-100/70 via-white to-slate-100/70 text-slate-900 border-b border-slate-300/80 select-none py-10 overflow-hidden"
     >
       {/* -------------------------------------------------------------------
           BACKGROUND ENHANCEMENT: VIGNETTE & INDUSTRIAL THEME TOWARDS BORDERS
@@ -600,9 +600,9 @@ export function CategoryDistribution3D({
       </div>
 
       {/* ---------------------------------------------------------------------
-          CATEGORY STATIONS (Vertical distribution along the natural scroll)
+          CATEGORY STATIONS (Vertical distribution with exact 30px gap between categories)
          --------------------------------------------------------------------- */}
-      <div className="relative z-10 w-full flex flex-col justify-around min-h-[1350px]">
+      <div className="relative z-10 w-full flex flex-col items-center gap-[30px] py-4">
         {resolvedCategories.map((category, index) => (
           <CategoryStation
             key={category.id}
