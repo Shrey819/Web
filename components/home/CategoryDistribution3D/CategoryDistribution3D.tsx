@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -527,11 +527,35 @@ function CategoryStation({
  * - Reduced horizontal distance and horizontal scroll product cycling.
  */
 export function CategoryDistribution3D({
-  categories = [],
-  products = [],
+  categories: initialCategories = [],
+  products: initialProducts = [],
   config,
 }: CategoryDistribution3DProps) {
   const shouldReduceMotion = useReducedMotion();
+
+  const [categories, setCategories] = useState<StorefrontCategory[]>(initialCategories);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+
+  // Synchronize live with the exact same database APIs used by Header and MegaMenu shop popup
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCategories(data);
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Resolve categories and active products
   const resolvedCategories = useMemo(() => {
