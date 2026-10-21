@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cinematic-web/schemas/main/storyboard.schema.json",
+  "project": "OM AUTOMATION",
+  "version": "1.0.0",
+  "scenes": [
+    {
+      "id": "mainframe-hero",
+      "message": "Immediate OEM credibility with eye-contact responsive tracking and fast dispatch CTA.",
+      "scroll": { "start": 0.0, "end": 0.15 },
+      "technique": "video-scrub",
+      "techniqueRationale": "Precise interactive head gaze tracking calibrated between 0.0s and 1.9s.",
+      "pinned": false,
+      "reducedMotion": "instant",
+      "mobile": { "technique": "video-scrub", "pinned": false }
+    },
+    {
+      "id": "product-assembly",
+      "message": "Every precision component aligns to assemble a 24,000 RPM high-tolerance CNC machine.",
+      "scroll": { "start": 0.35, "end": 0.60 },
+      "technique": "scroll-linked",
+      "techniqueRationale": "Signature moment showing multi-part exploded CAD components joining into the final product.",
+      "pinned": true,
+      "camera": "push-in",
+      "elements": [
+        { "selector": "[data-scene='product-assembly'] [data-el='assembly-hud']", "role": "support", "reveal": 0.10 },
+        { "selector": "[data-scene='product-assembly'] [data-el='final-machine']", "role": "subject", "reveal": 0.75 },
+        { "selector": "[data-scene='product-assembly'] [data-el='specs-card']", "role": "context", "reveal": 0.85 }
+      ],
+      "mobile": {
+        "technique": "scroll-linked",
+        "pinned": false,
+        "notes": "Unpinned on mobile; displays as progressive 2-step view without screen locking."
+      },
+      "reducedMotion": "instant"
+    }
+  ],
+  "budgets": {
+    "desktop": { "fpsMedian": 55, "fpsP5": 30, "maxLongFrameRatio": 0.02, "maxLcpMs": 2000, "maxCls": 0.05 },
+    "mobile": { "fpsMedian": 50, "fpsP5": 26, "maxLongFrameRatio": 0.03, "maxLcpMs": 2500, "maxCls": 0.05 }
+  }
+}

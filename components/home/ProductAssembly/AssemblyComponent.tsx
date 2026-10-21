@@ -81,7 +81,6 @@ export function AssemblyComponent({ config, progress, isMobile }: AssemblyCompon
         scale,
         opacity,
         zIndex: config.zIndex,
-        willChange: "transform, opacity",
       }}
     >
       <div className="relative group flex items-center justify-center">

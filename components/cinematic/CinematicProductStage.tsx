@@ -1,17 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { CinematicProduct } from "./cinematicProducts";
 
 interface CinematicProductStageProps {
   products: CinematicProduct[];
-  progress?: number;
-  isPlaying?: boolean;
-  activeIndex?: number;
-  onActiveIndexChange?: (index: number) => void;
-  targetIndex?: number | null;
-  onTargetIndexConsumed?: () => void;
+  progress: number; // Continuous progress float
   isReducedMotion?: boolean;
 }
 
@@ -58,7 +53,7 @@ const SafeStageImage: React.FC<{
       src={imgSrc}
       alt={alt}
       fill
-      sizes={sizes || "(max-width: 640px) 160px, 260px"}
+      sizes={sizes}
       className={className}
       priority={priority}
       onError={() => {
@@ -71,434 +66,572 @@ const SafeStageImage: React.FC<{
   );
 };
 
-export const CinematicProductStage: React.FC<CinematicProductStageProps> = ({
-  products,
+// System A — Main Hero Products 3D Horizontal Circle / Sine-Cosine Orbit Engine
+function getCenterHeroStyle(dist: number) {
+  const absDist = Math.abs(dist);
+  const angleRad = dist * (Math.PI / 3.2);
+
+  const radiusX = 460; // Horizontal sine/cosine arc movement
+  const radiusZ = 200; // 3D depth recession into Z-space
+
+  const translateX = Math.sin(angleRad) * radiusX;
+  const translateZ = (Math.cos(angleRad) - 1) * radiusZ;
+  const translateY = Math.sin(angleRad) * 20;
+
+  // Scale: 1.0 at front center, shrinks as it recedes along 3D horizontal orbit
+  const scale = Math.max(0.45, 1.0 - absDist * 0.28);
+  const rotateY = -Math.sin(angleRad) * 22; // 3D rotation following curve
+  const opacity = Math.max(0, Math.min(1.0, 1.15 - absDist * 0.35));
+  const zIndex = Math.max(1, Math.round(50 - absDist * 15));
+
+  return {
+    transform: `translate3d(${translateX.toFixed(1)}px, ${translateY.toFixed(1)}px, ${translateZ.toFixed(1)}px) scale(${scale.toFixed(3)}) rotateY(${rotateY.toFixed(1)}deg)`,
+    opacity,
+    zIndex,
+    absDist,
+  };
+}
+
+// System B — Independent Draggable Small Background Product Tile with Physics Fling & Bounce
+interface DraggableAmbientTileProps {
+  id: string;
+  product: CinematicProduct;
+  initialBaseX: number;
+  initialBaseY: number;
+  scale: number;
+  depthOpacity: number;
+  phaseX: number;
+  phaseY: number;
+  freqX: number;
+  freqY: number;
+  amplitudeX: number;
+  amplitudeY: number;
+  progress: number;
+  stageRef: React.RefObject<HTMLDivElement | null>;
+}
+
+const DraggableAmbientTile: React.FC<DraggableAmbientTileProps> = ({
+  product,
+  initialBaseX,
+  initialBaseY,
+  scale,
+  depthOpacity,
+  phaseX,
+  phaseY,
+  freqX,
+  freqY,
+  amplitudeX,
+  amplitudeY,
   progress,
-  isPlaying = true,
-  onActiveIndexChange,
-  targetIndex = null,
-  onTargetIndexConsumed,
-  isReducedMotion = false,
+  stageRef,
 }) => {
-  const stageRef = useRef<HTMLDivElement>(null);
-  const cylinderRef = useRef<HTMLDivElement>(null);
+  // Persistent user base position offset for THIS SPECIFIC TILE ONLY
+  const [baseOffset, setBaseOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [isSliding, setIsSliding] = useState<boolean>(false);
+  const [hasBeenMoved, setHasBeenMoved] = useState<boolean>(false);
 
-  // If products length is small (< 6), repeat to form a rich full 3D cylinder
-  const cylinderProducts = React.useMemo(() => {
-    if (!products || products.length === 0) return [];
-    if (products.length < 6) {
-      return [...products, ...products, ...products].slice(0, 8);
-    }
-    return products;
-  }, [products]);
+  // Velocity tracking and physics animation refs
+  const pointerHistoryRef = useRef<Array<{ t: number; x: number; y: number }>>([]);
+  const physicsAnimRef = useRef<number | null>(null);
 
-  const numProducts = cylinderProducts.length;
-  const stepAngle = 360 / Math.max(1, numProducts);
-
-  // Synchronize external progress if supplied (e.g. from visual editor)
-  useEffect(() => {
-    if (progress !== undefined && !isDraggingRef.current && !isSeekingRef.current) {
-      angleRef.current = -progress * stepAngle;
-      if (cylinderRef.current) {
-        cylinderRef.current.style.transform = `rotateX(-4deg) rotateY(${angleRef.current.toFixed(2)}deg)`;
-      }
-    }
-  }, [progress, stepAngle]);
-
-  // Responsive stage dimensions (desktop vs mobile)
-  const [stageDimensions, setStageDimensions] = useState<{
-    cardWidth: number;
-    cardHeight: number;
-    radius: number;
-    perspective: number;
-  }>({
-    cardWidth: 230,
-    cardHeight: 310,
-    radius: 360,
-    perspective: 1200,
+  // Cached stage boundaries to eliminate getBoundingClientRect layout thrashing in RAF loops
+  const boundsRef = useRef<{ minX: number; maxX: number; minY: number; maxY: number }>({
+    minX: -650,
+    maxX: 650,
+    minY: -380,
+    maxY: 380,
   });
 
-  useEffect(() => {
-    const updateSize = () => {
-      const width = window.innerWidth;
-      if (width < 640) {
-        // Mobile
-        const cardW = 150;
-        const cardH = 210;
-        // Radius based on count
-        const rad = Math.max(190, Math.round(cardW / (2 * Math.tan(Math.PI / numProducts)) + 20));
-        setStageDimensions({
-          cardWidth: cardW,
-          cardHeight: cardH,
-          radius: rad,
-          perspective: 800,
-        });
-      } else if (width < 1024) {
-        // Tablet
-        const cardW = 190;
-        const cardH = 260;
-        const rad = Math.max(270, Math.round(cardW / (2 * Math.tan(Math.PI / numProducts)) + 30));
-        setStageDimensions({
-          cardWidth: cardW,
-          cardHeight: cardH,
-          radius: rad,
-          perspective: 1000,
-        });
-      } else {
-        // Desktop
-        const cardW = 230;
-        const cardH = 310;
-        const rad = Math.max(340, Math.round(cardW / (2 * Math.tan(Math.PI / numProducts)) + 40));
-        setStageDimensions({
-          cardWidth: cardW,
-          cardHeight: cardH,
-          radius: rad,
-          perspective: 1200,
-        });
-      }
-    };
-
-    updateSize();
-    window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
-  }, [numProducts]);
-
-  // Motion & Physics State stored in refs for 60/120fps direct DOM manipulation
-  const angleRef = useRef<number>(0);
-  const velocityRef = useRef<number>(14); // Initial cruising speed in deg/sec
-  const isDraggingRef = useRef<boolean>(false);
-  const dragStartRef = useRef<{ x: number; y: number; time: number }>({ x: 0, y: 0, time: 0 });
-  const dragStartAngleRef = useRef<number>(0);
-  const pointerHistoryRef = useRef<Array<{ x: number; t: number }>>([]);
-  const lastActiveIdxRef = useRef<number>(0);
-  const [internalActiveIndex, setInternalActiveIndex] = useState<number>(0);
-
-  // Target seek state (when clicking dot or jumping to product)
-  const isSeekingRef = useRef<boolean>(false);
-  const seekTargetAngleRef = useRef<number | null>(null);
-
-  // Synchronize target index requests from parent
-  useEffect(() => {
-    if (targetIndex === null || targetIndex === undefined) return;
-
-    const currentAngle = angleRef.current;
-    // Normalized target angle where targetIndex is at front (angle 0)
-    // At angle Ω, product i is at (i * stepAngle + Ω) = 0 => Ω = -i * stepAngle
-    const desiredAngleRaw = -targetIndex * stepAngle;
-    
-    // Find closest modular equivalent to currentAngle
-    const fullTurns = Math.round(currentAngle / 360) * 360;
-    let closestTarget = fullTurns + (desiredAngleRaw % 360);
-    while (closestTarget - currentAngle > 180) closestTarget -= 360;
-    while (closestTarget - currentAngle < -180) closestTarget += 360;
-
-    seekTargetAngleRef.current = closestTarget;
-    isSeekingRef.current = true;
-
-    if (onTargetIndexConsumed) {
-      onTargetIndexConsumed();
+  const updateCachedBounds = () => {
+    const stageElement = stageRef.current;
+    if (stageElement) {
+      const rect = stageElement.getBoundingClientRect();
+      const halfW = Math.max(120, rect.width / 2 - 80);
+      const halfH = Math.max(80, rect.height / 2 - 55);
+      boundsRef.current = {
+        minX: -halfW - initialBaseX,
+        maxX: halfW - initialBaseX,
+        minY: -halfH - initialBaseY,
+        maxY: halfH - initialBaseY,
+      };
     }
-  }, [targetIndex, stepAngle, onTargetIndexConsumed]);
+  };
 
-  // Click on a product card to rotate it directly to the front center
-  const handleCardClick = useCallback(
-    (idx: number) => {
-      const currentAngle = angleRef.current;
-      const desiredAngleRaw = -idx * stepAngle;
-      const fullTurns = Math.round(currentAngle / 360) * 360;
-      let closestTarget = fullTurns + (desiredAngleRaw % 360);
-      while (closestTarget - currentAngle > 180) closestTarget -= 360;
-      while (closestTarget - currentAngle < -180) closestTarget += 360;
-
-      seekTargetAngleRef.current = closestTarget;
-      isSeekingRef.current = true;
-    },
-    [stepAngle]
-  );
-
-  // Main 60fps/120fps continuous physics & rotation animation loop
   useEffect(() => {
-    if (isReducedMotion) return;
+    updateCachedBounds();
+    window.addEventListener("resize", updateCachedBounds);
+    return () => window.removeEventListener("resize", updateCachedBounds);
+  }, [initialBaseX, initialBaseY]);
 
-    let animFrameId: number;
-    let lastTimestamp: number = performance.now();
-
-    const loop = (timestamp: number) => {
-      // Clamp delta time to 80ms to avoid tab-switch physics jumps
-      const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.08);
-      lastTimestamp = timestamp;
-
-      if (!isDraggingRef.current) {
-        if (isSeekingRef.current && seekTargetAngleRef.current !== null) {
-          // Smooth spring-like ease to target index
-          const diff = seekTargetAngleRef.current - angleRef.current;
-          if (Math.abs(diff) < 0.15) {
-            angleRef.current = seekTargetAngleRef.current;
-            isSeekingRef.current = false;
-            seekTargetAngleRef.current = null;
-            velocityRef.current = isPlaying ? 14 : 0;
-          } else {
-            angleRef.current += diff * Math.min(1, dt * 7.5);
-          }
-        } else {
-          // Base cruising speed: 14 deg/s when playing, 0 when paused
-          const targetCruisingSpeed = isPlaying ? 14 : 0;
-
-          // Realistic exponential deceleration toward targetCruisingSpeed
-          // Friction = 2.2 allows high-speed swipes to spin with momentum and gradually settle back to normal speed
-          const decayRate = 2.2;
-          const decayFactor = Math.exp(-decayRate * dt);
-          velocityRef.current = targetCruisingSpeed + (velocityRef.current - targetCruisingSpeed) * decayFactor;
-
-          // Advance angle by current velocity
-          angleRef.current += velocityRef.current * dt;
-        }
-
-        // Apply 3D rotation transform directly to DOM
-        if (cylinderRef.current) {
-          cylinderRef.current.style.transform = `rotateX(-4deg) rotateY(${angleRef.current.toFixed(2)}deg)`;
-        }
-
-        // Determine currently active front-facing card
-        const rawIdx = Math.round(-angleRef.current / stepAngle);
-        const activeIdx = ((rawIdx % numProducts) + numProducts) % numProducts;
-        if (activeIdx !== lastActiveIdxRef.current) {
-          lastActiveIdxRef.current = activeIdx;
-          setInternalActiveIndex(activeIdx);
-          if (onActiveIndexChange) {
-            onActiveIndexChange(activeIdx);
-          }
-        }
+  // Clean up physics loop on unmount
+  useEffect(() => {
+    return () => {
+      if (physicsAnimRef.current !== null) {
+        cancelAnimationFrame(physicsAnimRef.current);
       }
+    };
+  }, []);
 
-      animFrameId = requestAnimationFrame(loop);
+  // Launch Inertial Fling Physics Loop with Progressive Dynamic Resistance & Upper/Lower Wall Bound Protection
+  const startFlingPhysics = (
+    initialVx: number,
+    initialVy: number,
+    previousLocation: { x: number; y: number }
+  ) => {
+    setIsSliding(true);
+    let vx = initialVx;
+    let vy = initialVy;
+    let lastTime = performance.now();
+    const flingStartTime = performance.now();
+    let bounceCount = 0;
+
+    // Resistance progression formula:
+    // Base resistance = 2.5
+    // If not steady within 2s, double resistance (5.0)
+    // If still not stopped, add new + old resistance continuously (7.5, 12.5, 20.0...)
+    const getDynamicResistance = (elapsedSec: number): number => {
+      const R_BASE = 2.5;
+      if (elapsedSec < 2.0) {
+        return R_BASE;
+      }
+      let prevR = R_BASE; // 2.5
+      let currR = R_BASE * 2; // 5.0 (doubled after 2 sec)
+      let s = 2;
+      while (s < Math.floor(elapsedSec) && s < 10) {
+        const nextR = currR + prevR; // new + old resistance
+        prevR = currR;
+        currR = nextR;
+        s++;
+      }
+      const frac = elapsedSec - Math.floor(elapsedSec);
+      const nextTarget = currR + prevR;
+      return currR + (nextTarget - currR) * frac;
     };
 
-    animFrameId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animFrameId);
-  }, [isPlaying, isReducedMotion, numProducts, stepAngle, onActiveIndexChange]);
+    const physicsStep = (now: number) => {
+      const elapsedSec = (now - flingStartTime) / 1000;
 
-  // Pointer drag event handlers for mouse & touch swipe
+      // 10-Second Safety Rule: if it runs for more than 10 seconds and still hasn't stopped,
+      // directly halt at the previous location!
+      if (elapsedSec >= 10.0) {
+        setBaseOffset(previousLocation);
+        physicsAnimRef.current = null;
+        setIsSliding(false);
+        return;
+      }
+
+      const dt = Math.min((now - lastTime) / 1000, 0.04); // Cap max dt to 40ms
+      lastTime = now;
+      // 1. Read Cached Stage Boundaries (Zero layout thrashing during physics RAF loop)
+      const { minX, maxX, minY, maxY } = boundsRef.current;
+
+      setBaseOffset((prev) => {
+        let newX = prev.x + vx * dt;
+        let newY = prev.y + vy * dt;
+
+        // Energy-dissipating restitution to eliminate infinite loops between upper and lower walls:
+        // First collision has a clean rebound (0.85); consecutive bounces lose energy rapidly (0.65 -> 0.3)
+        const restitution = bounceCount === 0 ? 0.85 : Math.max(0.3, 0.65 - bounceCount * 0.12);
+
+        // Horizontal wall collision
+        if (newX > maxX) {
+          newX = maxX;
+          vx = -Math.abs(vx) * restitution;
+          bounceCount++;
+        } else if (newX < minX) {
+          newX = minX;
+          vx = Math.abs(vx) * restitution;
+          bounceCount++;
+        }
+
+        // Upper and lower wall collision (prevents vertical ping-pong infinite loop)
+        if (newY > maxY) {
+          newY = maxY;
+          vy = -Math.abs(vy) * restitution;
+          bounceCount++;
+        } else if (newY < minY) {
+          newY = minY;
+          vy = Math.abs(vy) * restitution;
+          bounceCount++;
+        }
+
+        return { x: newX, y: newY };
+      });
+
+      // Progressive aerodynamic resistance:
+      // Smoothly doubles at 2 sec, then continuously adds (new + old resistance)
+      const currentResistance = getDynamicResistance(elapsedSec);
+      const dampFactor = Math.exp(-currentResistance * dt);
+      vx *= dampFactor;
+      vy *= dampFactor;
+
+      const currentSpeed = Math.hypot(vx, vy);
+      if (currentSpeed > 10) {
+        physicsAnimRef.current = requestAnimationFrame(physicsStep);
+      } else {
+        physicsAnimRef.current = null;
+        setIsSliding(false);
+      }
+    };
+
+    physicsAnimRef.current = requestAnimationFrame(physicsStep);
+  };
+
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    updateCachedBounds();
+    e.stopPropagation();
+    e.preventDefault();
+
+    // Cancel any active fling slide immediately
+    if (physicsAnimRef.current !== null) {
+      cancelAnimationFrame(physicsAnimRef.current);
+      physicsAnimRef.current = null;
+    }
+
     const pointerId = e.pointerId;
     try {
       e.currentTarget.setPointerCapture(pointerId);
     } catch {}
 
-    isDraggingRef.current = true;
-    isSeekingRef.current = false;
-    seekTargetAngleRef.current = null;
+    // Calculate exact visual coordinates at the moment of touch to eliminate any pickup jump
+    const currentOrganicX = hasBeenMoved ? 0 : Math.sin(progress * freqX + phaseX) * amplitudeX;
+    const currentOrganicY = hasBeenMoved ? 0 : Math.cos(progress * freqY + phaseY) * amplitudeY;
 
-    dragStartRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-      time: performance.now(),
+    const visualX = initialBaseX + baseOffset.x + currentOrganicX;
+    const visualY = initialBaseY + baseOffset.y + currentOrganicY;
+
+    // Freeze this exact location into baseOffset so the tile does not snap or teleport
+    const frozenOffsetX = visualX - initialBaseX;
+    const frozenOffsetY = visualY - initialBaseY;
+
+    setBaseOffset({ x: frozenOffsetX, y: frozenOffsetY });
+    setHasBeenMoved(true);
+
+    const startPX = e.clientX;
+    const startPY = e.clientY;
+    const startOffsetX = frozenOffsetX;
+    const startOffsetY = frozenOffsetY;
+
+    pointerHistoryRef.current = [{ t: performance.now(), x: startPX, y: startPY }];
+    setIsDragging(true);
+    setIsSliding(false);
+
+    const handlePointerMove = (moveEv: PointerEvent) => {
+      if (moveEv.pointerId !== pointerId) return;
+
+      const now = performance.now();
+      const px = moveEv.clientX;
+      const py = moveEv.clientY;
+
+      // Buffer last 80ms pointer samples for velocity estimation
+      const history = pointerHistoryRef.current;
+      history.push({ t: now, x: px, y: py });
+      while (history.length > 2 && now - history[0].t > 80) {
+        history.shift();
+      }
+
+      // Exact 1:1 mouse movement: if mouse moves (+100, +250), tile moves (+100, +250)
+      const dx = px - startPX;
+      const dy = py - startPY;
+
+      setBaseOffset({
+        x: startOffsetX + dx,
+        y: startOffsetY + dy,
+      });
     };
-    dragStartAngleRef.current = angleRef.current;
-    pointerHistoryRef.current = [{ x: e.clientX, t: performance.now() }];
-  };
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current) return;
+    const handlePointerUp = (upEv: PointerEvent) => {
+      if (upEv.pointerId !== pointerId) return;
 
-    const now = performance.now();
-    const dx = e.clientX - dragStartRef.current.x;
+      try {
+        e.currentTarget.releasePointerCapture(pointerId);
+      } catch {}
 
-    // Drag sensitivity (degrees per pixel drag)
-    const sensitivity = 0.38;
-    angleRef.current = dragStartAngleRef.current + dx * sensitivity;
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
 
-    // Apply transform in real-time
-    if (cylinderRef.current) {
-      cylinderRef.current.style.transform = `rotateX(-4deg) rotateY(${angleRef.current.toFixed(2)}deg)`;
-    }
+      setIsDragging(false);
 
-    // Update active index dynamically while dragging
-    const rawIdx = Math.round(-angleRef.current / stepAngle);
-    const activeIdx = ((rawIdx % numProducts) + numProducts) % numProducts;
-    if (activeIdx !== lastActiveIdxRef.current) {
-      lastActiveIdxRef.current = activeIdx;
-      setInternalActiveIndex(activeIdx);
-      if (onActiveIndexChange) {
-        onActiveIndexChange(activeIdx);
+      // Estimate release velocity
+      const history = pointerHistoryRef.current;
+      if (history.length >= 2) {
+        const first = history[0];
+        const last = history[history.length - 1];
+        const dt = (last.t - first.t) / 1000;
+        if (dt > 0.008) {
+          let vx = (last.x - first.x) / dt;
+          let vy = (last.y - first.y) / dt;
+
+          const speed = Math.hypot(vx, vy);
+          const maxInitialSpeed = 1600;
+          if (speed > maxInitialSpeed) {
+            vx = (vx / speed) * maxInitialSpeed;
+            vy = (vy / speed) * maxInitialSpeed;
+          }
+
+          if (speed > 70) {
+            const previousLocation = {
+              x: startOffsetX + (last.x - startPX),
+              y: startOffsetY + (last.y - startPY),
+            };
+            startFlingPhysics(vx, vy, previousLocation);
+            return;
+          }
+        }
       }
-    }
 
-    // Keep sliding window of pointer moves in the last 90ms for flick velocity calculation
-    const history = pointerHistoryRef.current;
-    history.push({ x: e.clientX, t: now });
-    while (history.length > 2 && now - history[0].t > 90) {
-      history.shift();
-    }
+      // If released gently, tile stays exactly at this stopped position without any bounce or jump
+      physicsAnimRef.current = null;
+      setIsSliding(false);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current) return;
-    isDraggingRef.current = false;
+  // Once moved or while user is manipulating, organic float is zero so the tile stops and stays exactly at the user's chosen position
+  const organicX = hasBeenMoved || isDragging || isSliding
+    ? 0
+    : Math.sin(progress * freqX + phaseX) * amplitudeX;
+  const organicY = hasBeenMoved || isDragging || isSliding
+    ? 0
+    : Math.cos(progress * freqY + phaseY) * amplitudeY;
 
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
+  // Rendered Position = Base Position + User Drag/Fling Offset + Organic Float
+  const finalX = initialBaseX + baseOffset.x + organicX;
+  const finalY = initialBaseY + baseOffset.y + organicY;
 
-    const totalDx = Math.abs(e.clientX - dragStartRef.current.x);
-    const totalDy = Math.abs(e.clientY - dragStartRef.current.y);
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      suppressHydrationWarning
+      aria-label={`Draggable background product ${product.name}`}
+      onPointerDown={handlePointerDown}
+      className={`absolute w-32 sm:w-40 h-20 sm:h-26 rounded-2xl border shadow-2xl hidden sm:flex items-center justify-center pointer-events-auto select-none group touch-none ${
+        isDragging
+          ? "border-amber-400 bg-slate-900/95 cursor-grabbing ring-2 ring-amber-400/60 shadow-[0_0_30px_rgba(245,158,11,0.5)]"
+          : isSliding
+          ? "border-amber-400/80 bg-slate-900/90 ring-1 ring-amber-400/30 shadow-[0_0_20px_rgba(245,158,11,0.3)] cursor-grab"
+          : "border-amber-500/35 bg-slate-900/85 backdrop-blur-md cursor-grab hover:border-amber-400"
+      }`}
+      style={{
+        transform: `translate3d(${finalX.toFixed(1)}px, ${finalY.toFixed(1)}px, 0px) scale(${
+          isDragging ? (scale * 1.12).toFixed(3) : scale.toFixed(3)
+        })`,
+        opacity: isDragging || isSliding ? 1.0 : depthOpacity,
+        zIndex: isDragging ? 100 : isSliding ? 80 : 15,
+        touchAction: "none",
+        willChange: "transform",
+        transition: isDragging ? "none" : "border-color 0.2s, box-shadow 0.2s, opacity 0.2s",
+      }}
+    >
+      <SafeStageImage
+        src={product.image}
+        alt={product.name}
+        className="object-contain p-2.5 opacity-90 group-hover:opacity-100 transition-opacity filter drop-shadow-md pointer-events-none"
+      />
+      {/* Drop Status Indicator Dot */}
+      <div
+        className={`absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full transition-all ${
+          isDragging
+            ? "bg-amber-300 scale-125 shadow-[0_0_8px_rgba(252,211,77,0.9)]"
+            : isSliding
+            ? "bg-amber-400 animate-ping"
+            : hasBeenMoved
+            ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+            : "bg-amber-400/60 group-hover:bg-amber-400"
+        }`}
+      />
+    </div>
+  );
+};
 
-    // If total movement was less than 6px, treat as a tap/click
-    if (totalDx < 6 && totalDy < 6) {
-      return;
-    }
+export const CinematicProductStage: React.FC<CinematicProductStageProps> = ({
+  products,
+  progress,
+  isReducedMotion = false,
+}) => {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const numProducts = products.length;
 
-    // Calculate release flick velocity
-    const history = pointerHistoryRef.current;
-    if (history.length >= 2) {
-      const first = history[0];
-      const last = history[history.length - 1];
-      const dt = (last.t - first.t) / 1000;
-      if (dt > 0.012) {
-        const vxPx = (last.x - first.x) / dt; // px / sec
-        const sensitivity = 0.38;
-        const vxDeg = vxPx * sensitivity; // deg / sec
+  // System B — Small floating background products data
+  const ambientTiles = useMemo(() => {
+    return Array.from({ length: 14 }).map((_, idx) => {
+      const angle = (idx / 14) * Math.PI * 2;
+      const radiusX = 540 + (idx % 4) * 60;
+      const radiusY = 220 + (idx % 3) * 40;
 
-        // Clamp max flick speed for comfortable physics
-        const maxFlick = 600;
-        velocityRef.current = Math.max(-maxFlick, Math.min(maxFlick, vxDeg));
-      }
-    }
-  };
+      // Deterministic pseudo-random seeds per tile for unique organic trajectories
+      const seed1 = Math.sin(idx * 12.9898 + 78.233) * 43758.5453;
+      const seed2 = Math.cos(idx * 4.1414 + 12.12) * 23421.1212;
+      const seed3 = Math.sin(idx * 8.88 + 3.14) * 11111.11;
 
-  // Accessibility reduced motion static view
+      const phaseX = (Math.abs(seed1) % 1) * Math.PI * 2;
+      const phaseY = (Math.abs(seed2) % 1) * Math.PI * 2;
+      const freqX = 0.06 + (Math.abs(seed1) % 0.12);
+      const freqY = 0.05 + (Math.abs(seed2) % 0.10);
+      const amplitudeX = 35 + (Math.abs(seed3) % 45);
+      const amplitudeY = 25 + (Math.abs(seed1) % 35);
+
+      return {
+        id: `ambient-tile-${idx}`,
+        baseX: Math.cos(angle) * radiusX,
+        baseY: Math.sin(angle) * radiusY - 20,
+        prodIdx: idx % numProducts,
+        scale: 0.35 + (idx % 3) * 0.08,
+        depthOpacity: 0.75 + (idx % 3) * 0.1,
+        phaseX,
+        phaseY,
+        freqX,
+        freqY,
+        amplitudeX,
+        amplitudeY,
+      };
+    });
+  }, [numProducts]);
+
+  // Reduced motion fallback
   if (isReducedMotion) {
-    const activeProduct = cylinderProducts[internalActiveIndex] || cylinderProducts[0];
+    const activeIdx = ((Math.floor(progress) % numProducts) + numProducts) % numProducts;
+    const currentProduct = products[activeIdx];
     return (
-      <div className="relative w-full h-[400px] flex items-center justify-center p-4">
-        <div className="relative w-72 sm:w-80 aspect-square rounded-3xl overflow-hidden border border-amber-500/30 bg-slate-900/90 shadow-2xl p-6 flex flex-col items-center justify-center">
-          <div className="relative w-full h-48">
-            <SafeStageImage
-              src={activeProduct.image}
-              alt={activeProduct.name}
-              className="object-contain p-4"
-              priority
-            />
-          </div>
-          <p className="mt-4 text-center font-bold text-white text-base">{activeProduct.name}</p>
-          <span className="text-amber-400 font-mono font-semibold text-sm mt-1">{activeProduct.price}</span>
+      <div className="relative w-full h-full flex items-center justify-center bg-slate-950 p-6">
+        <div className="relative w-72 sm:w-96 aspect-square rounded-3xl overflow-hidden border border-amber-500/30 bg-slate-900/90 shadow-2xl p-6 flex items-center justify-center">
+          <SafeStageImage
+            src={currentProduct.image}
+            alt={currentProduct.name}
+            className="object-contain p-4"
+            priority
+          />
         </div>
       </div>
     );
   }
 
+  // System A — Main Hero Products 3D Horizontal Circle Orbit Keys
+  const centerK = Math.floor(progress);
+  const heroKeys = [centerK - 2, centerK - 1, centerK, centerK + 1, centerK + 2];
+
   return (
     <div
       ref={stageRef}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-      className="relative w-full h-[420px] sm:h-[480px] flex items-center justify-center overflow-hidden select-none cursor-grab active:cursor-grabbing touch-pan-y"
-      style={{
-        perspective: `${stageDimensions.perspective}px`,
-      }}
+      className="relative w-full h-full flex items-center justify-center overflow-hidden bg-slate-950 select-none"
     >
-      {/* 1. Cinematic Background Lighting & Floor Spotlight */}
+      {/* 1. Cinematic Background Lighting & Golden Floor Spotlight */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Top ambient gold glow */}
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] h-[500px] bg-amber-600/10 rounded-full blur-[140px]" />
+        {/* Top ambient luxury glow */}
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[550px] bg-amber-600/10 rounded-full blur-[150px]" />
 
         {/* Central warm spotlight cone */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[950px] h-[600px] bg-radial from-amber-500/15 via-amber-900/5 to-transparent blur-3xl rounded-full" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1050px] h-[700px] bg-radial from-amber-500/15 via-amber-900/5 to-transparent blur-3xl rounded-full" />
 
         {/* Floor reflection grid line & spotlight highlight */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-48 bg-gradient-to-t from-amber-500/10 via-slate-900/20 to-transparent blur-xl border-t border-amber-500/15" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-64 bg-gradient-to-t from-amber-500/10 via-slate-900/20 to-transparent blur-xl border-t border-amber-500/10" />
 
-        {/* Subtle circular stage floor ring */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] border border-amber-500/10 rounded-full blur-sm" />
+        {/* Subtle radial spotlight ring */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] border border-amber-500/10 rounded-full blur-sm" />
       </div>
 
-      {/* 2. Rotating 3D Cylindrical Wheel Container */}
-      <div
-        ref={cylinderRef}
-        className="relative flex items-center justify-center"
-        style={{
-          width: `${stageDimensions.cardWidth}px`,
-          height: `${stageDimensions.cardHeight}px`,
-          transformStyle: "preserve-3d",
-          transform: `rotateX(-4deg) rotateY(${angleRef.current}deg)`,
-          willChange: "transform",
-        }}
-      >
-        {cylinderProducts.map((product, idx) => {
-          const itemAngle = idx * stepAngle;
-          const isActive = internalActiveIndex === idx;
+      {/* 2. System B — Independent Draggable Small Background Products with Fling & Wall Bounce Physics */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        {ambientTiles.map((tile) => (
+          <DraggableAmbientTile
+            key={tile.id}
+            id={tile.id}
+            product={products[tile.prodIdx]}
+            initialBaseX={tile.baseX}
+            initialBaseY={tile.baseY}
+            scale={tile.scale}
+            depthOpacity={tile.depthOpacity}
+            phaseX={tile.phaseX}
+            phaseY={tile.phaseY}
+            freqX={tile.freqX}
+            freqY={tile.freqY}
+            amplitudeX={tile.amplitudeX}
+            amplitudeY={tile.amplitudeY}
+            progress={progress}
+            stageRef={stageRef}
+          />
+        ))}
+      </div>
+
+      {/* 3. System A — Main Hero Products 3D Horizontal Circle / Sine-Cosine Orbit */}
+      <div className="relative w-full max-w-7xl h-[480px] sm:h-[560px] flex items-center justify-center perspective-[1200px] preserve-3d z-20 pointer-events-none">
+        {heroKeys.map((K) => {
+          const productIndex = ((K % numProducts) + numProducts) % numProducts;
+          const product = products[productIndex];
+          const dist = K - progress;
+          const style = getCenterHeroStyle(dist);
+
+          if (style.opacity <= 0.001) return null;
+
+          const isActive = style.absDist < 0.3;
 
           return (
             <div
-              key={`${product.id}-${idx}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCardClick(idx);
-              }}
-              className={`absolute top-0 left-0 w-full h-full rounded-2xl sm:rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between p-3.5 sm:p-5 shadow-2xl backdrop-blur-md cursor-pointer group ${
-                isActive
-                  ? "border-amber-400 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-slate-950/98 shadow-[0_15px_45px_rgba(245,158,11,0.35)] ring-1 ring-amber-400/60"
-                  : "border-white/10 bg-gradient-to-b from-slate-900/85 via-slate-900/75 to-slate-950/90 hover:border-amber-400/50 shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
-              }`}
+              key={K}
+              className="absolute w-72 sm:w-[380px] aspect-square transition-shadow duration-300 pointer-events-auto"
               style={{
-                transform: `rotateY(${itemAngle}deg) translateZ(${stageDimensions.radius}px)`,
-                backfaceVisibility: "hidden",
-                WebkitBackfaceVisibility: "hidden",
-                willChange: "transform",
+                transform: style.transform,
+                opacity: style.opacity,
+                zIndex: style.zIndex,
+                willChange: "transform, opacity",
               }}
             >
-              {/* Subtle active highlight badge / category */}
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-mono tracking-wider font-semibold text-amber-400/90">
-                <span className="truncate max-w-[120px]">{product.category || product.sku}</span>
+              <div
+                className={`relative w-full h-full rounded-3xl p-6 sm:p-8 flex items-center justify-center border transition-all duration-500 ${
+                  isActive
+                    ? "bg-slate-900/90 border-amber-500/60 shadow-[0_0_60px_rgba(245,158,11,0.35)] backdrop-blur-md opacity-100"
+                    : "bg-slate-950/20 border-slate-700/40 shadow-lg backdrop-blur-sm opacity-70"
+                }`}
+              >
+                {/* Accent glow corner badge for active center hero */}
+                {isActive && (
+                  <div
+                    className="absolute -top-1 -right-1 w-24 h-24 rounded-tr-3xl bg-radial from-amber-400/20 to-transparent pointer-events-none"
+                    style={{
+                      backgroundColor: product.accentColor
+                        ? `${product.accentColor}15`
+                        : undefined,
+                    }}
+                  />
+                )}
+
+                {/* Main Product Image */}
                 <div
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    isActive
-                      ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.9)] scale-125"
-                      : "bg-slate-600 group-hover:bg-amber-400/50"
+                  className={`relative w-full h-full flex items-center justify-center transition-opacity duration-300 ${
+                    isActive ? "opacity-100" : "opacity-80"
                   }`}
-                />
-              </div>
-
-              {/* Product Image Stage */}
-              <div className="relative flex-1 w-full flex items-center justify-center p-2 sm:p-3 my-1">
-                <SafeStageImage
-                  src={product.image}
-                  alt={product.name}
-                  className={`object-contain transition-transform duration-300 filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.7)] ${
-                    isActive ? "scale-105" : "scale-95 group-hover:scale-100"
-                  }`}
-                  priority={idx < 4}
-                />
-              </div>
-
-              {/* Card Footer: Product Title & Price */}
-              <div className="pt-2 border-t border-slate-800/80 space-y-0.5">
-                <p className="text-xs sm:text-sm font-bold text-white tracking-tight line-clamp-1">
-                  {product.name}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] sm:text-xs font-mono font-extrabold text-amber-400">
-                    {product.price}
-                  </span>
-                  <span className="text-[9px] sm:text-[10px] font-mono text-slate-400 uppercase">
-                    {product.sku}
-                  </span>
+                >
+                  <SafeStageImage
+                    src={product.image}
+                    alt={product.name}
+                    sizes="(max-width: 640px) 280px, 380px"
+                    className={`object-contain transition-transform duration-300 ${
+                      isActive
+                        ? "drop-shadow-[0_15px_35px_rgba(0,0,0,0.85)] scale-100"
+                        : "drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] scale-95"
+                    }`}
+                    priority={isActive}
+                  />
                 </div>
-              </div>
 
-              {/* Active Golden Floor Spotlight Reflection inside Card */}
-              {isActive && (
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-6 bg-amber-400/20 rounded-full blur-md pointer-events-none" />
-              )}
+                {/* Active Floor Halo Ring */}
+                {isActive && (
+                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-amber-500/25 rounded-full blur-xl pointer-events-none" />
+                )}
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* Subtle Bottom Stage Base Highlight */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-52 sm:w-72 h-1 bg-gradient-to-r from-transparent via-amber-500/40 to-transparent rounded-full pointer-events-none" />
+      {/* Subtle Bottom Stage Base Line */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-64 h-1 bg-gradient-to-r from-transparent via-amber-500/40 to-transparent rounded-full" />
     </div>
   );
 };

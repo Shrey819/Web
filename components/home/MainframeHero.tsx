@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useReducedMotion } from "framer-motion";
 
 // Custom hook for typewriter effect with configurable start delay and typing speed
 export function useTypewriter(
@@ -44,6 +45,8 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
   const isSeekingRef = useRef<boolean>(false);
   const targetProgressRef = useRef<number>(0.5);
   const currentProgressRef = useRef<number>(0.5);
+  const shouldReduceMotion = useReducedMotion();
+  const [isVisible, setIsVisible] = useState(true);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pillsVisible, setPillsVisible] = useState(false);
@@ -83,10 +86,40 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
       return SCAN_CENTER + ((progress - 0.5) / 0.5) * (SCAN_END - SCAN_CENTER);
     }
   };
+  // IntersectionObserver to pause tracking RAF when character frame is out of viewport
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Set video frame statically to SCAN_CENTER if reduced motion is requested
+  useEffect(() => {
+    if (shouldReduceMotion && videoRef.current) {
+      videoRef.current.currentTime = SCAN_CENTER;
+      currentProgressRef.current = 0.5;
+      targetProgressRef.current = 0.5;
+    }
+  }, [shouldReduceMotion]);
 
   const handleLoadedMetadata = () => {
     const video = videoRef.current;
     if (video) {
+      if (shouldReduceMotion) {
+        video.currentTime = SCAN_CENTER;
+        currentProgressRef.current = 0.5;
+        targetProgressRef.current = 0.5;
+        return;
+      }
       const initialTime = calculateTargetTime(targetProgressRef.current);
       video.currentTime = initialTime;
       currentProgressRef.current = targetProgressRef.current;
@@ -95,6 +128,7 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
 
   // Continuous animation loop for smooth eye-contact tracking on mouse pointer
   useEffect(() => {
+    if (shouldReduceMotion || !isVisible) return;
     let animationFrameId: number;
 
     const tick = () => {
@@ -131,10 +165,11 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
 
     animationFrameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animationFrameId);
-  }, []);
+  }, [shouldReduceMotion, isVisible]);
 
   // Track mouse pointer relative to the character's center position on screen
   useEffect(() => {
+    if (shouldReduceMotion) return;
     const updatePointerGaze = (clientX: number) => {
       const container = containerRef.current;
       let characterCenterX = window.innerWidth * 0.5;
@@ -179,7 +214,7 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("touchmove", handleTouchMove);
     };
-  }, []);
+  }, [shouldReduceMotion]);
 
   // Copy email handler
   const handleCopyEmail = async (e: React.MouseEvent) => {
@@ -202,6 +237,7 @@ export function MainframeHero({ config }: { config?: MainframeHeroConfig }) {
 
   return (
     <div
+      data-scene="mainframe-hero"
       className="mainframe-hero-wrapper relative w-full min-h-screen select-none font-body overflow-hidden text-slate-900 bg-[#faf9f5]"
       style={
         {

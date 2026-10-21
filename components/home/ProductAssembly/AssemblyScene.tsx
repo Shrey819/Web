@@ -4,20 +4,24 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useTransform, MotionValue } from "framer-motion";
-import { ArrowDown, ArrowRight, Layers } from "lucide-react";
+import { ArrowDown, ArrowRight, Layers, CheckCircle } from "lucide-react";
 import { ASSEMBLY_COMPONENTS } from "./assemblyData";
 import { AssemblyComponent } from "./AssemblyComponent";
 
 interface AssemblySceneProps {
   scrollProgress: MotionValue<number>;
+  isReducedMotion?: boolean;
 }
 
-export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
+export function AssemblyScene({
+  scrollProgress,
+  isReducedMotion = false,
+}: AssemblySceneProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
+      setIsMobile(window.innerWidth < 768);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -66,6 +70,179 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
     isMobile ? [50, 50, 0, 0] : [0, 0, 0, 0]
   );
 
+  // =========================================================================
+  // REDUCED MOTION STATIC FALLBACK:
+  // Immediately render assembled machine + spec card, no pinning, no floating parts
+  // =========================================================================
+  if (isReducedMotion) {
+    return (
+      <div className="relative w-full bg-[#f8f8f8] text-slate-900 px-4 sm:px-8 py-10 max-w-7xl mx-auto rounded-3xl border border-slate-300/80 shadow-sm space-y-8">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="font-mono text-xs font-bold uppercase tracking-widest text-amber-600 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 inline-block">
+            PRECISION ENGINEERED
+          </span>
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            Every component has a purpose.
+          </h2>
+          <p className="text-sm text-slate-600">
+            Industrial CNC machining centers and power drive assemblies delivering sub-micron positioning accuracy.
+          </p>
+        </div>
+
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-12">
+          {/* Machine Photo */}
+          <div
+            data-el="final-machine"
+            className="relative w-full max-w-[420px] lg:w-1/2 h-[300px] sm:h-[400px] flex items-center justify-center"
+          >
+            <Image
+              src="/images/product-assembly/final-machine.jpg"
+              alt="Engineered Industrial Machine"
+              fill
+              className="object-contain rounded-2xl drop-shadow-[0_20px_40px_rgba(0,0,0,0.18)]"
+              priority
+              unoptimized
+            />
+          </div>
+
+          {/* Technical Specs Card */}
+          <div
+            data-el="specs-card"
+            className="w-full max-w-[440px] lg:w-[480px] bg-white border border-slate-300/90 p-6 sm:p-8 rounded-2xl shadow-xl space-y-4 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="font-mono text-xs font-bold uppercase tracking-widest text-amber-600 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                FACTORY CERTIFIED
+              </span>
+            </div>
+            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
+              Designed for accuracy, repeatability & reliable performance.
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              Our multi-axis CNC machining centers deliver sub-micron positioning accuracy under demanding factory operations.
+            </p>
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <span className="block font-mono text-[10px] text-slate-400 font-bold uppercase">Spindle Speed</span>
+                <span className="font-mono text-sm font-extrabold text-slate-900">24,000 RPM</span>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <span className="block font-mono text-[10px] text-slate-400 font-bold uppercase">Repeatability</span>
+                <span className="font-mono text-sm font-extrabold text-amber-600">±0.002 mm</span>
+              </div>
+            </div>
+            <div className="pt-2">
+              <Link
+                href="/products"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-amber-600 transition-colors shadow-lg w-full sm:w-auto text-center"
+              >
+                <span>EXPLORE MACHINE</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* HUD Indicator */}
+        <div
+          data-el="assembly-hud"
+          className="flex items-center justify-center gap-3 pt-2 text-xs font-mono font-bold text-slate-500"
+        >
+          <Layers className="w-4 h-4 text-amber-500" />
+          <span>SYS.CAD // ASSEMBLED 100%</span>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // MOBILE VIEW (< 768px): Fluid 2-step card without scroll locking
+  // =========================================================================
+  if (isMobile) {
+    return (
+      <div className="relative w-full bg-[#f8f8f8] text-slate-900 px-4 py-8 space-y-6">
+        {/* Intro */}
+        <div className="text-center space-y-2">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 inline-block">
+            PRECISION ENGINEERED
+          </span>
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+            Every component has a purpose.
+          </h2>
+          <p className="text-xs text-slate-600">
+            High-tolerance industrial CNC architecture engineered for 24,000 RPM precision.
+          </p>
+        </div>
+
+        {/* Step 1: CAD Assembled Machine */}
+        <div
+          data-el="final-machine"
+          className="relative w-full h-[240px] flex items-center justify-center bg-white/70 rounded-2xl border border-slate-200/80 p-4 shadow-sm"
+        >
+          <Image
+            src="/images/product-assembly/final-machine.jpg"
+            alt="Engineered Industrial Machine"
+            fill
+            className="object-contain rounded-xl drop-shadow-md"
+            priority
+            unoptimized
+          />
+        </div>
+
+        {/* Step 2: Technical Specs & CTA Card */}
+        <div
+          data-el="specs-card"
+          className="w-full bg-white border border-slate-300/90 p-5 rounded-2xl shadow-xl space-y-3"
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+              FACTORY CERTIFIED
+            </span>
+          </div>
+
+          <h3 className="text-base font-extrabold text-slate-900 tracking-tight leading-snug">
+            Designed for accuracy, repeatability & reliable performance.
+          </h3>
+
+          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <span className="block font-mono text-[9px] text-slate-400 font-bold uppercase">Spindle Speed</span>
+              <span className="font-mono text-xs font-extrabold text-slate-900">24,000 RPM</span>
+            </div>
+            <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <span className="block font-mono text-[9px] text-slate-400 font-bold uppercase">Repeatability</span>
+              <span className="font-mono text-xs font-extrabold text-amber-600">±0.002 mm</span>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <Link
+              href="/products"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-amber-600 transition-colors shadow-lg w-full text-center"
+            >
+              <span>EXPLORE MACHINE</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* HUD Indicator */}
+        <div
+          data-el="assembly-hud"
+          className="flex items-center justify-center gap-2 text-[10px] font-mono font-bold text-slate-500"
+        >
+          <Layers className="w-3.5 h-3.5 text-amber-500" />
+          <span>SYS.CAD // ASSEMBLED 100%</span>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // DESKTOP FULL SCROLL-LINKED CHOREOGRAPHY (Pinned 220vh - 250vh)
+  // =========================================================================
   return (
     <div className="relative w-full h-full bg-[#f8f8f8] text-slate-900 overflow-hidden flex flex-col items-center justify-center select-none border-y border-slate-300/60">
       {/* Background Engineering Grid */}
@@ -92,9 +269,7 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
         </div>
       </div>
 
-      {/* ===================================================
-          STAGE 1: INTRO TEXT (0% - 12%, 100% hidden after 12%)
-         =================================================== */}
+      {/* STAGE 1: INTRO TEXT (0% - 12%, 100% hidden after 12%) */}
       <motion.div
         initial={{ opacity: 1 }}
         style={{ opacity: introOpacity, y: introY }}
@@ -123,22 +298,21 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
         </div>
       </motion.div>
 
-      {/* ===================================================
-          STAGE 2: FLOATING COMPONENTS ASSEMBLY CANVAS (6% - 65%, completely gone by 0.71)
-         =================================================== */}
+      {/* STAGE 2: FLOATING COMPONENTS ASSEMBLY CANVAS (6% - 65%, gone by 0.71) */}
       <div className="relative w-full h-full max-w-7xl mx-auto flex items-center justify-center overflow-hidden">
         {ASSEMBLY_COMPONENTS.map((config) => (
           <AssemblyComponent
             key={config.id}
             config={config}
             progress={scrollProgress}
-            isMobile={isMobile}
+            isMobile={false}
           />
         ))}
       </div>
 
       {/* Dynamic Assembly Progress HUD Badge */}
       <motion.div
+        data-el="assembly-hud"
         initial={{ opacity: 0 }}
         style={{ opacity: hudOpacity }}
         className="absolute bottom-8 right-6 md:right-12 z-40 bg-white/95 backdrop-blur-md border border-slate-300/80 rounded-2xl p-3.5 shadow-xl pointer-events-none hidden sm:flex items-center gap-4"
@@ -164,15 +338,11 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
         </div>
       </motion.div>
 
-      {/* ===================================================
-          STAGE 3 & 4: TWO-STEP FINAL HERO REVEAL
-          Step 1 (0.71-0.79): Center Machine Reveal (100% centered)
-          Step 2 (0.80-0.88): Machine glides to LEFT (Desktop) / glides UP (Mobile)
-                             Right Card slides into RIGHT (Desktop) / slides UP (Mobile)
-         =================================================== */}
+      {/* STAGE 3 & 4: TWO-STEP FINAL HERO REVEAL */}
       <div className="absolute inset-0 z-30 flex flex-col lg:flex-row items-center justify-center pt-24 sm:pt-28 lg:pt-0 px-4 sm:px-8 lg:px-12 max-w-7xl mx-auto pointer-events-none">
         {/* Machine Photo */}
         <motion.div
+          data-el="final-machine"
           initial={{ opacity: 0 }}
           style={{
             opacity: finalImageOpacity,
@@ -193,8 +363,9 @@ export function AssemblyScene({ scrollProgress }: AssemblySceneProps) {
           />
         </motion.div>
 
-        {/* Technical Specs & CTA Card: STRICTLY 0 UNTIL 0.80, then slides into RIGHT SIDE / DOWN SIDE */}
+        {/* Technical Specs & CTA Card: STRICTLY 0 UNTIL 0.80, then slides into RIGHT SIDE */}
         <motion.div
+          data-el="specs-card"
           initial={{ opacity: 0 }}
           style={{
             opacity: finalTextOpacity,

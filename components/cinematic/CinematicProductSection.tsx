@@ -1,30 +1,48 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { Sparkles, Tag, CheckCircle, Play, Pause, MoveHorizontal } from "lucide-react";
+import { Sparkles, Tag, CheckCircle, Play, Pause } from "lucide-react";
 import { CinematicProduct, CINEMATIC_PRODUCTS } from "./cinematicProducts";
 import { CinematicProductStage } from "./CinematicProductStage";
 import { OrbitStageConfig, DEFAULT_ORBIT_STAGE } from "@/lib/homepage";
 
 interface CinematicProductSectionProps {
   products?: CinematicProduct[];
-  autoRotateSpeed?: number;
+  autoRotateSpeed?: number; // Product cycles per second
   config?: OrbitStageConfig;
 }
 
 export const CinematicProductSection: React.FC<CinematicProductSectionProps> = ({
   products = CINEMATIC_PRODUCTS,
+  autoRotateSpeed = 0.35,
   config,
 }) => {
   const currentConfig = config || DEFAULT_ORBIT_STAGE;
   const shouldReduceMotion = useReducedMotion();
-  const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [targetIndex, setTargetIndex] = useState<number | null>(null);
+  const [progressValue, setProgressValue] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const [isVisible, setIsVisible] = useState<boolean>(true);
 
-  // If config provides products, map them or fallback to default products
+  // Pause RAF when section is scrolled out of view
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // If config provides products, merge or use them
   const displayProducts: CinematicProduct[] =
     currentConfig.products && currentConfig.products.length > 0
       ? currentConfig.products.map((p, idx) => ({
@@ -41,17 +59,41 @@ export const CinematicProductSection: React.FC<CinematicProductSectionProps> = (
       : products;
 
   const numProducts = displayProducts.length;
+
+  // Continuous Time-Based Animation Loop (Uninterrupted 3D Orbital Motion)
+  useEffect(() => {
+    if (shouldReduceMotion || !isPlaying || !isVisible) return;
+
+    let animFrameId: number;
+    let lastTimestamp: number | null = null;
+
+    const updateLoop = (timestamp: number) => {
+      if (lastTimestamp !== null) {
+        const deltaSec = (timestamp - lastTimestamp) / 1000;
+        setProgressValue((prev) => prev + deltaSec * autoRotateSpeed);
+      }
+      lastTimestamp = timestamp;
+      animFrameId = requestAnimationFrame(updateLoop);
+    };
+
+    animFrameId = requestAnimationFrame(updateLoop);
+    return () => cancelAnimationFrame(animFrameId);
+  }, [isPlaying, autoRotateSpeed, shouldReduceMotion, isVisible]);
+
+  // Synchronized active product index
+  const activeIndex =
+    ((Math.floor(progressValue + 0.5) % numProducts) + numProducts) % numProducts;
   const activeProduct = displayProducts[activeIndex] || displayProducts[0];
 
-  // Direct dot click navigation to jump to a specific product
+  // Direct dot click navigation to jump to product
   const handleSelectProduct = (targetIdx: number) => {
-    setActiveIndex(targetIdx);
-    setTargetIndex(targetIdx);
+    const currentBase = Math.floor(progressValue / numProducts) * numProducts;
+    setProgressValue(currentBase + targetIdx);
   };
 
   return (
-    <section className="relative w-full py-12 sm:py-20 bg-slate-950 text-white font-sans border-b border-slate-800/80 overflow-hidden min-h-[90vh] flex flex-col justify-between">
-      {/* Hidden preloader for instant card switching */}
+    <section ref={sectionRef} data-scene="cinematic-orbit" className="relative w-full py-12 sm:py-20 bg-slate-950 text-white font-sans border-b border-slate-800/80 overflow-hidden min-h-[90vh] flex flex-col justify-between">
+      {/* Hidden preloader */}
       <div className="hidden" aria-hidden="true">
         {displayProducts.map((p) => (
           <Image key={`preload-${p.id}`} src={p.image} alt="" width={1} height={1} priority />
@@ -71,32 +113,20 @@ export const CinematicProductSection: React.FC<CinematicProductSectionProps> = (
 
         <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto hidden sm:block">
           {currentConfig.subtitle ||
-            "Continuous 3D cylindrical product carousel. Swipe with mouse or finger to spin with realistic momentum."}
+            "Continuous 3D horizontal orbital product movement. Uninterrupted autonomous rotation."}
         </p>
-
-        {/* Interactive swipe/drag hint badge */}
-        <div className="pt-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-[11px] font-mono text-slate-400 shadow-sm">
-            <MoveHorizontal className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-            <span>Swipe horizontally or drag to spin with momentum</span>
-          </div>
-        </div>
       </div>
 
-      {/* 2. Central 3D Product Cylinder Stage (Smooth Rotation & Swipe Momentum) */}
-      <div className="relative flex-1 w-full my-4 flex items-center justify-center">
+      {/* 2. Central 3D Product Stage (Uninterrupted Motion Engine) */}
+      <div data-el="orbit-stage" className="relative flex-1 w-full my-4 flex items-center justify-center">
         <CinematicProductStage
           products={displayProducts}
-          isPlaying={isPlaying}
-          activeIndex={activeIndex}
-          onActiveIndexChange={setActiveIndex}
-          targetIndex={targetIndex}
-          onTargetIndexConsumed={() => setTargetIndex(null)}
+          progress={progressValue}
           isReducedMotion={shouldReduceMotion ?? false}
         />
       </div>
 
-      {/* 3. Bottom Information Bar: Active Product Details & Navigation Controls */}
+      {/* 3. Bottom Information Bar: Active Product Details & Dot Navigation */}
       <div className="relative z-50 max-w-4xl mx-auto w-full text-center space-y-4 px-4">
         {/* Active Product Info */}
         <div className="space-y-1.5 transition-all duration-300">

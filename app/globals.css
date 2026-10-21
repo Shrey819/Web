@@ -20,9 +20,11 @@
   *, ::before, ::after {
     box-sizing: border-box;
   }
+  html:not(:has([data-scene])) {
+    scroll-behavior: smooth;
+  }
 
   html {
-    scroll-behavior: smooth;
     background-color: var(--bg-light);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
@@ -124,7 +126,7 @@
   display: flex;
   width: 200%;
   animation: marquee 25s linear infinite;
-  will-change: transform;
+
 }
 
 .animate-marquee:hover {
