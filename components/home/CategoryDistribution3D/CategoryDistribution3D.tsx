@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -8,19 +8,15 @@ import {
   AnimatePresence,
   useScroll,
   useTransform,
-  useMotionValueEvent,
+  useReducedMotion,
 } from "framer-motion";
 import {
-  ChevronUp,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ArrowRight,
   Layers,
-  Sparkles,
   PackageCheck,
-  Tag,
-  SlidersHorizontal,
+  Sparkles,
 } from "lucide-react";
 import { StorefrontCategory } from "@/lib/storefront";
 import { Product } from "@/types";
@@ -36,666 +32,482 @@ interface CategoryDistribution3DProps {
   config?: any;
 }
 
+/**
+ * Individual Category Station situated along the 3000px vertical Y-axis.
+ * As the user scrolls naturally down the page, its 3D angle smoothly transitions:
+ * Entering from below: +120°
+ * Centered in viewport: 0° (Facing forward, 100% opacity, sharp)
+ * Scrolled past above: -120°
+ */
+function CategoryStation({
+  category,
+  index,
+  totalCategories,
+  activeProductIndex,
+  onProductChange,
+  shouldReduceMotion,
+}: {
+  category: ResolvedCategory3D;
+  index: number;
+  totalCategories: number;
+  activeProductIndex: number;
+  onProductChange: (categoryId: string, delta: number) => void;
+  shouldReduceMotion: boolean | null;
+}) {
+  const stationRef = useRef<HTMLDivElement>(null);
+  const [swipeDirection, setSwipeDirection] = useState<number>(1);
+
+  // Track station position as it travels through the viewport during natural scroll
+  const { scrollYProgress } = useScroll({
+    target: stationRef,
+    offset: ["start end", "end start"],
+  });
+
+  // 3D Angle Calculation:
+  // When at bottom of viewport (0.15): rotated at +120deg (or receded in 3D circle)
+  // When at center of viewport (0.45 - 0.55): strictly 0deg (Facing forward)
+  // When at top of viewport (0.85): rotated at -120deg (receded in 3D circle)
+  const rotateY = useTransform(
+    scrollYProgress,
+    [0.1, 0.42, 0.58, 0.9],
+    [120, 0, 0, -120]
+  );
+
+  const translateZ = useTransform(
+    scrollYProgress,
+    [0.1, 0.42, 0.58, 0.9],
+    [-100, 0, 0, -100]
+  );
+
+  const stationOpacity = useTransform(
+    scrollYProgress,
+    [0.1, 0.35, 0.65, 0.9],
+    [0.4, 1.0, 1.0, 0.4]
+  );
+
+  const products = category.products || [];
+  const hasProducts = products.length > 0;
+  const currentProduct = hasProducts
+    ? products[activeProductIndex % products.length]
+    : undefined;
+
+  // Active image: selected product image if available, else category hero image
+  const displayImageSrc =
+    currentProduct?.images?.[0]?.url ||
+    category.image ||
+    FALLBACK_CATEGORY_IMAGES.default;
+
+  // Horizontal product swap strictly within the 500x800px frame
+  const handleSwap = (delta: number) => {
+    if (!hasProducts || products.length <= 1) return;
+    setSwipeDirection(delta > 0 ? 1 : -1);
+    onProductChange(category.id, delta);
+  };
+
+  // Touch swipe handling on the 500x800 frame
+  const touchStartXRef = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length > 0) touchStartXRef.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const diffX = e.changedTouches[0].clientX - touchStartXRef.current;
+    if (Math.abs(diffX) > 40) {
+      handleSwap(diffX < 0 ? 1 : -1);
+    }
+    touchStartXRef.current = null;
+  };
+
+  const productPrice = currentProduct
+    ? (currentProduct.basePrice || (currentProduct as any).price)
+    : undefined;
+
+  // Frame slide animation variants:
+  // Outgoing image slides left and disappears from left edge
+  // Incoming image enters from right edge
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? "100%" : "-100%",
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction > 0 ? "-100%" : "100%",
+      opacity: 0,
+    }),
+  };
+
+  return (
+    <div
+      ref={stationRef}
+      className="relative w-full min-h-[650px] flex flex-col items-center justify-center my-12 sm:my-16"
+    >
+      {/* Station Vertical Anchor Node on the Central Spine */}
+      <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex items-center gap-2 pointer-events-none z-10">
+        <span className="w-3 h-3 rounded-full bg-sky-500 ring-4 ring-sky-100" />
+        <span className="font-mono text-[10px] font-bold text-slate-400 bg-white/90 px-2 py-0.5 rounded border border-slate-200">
+          NODE 0{index + 1} // Y: {index * 700}PX
+        </span>
+      </div>
+
+      {/* -------------------------------------------------------------------
+          1. CATEGORY NAME (Prominently displayed ABOVE the central frame)
+         ------------------------------------------------------------------- */}
+      <div className="text-center max-w-3xl mx-auto px-4 mb-6 z-20">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-xs font-mono font-semibold uppercase tracking-wider mb-2">
+          <Layers className="w-3.5 h-3.5 text-sky-600" />
+          <span>
+            Category 0{index + 1} of 0{totalCategories} // {category.badge}
+          </span>
+        </div>
+
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+          {category.name}
+        </h2>
+        <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto mt-1 line-clamp-2">
+          {category.description}
+        </p>
+      </div>
+
+      {/* -------------------------------------------------------------------
+          2. CENTRAL 500x800PX 3D FRAME & PRODUCT DETAILS TO THE RIGHT
+         ------------------------------------------------------------------- */}
+      <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-12 px-4 z-20">
+        {/* 3D Perspective Container */}
+        <div
+          className="relative flex items-center justify-center shrink-0 w-full max-w-[340px] sm:max-w-[440px] lg:max-w-[500px]"
+          style={{
+            perspective: "1200px",
+            perspectiveOrigin: "50% 50%",
+          }}
+        >
+          {/* Rotating 3D Shell tied to scroll distance along the Y-axis */}
+          <motion.div
+            style={
+              shouldReduceMotion
+                ? {}
+                : {
+                    rotateY,
+                    translateZ,
+                    opacity: stationOpacity,
+                    transformStyle: "preserve-3d",
+                  }
+            }
+            className="relative w-full flex items-center justify-center"
+          >
+            {/* ---------------------------------------------------------------
+                THE EXACT 500px * 800px MASKED VIEWPORT FRAME (overflow: hidden)
+                Horizontal product swap happens strictly inside this frame box!
+               --------------------------------------------------------------- */}
+            <div
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              className="relative w-[320px] sm:w-[440px] lg:w-[500px] h-[480px] sm:h-[620px] lg:h-[750px] max-h-[80vh] bg-white rounded-3xl border border-slate-200/90 shadow-2xl overflow-hidden flex flex-col items-center justify-between p-4 sm:p-6"
+              style={{
+                boxShadow:
+                  "0 25px 60px -15px rgba(15, 23, 42, 0.12), 0 0 40px -10px rgba(2, 132, 199, 0.08)",
+              }}
+            >
+              {/* Subtle Ambient Blueprint Grid inside frame */}
+              <div
+                className="absolute inset-0 pointer-events-none opacity-[0.02]"
+                style={{
+                  backgroundImage: `
+                    linear-gradient(to right, #0f172a 1px, transparent 1px),
+                    linear-gradient(to bottom, #0f172a 1px, transparent 1px)
+                  `,
+                  backgroundSize: "24px 24px",
+                }}
+              />
+
+              {/* Frame Header Tag */}
+              <div className="relative z-10 w-full flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider px-2">
+                <span>500×800 FRAME</span>
+                <span className="text-sky-600 font-semibold">{category.badge}</span>
+              </div>
+
+              {/* -------------------------------------------------------------
+                  HORIZONTAL SLIDE STAGE INSIDE THE 500x800 FRAME ONLY:
+                  Old image slides left & disappears; new image enters from right!
+                 ------------------------------------------------------------- */}
+              <div className="relative w-full flex-1 overflow-hidden flex items-center justify-center my-2">
+                <AnimatePresence initial={false} custom={swipeDirection} mode="popLayout">
+                  <motion.div
+                    key={`prod-img-${category.id}-${activeProductIndex}`}
+                    custom={swipeDirection}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{
+                      x: { type: "spring", stiffness: 300, damping: 32 },
+                      opacity: { duration: 0.22 },
+                    }}
+                    className="absolute inset-0 w-full h-full flex flex-col items-center justify-center"
+                  >
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      <Image
+                        src={displayImageSrc}
+                        alt={currentProduct?.name || category.name}
+                        fill
+                        sizes="(max-width: 640px) 320px, (max-width: 1024px) 440px, 500px"
+                        className="object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.14)] pointer-events-none p-2 sm:p-4"
+                        priority={index === 0}
+                      />
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Soft Ground Floor Shadow under active frame product */}
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-3 bg-slate-900/10 rounded-full blur-md pointer-events-none" />
+              </div>
+
+              {/* Horizontal Product Pagination Controls in Frame Base */}
+              {hasProducts && products.length > 1 && (
+                <div className="relative z-20 w-full flex items-center justify-between pt-2 border-t border-slate-100 px-2">
+                  <button
+                    onClick={() => handleSwap(-1)}
+                    className="p-1.5 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-700 transition-colors cursor-pointer"
+                    title="Previous Product (Slide in from left)"
+                    aria-label="Previous Product"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <div className="flex items-center gap-1.5">
+                    {products.map((p, pIdx) => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          const delta = pIdx - activeProductIndex;
+                          if (delta !== 0) handleSwap(delta);
+                        }}
+                        className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                          activeProductIndex === pIdx
+                            ? "w-6 bg-sky-600"
+                            : "w-1.5 bg-slate-200 hover:bg-slate-300"
+                        }`}
+                        title={`Select ${p.name}`}
+                        aria-label={`Select product ${p.name}`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => handleSwap(1)}
+                    className="p-1.5 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-700 transition-colors cursor-pointer"
+                    title="Next Product (Slide in from right)"
+                    aria-label="Next Product"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* -------------------------------------------------------------------
+            3. PRODUCT DETAILS PANEL (Positioned to the RIGHT of the frame)
+           ------------------------------------------------------------------- */}
+        <div className="w-full lg:max-w-[420px] flex flex-col justify-center space-y-4 text-left px-2 sm:px-4 z-20 shrink-0">
+          {currentProduct ? (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`prod-card-${currentProduct.id}`}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.28, ease: "easeOut" }}
+                className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4"
+              >
+                {/* Category & Product Index Tag */}
+                <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <span className="font-mono text-xs font-bold text-sky-600 bg-sky-50 px-2.5 py-1 rounded-md border border-sky-100 uppercase tracking-wider">
+                    {category.name}
+                  </span>
+                  <span className="font-mono text-[11px] text-slate-400 font-semibold">
+                    PRODUCT 0{activeProductIndex + 1} // 0{products.length}
+                  </span>
+                </div>
+
+                {/* Product Title & SKU */}
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
+                    {currentProduct.name}
+                  </h3>
+                  {currentProduct.sku && (
+                    <span className="font-mono text-xs text-slate-400 block mt-1">
+                      SKU: {currentProduct.sku}
+                    </span>
+                  )}
+                </div>
+
+                {/* Product Short Description */}
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-3">
+                  {currentProduct.shortDescription ||
+                    currentProduct.description ||
+                    "Engineered for sub-micron positioning repeatability and high dynamic load capacities in demanding industrial automation."}
+                </p>
+
+                {/* Price & Action Row */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <div>
+                    {productPrice ? (
+                      <div className="space-y-0.5">
+                        <span className="block font-mono text-[10px] text-slate-400 uppercase font-bold">
+                          Price
+                        </span>
+                        <span className="font-mono text-lg sm:text-xl font-extrabold text-slate-900">
+                          ₹{Number(productPrice).toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-mono text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+                        OEM In Stock
+                      </span>
+                    )}
+                  </div>
+
+                  <Link
+                    href={`/product/${currentProduct.slug || currentProduct.id}`}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs sm:text-sm hover:bg-sky-600 transition-colors shadow-md hover:shadow-sky-600/20"
+                  >
+                    <span>VIEW PRODUCT</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          ) : (
+            /* Graceful Empty State if category has no products yet */
+            <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
+              <div className="flex items-center gap-2 text-xs font-mono font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-md border border-amber-200 inline-flex">
+                <PackageCheck className="w-3.5 h-3.5" />
+                <span>CATALOG READY</span>
+              </div>
+
+              <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+                {category.name}
+              </h3>
+
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Precision hardware solutions configured to your machine specifications. Explore full category inventory or submit technical drawings for custom sizing.
+              </p>
+
+              <div className="pt-2">
+                <Link
+                  href={`/category/${category.slug || category.id}`}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-sky-600 transition-colors shadow-md"
+                >
+                  <span>BROWSE CATEGORY</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* User Hint */}
+          <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 px-1 pt-1">
+            <span>◄ Swipe 500px frame to change product ►</span>
+            <span>Scroll naturally for next category</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Main 3D Category Distribution Section.
+ * Takes the whole 3000px height along the Y-axis.
+ * DOES NOT stop/freeze the screen while scrolling (no sticky locking).
+ * The user scrolls down naturally through the 3000px track.
+ */
 export function CategoryDistribution3D({
   categories = [],
   products = [],
   config,
 }: CategoryDistribution3DProps) {
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion();
 
-  // 1. Resolve categories and active products
+  // Resolve categories and active products
   const resolvedCategories = useMemo(() => {
     return resolve3DCategories(categories, products);
   }, [categories, products]);
 
-  const numCategories = resolvedCategories.length;
-
-  // 2. Full 3000px Y-Axis Scroll Budget:
-  // Whole section height is exactly 3000px on the Y axis
-  const TOTAL_SECTION_HEIGHT_PX = 3000;
-
-  // Track page scroll progress strictly over this 3000px section
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-
-  // Calculate piecewise scroll thresholds across the 3000px size for N categories
-  const { scrollProgressThresholds, angleThresholds } = useMemo(() => {
-    if (numCategories <= 1) {
-      return { scrollProgressThresholds: [0, 1], angleThresholds: [0, 0] };
-    }
-
-    const sp: number[] = [];
-    const ap: number[] = [];
-
-    // Distribute categories evenly across the 3000px range
-    // Each category gets a plateau with smooth 120deg rotation transitions in between
-    for (let i = 0; i < numCategories; i++) {
-      const targetAngle = -i * 120;
-      const centerFrac = i / (numCategories - 1);
-
-      // Plateau width around center (approx 12% of total range)
-      const plateauHalf = 0.06;
-      const plateauStart = Math.max(0, centerFrac - plateauHalf);
-      const plateauEnd = Math.min(1.0, centerFrac + plateauHalf);
-
-      if (i === 0) {
-        sp.push(0);
-        ap.push(targetAngle);
-        sp.push(plateauEnd);
-        ap.push(targetAngle);
-      } else if (i === numCategories - 1) {
-        sp.push(plateauStart);
-        ap.push(targetAngle);
-        sp.push(1.0);
-        ap.push(targetAngle);
-      } else {
-        sp.push(plateauStart);
-        ap.push(targetAngle);
-        sp.push(plateauEnd);
-        ap.push(targetAngle);
-      }
-    }
-
-    // Ensure strictly monotonic non-decreasing points
-    const cleanSp: number[] = [];
-    const cleanAp: number[] = [];
-    for (let i = 0; i < sp.length; i++) {
-      const p = Math.max(0, Math.min(1, sp[i]));
-      if (cleanSp.length === 0 || p > cleanSp[cleanSp.length - 1] + 0.001) {
-        cleanSp.push(p);
-        cleanAp.push(ap[i]);
-      } else if (p === cleanSp[cleanSp.length - 1]) {
-        cleanAp[cleanAp.length - 1] = ap[i];
-      }
-    }
-
-    if (cleanSp[cleanSp.length - 1] < 1.0) {
-      cleanSp.push(1.0);
-      cleanAp.push(cleanAp[cleanAp.length - 1]);
-    }
-
-    return { scrollProgressThresholds: cleanSp, angleThresholds: cleanAp };
-  }, [numCategories]);
-
-  // Continuous linear 3D Y-axis rotation tied 1:1 to user scroll gesture
-  const scrollRotation = useTransform(
-    scrollYProgress,
-    scrollProgressThresholds,
-    angleThresholds
-  );
-
-  // Subtle continuous 3D depth floating response
-  const depthZ = useTransform(scrollYProgress, [0, 0.5, 1], [0, 20, 0]);
-
-  // Active Category State
-  const [activeCategoryIdx, setActiveCategoryIdx] = useState<number>(0);
-  const [currentScrollPx, setCurrentScrollPx] = useState<number>(0);
-
-  // 3. Horizontal Product Browsing State
-  // Independent product index for each category
+  // Independent Product Index for each category (preserves state when scrolling away and back)
   const [categoryProductIndex, setCategoryProductIndex] = useState<Record<string, number>>({});
-  // Direction for horizontal swap:
-  // +1 = next product: current image slides LEFT and disappears (-100%), new enters from RIGHT (+100% -> 0)
-  // -1 = prev product: current image slides RIGHT and disappears (+100%), new enters from LEFT (-100% -> 0)
-  const [swipeDirection, setSwipeDirection] = useState<number>(1);
 
-  // Synchronize active category index from vertical page scroll
-  useMotionValueEvent(scrollYProgress, "change", (progress) => {
-    const px = Math.round(progress * TOTAL_SECTION_HEIGHT_PX);
-    setCurrentScrollPx(px);
-
-    // Determine which category is currently in focus
-    if (numCategories > 1) {
-      const step = 1 / (numCategories - 1);
-      let closestIdx = 0;
-      let minDiff = 999;
-      for (let i = 0; i < numCategories; i++) {
-        const diff = Math.abs(progress - i * step);
-        if (diff < minDiff) {
-          minDiff = diff;
-          closestIdx = i;
-        }
-      }
-      if (closestIdx !== activeCategoryIdx) {
-        setActiveCategoryIdx(closestIdx);
-      }
-    }
-  });
-
-  // Active Category & Selected Product
-  const activeCategory: ResolvedCategory3D =
-    resolvedCategories[activeCategoryIdx] || resolvedCategories[0];
-
-  const currentProductIdx = activeCategory ? (categoryProductIndex[activeCategory.id] || 0) : 0;
-  const activeProduct: Product | undefined =
-    activeCategory?.products && activeCategory.products.length > 0
-      ? activeCategory.products[currentProductIdx % activeCategory.products.length]
-      : undefined;
-
-  // Horizontal product swap handler strictly within the 500x800px frame
-  const changeProduct = useCallback(
-    (delta: number) => {
-      if (!activeCategory || !activeCategory.products || activeCategory.products.length <= 1) return;
-
-      const totalProds = activeCategory.products.length;
-      setSwipeDirection(delta > 0 ? 1 : -1);
-
-      setCategoryProductIndex((prevMap) => {
-        const currentIdx = prevMap[activeCategory.id] || 0;
-        const nextIdx = (currentIdx + delta + totalProds) % totalProds;
-        return {
-          ...prevMap,
-          [activeCategory.id]: nextIdx,
-        };
-      });
-    },
-    [activeCategory]
-  );
-
-  // Jump to specific category by scrolling the 3000px section
-  const scrollToCategory = useCallback(
-    (targetIndex: number) => {
-      if (!sectionRef.current) return;
-      const sectionTop = sectionRef.current.offsetTop;
-      const frac = numCategories > 1 ? targetIndex / (numCategories - 1) : 0;
-      const targetPx = frac * TOTAL_SECTION_HEIGHT_PX;
-      window.scrollTo({
-        top: sectionTop + targetPx,
-        behavior: "smooth",
-      });
-    },
-    [numCategories]
-  );
-
-  // Keyboard navigation: ArrowUp/Down for category scroll, ArrowLeft/Right for horizontal frame swap
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!sectionRef.current) return;
-      const rect = sectionRef.current.getBoundingClientRect();
-      const inView = rect.top <= window.innerHeight * 0.6 && rect.bottom >= window.innerHeight * 0.4;
-      if (!inView) return;
-
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const next = Math.min(numCategories - 1, activeCategoryIdx + 1);
-        scrollToCategory(next);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const prev = Math.max(0, activeCategoryIdx - 1);
-        scrollToCategory(prev);
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        changeProduct(1);
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        changeProduct(-1);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeCategoryIdx, numCategories, scrollToCategory, changeProduct]);
-
-  // Touch swipe tracking inside the 500x800px frame
-  const touchStartXRef = useRef<number | null>(null);
-  const handleFrameTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length > 0) {
-      touchStartXRef.current = e.touches[0].clientX;
-    }
-  };
-  const handleFrameTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartXRef.current === null) return;
-    const endX = e.changedTouches[0].clientX;
-    const diffX = endX - touchStartXRef.current;
-    if (Math.abs(diffX) > 35) {
-      if (diffX < 0) {
-        // Swiped Left -> advance product (current slides left & disappears, new enters from right)
-        changeProduct(1);
-      } else {
-        // Swiped Right -> previous product (current slides right & disappears, new enters from left)
-        changeProduct(-1);
-      }
-    }
-    touchStartXRef.current = null;
-  };
-
-  // Image source resolution
-  const centerImageSrc =
-    activeProduct?.images?.[0]?.url ||
-    activeCategory?.image ||
-    FALLBACK_CATEGORY_IMAGES.default;
-
-  const prevIdx = (activeCategoryIdx - 1 + numCategories) % numCategories;
-  const nextIdx = (activeCategoryIdx + 1) % numCategories;
-  const prevCategory = resolvedCategories[prevIdx];
-  const nextCategory = resolvedCategories[nextIdx];
-
-  const leftImageSrc = prevCategory?.image || FALLBACK_CATEGORY_IMAGES.default;
-  const rightImageSrc = nextCategory?.image || FALLBACK_CATEGORY_IMAGES.default;
-
-  const activeProductPrice = activeProduct
-    ? (activeProduct.basePrice || (activeProduct as any).price)
-    : undefined;
+  const handleProductChange = useCallback((categoryId: string, delta: number) => {
+    setCategoryProductIndex((prevMap) => {
+      const currentIdx = prevMap[categoryId] || 0;
+      const targetCategory = resolvedCategories.find((c) => c.id === categoryId);
+      const total = targetCategory?.products?.length || 1;
+      const nextIdx = (currentIdx + delta + total) % total;
+      return {
+        ...prevMap,
+        [categoryId]: nextIdx,
+      };
+    });
+  }, [resolvedCategories]);
 
   return (
     <section
-      ref={sectionRef}
       data-scene="category-distribution-3d"
-      style={{ height: `${TOTAL_SECTION_HEIGHT_PX}px` }}
-      className="relative w-full bg-white text-slate-900 border-b border-slate-200/90 select-none"
+      className="relative w-full min-h-[3000px] bg-white text-slate-900 border-b border-slate-200/90 select-none py-16"
     >
-      {/* Pinned Sticky Viewport Shell */}
-      <div className="sticky top-0 w-full h-screen overflow-hidden flex flex-col justify-between py-5 sm:py-7">
-        {/* Precision Industrial Blueprint Grid */}
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.038]"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, #0f172a 1px, transparent 1px),
-              linear-gradient(to bottom, #0f172a 1px, transparent 1px)
-            `,
-            backgroundSize: "32px 32px",
-          }}
-        />
+      {/* Precision Drafting Grid Background */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.035]"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, #0f172a 1px, transparent 1px),
+            linear-gradient(to bottom, #0f172a 1px, transparent 1px)
+          `,
+          backgroundSize: "32px 32px",
+        }}
+      />
 
-        {/* Ambient Cobalt Blue Light Diffusion Behind Center Stage */}
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[700px] pointer-events-none transition-all duration-700 ease-out"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, rgba(2, 132, 199, 0.08) 0%, rgba(14, 165, 233, 0.03) 45%, transparent 70%)",
-          }}
-        />
+      {/* Central Vertical Guide Bar / Spine along the entire 3000px height */}
+      <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-sky-500/30 to-transparent pointer-events-none hidden md:block" />
 
-        {/* Technical HUD Metadata Indicators */}
-        <div className="absolute top-4 left-6 hidden md:flex items-center gap-2 pointer-events-none font-mono text-[10px] text-slate-400 uppercase tracking-widest z-30">
-          <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-          <span>3D.SYS // Y-AXIS 120° CAROUSEL • 3000PX SCROLL BUDGET</span>
+      {/* Section Global Header */}
+      <div className="relative z-20 text-center max-w-2xl mx-auto px-4 mb-8">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-mono font-semibold uppercase tracking-wider mb-2">
+          <Sparkles className="w-3.5 h-3.5 text-sky-600" />
+          <span>Industrial 3D Distribution // 3000px Vertical Track</span>
         </div>
-        <div className="absolute top-4 right-6 hidden md:flex items-center gap-4 pointer-events-none font-mono text-[10px] text-slate-400 uppercase tracking-widest z-30">
-          <span>Y-SCROLL: {currentScrollPx}px / 3000px</span>
-          <span>DOMAIN: 0{activeCategoryIdx + 1} // 0{numCategories}</span>
-        </div>
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          Explore Hardware Domains by Scrolling
+        </h2>
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          Scroll down naturally through the vertical stations. Swipe any central frame horizontally to inspect products.
+        </p>
+      </div>
 
-        {/* -------------------------------------------------------------------
-            1. CATEGORY NAME (Prominently placed ABOVE central image)
-           ------------------------------------------------------------------- */}
-        <div className="relative z-30 text-center max-w-3xl mx-auto px-4 shrink-0">
-          {/* Eyebrow badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-50 border border-sky-200/80 text-sky-700 text-xs font-mono font-semibold uppercase tracking-wider shadow-sm mb-1.5">
-            <Layers className="w-3.5 h-3.5 text-sky-600" />
-            <span>
-              Category Domain 0{activeCategoryIdx + 1} of 0{numCategories}
-            </span>
-          </div>
-
-          {/* Active Category Name (Updated automatically upon vertical 120° rotation) */}
-          <motion.div
-            key={`title-${activeCategory.id}`}
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <h2
-              data-el="active-category-title"
-              className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight"
-            >
-              {activeCategory.name}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto line-clamp-1 mt-0.5">
-              {activeCategory.description}
-            </p>
-          </motion.div>
-
-          {/* Category Stepper Dots */}
-          <div className="flex items-center justify-center gap-2 pt-1.5">
-            {resolvedCategories.map((c, i) => (
-              <button
-                key={c.id}
-                onClick={() => scrollToCategory(i)}
-                className={`transition-all duration-300 rounded-full cursor-pointer ${
-                  activeCategoryIdx === i
-                    ? "w-8 h-1.5 bg-sky-600 shadow-sm shadow-sky-600/30"
-                    : "w-1.5 h-1.5 bg-slate-300 hover:bg-slate-400"
-                }`}
-                title={`Jump to ${c.name}`}
-                aria-label={`Jump to ${c.name}`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* -------------------------------------------------------------------
-            2. CENTRAL 3D STAGE & 500x800PX HORIZONTAL SWAP FRAME
-           ------------------------------------------------------------------- */}
-        <div className="relative z-20 w-full max-w-7xl mx-auto flex-1 flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-12 px-4 min-h-0">
-          {/* Vertical Stepper Quick Links (Desktop left column) */}
-          <div className="hidden xl:flex flex-col items-center gap-3 shrink-0">
-            <button
-              onClick={() => scrollToCategory(Math.max(0, activeCategoryIdx - 1))}
-              disabled={activeCategoryIdx === 0}
-              className="p-2.5 rounded-full bg-white border border-slate-300 shadow-sm text-slate-700 hover:text-sky-600 hover:border-sky-500 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-              title="Previous Category (-120°)"
-            >
-              <ChevronUp className="w-4 h-4" />
-            </button>
-
-            <span className="font-mono text-[9px] font-bold text-slate-400 uppercase tracking-widest writing-vertical rotate-180 py-1">
-              3000PX SCROLL
-            </span>
-
-            <button
-              onClick={() => scrollToCategory(Math.min(numCategories - 1, activeCategoryIdx + 1))}
-              disabled={activeCategoryIdx === numCategories - 1}
-              className="p-2.5 rounded-full bg-white border border-slate-300 shadow-sm text-slate-700 hover:text-sky-600 hover:border-sky-500 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-              title="Next Category (+120°)"
-            >
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* 3D PERSPECTIVE SHELL */}
-          <div
-            data-el="category-carousel-3d"
-            className="relative flex items-center justify-center shrink-0 w-full max-w-[340px] sm:max-w-[460px] lg:max-w-[500px]"
-            style={{
-              perspective: "1200px",
-              perspectiveOrigin: "50% 50%",
-            }}
-          >
-            {/* 3D Shell rotating around Y-axis controlled by vertical 3000px scroll */}
-            <motion.div
-              style={{
-                transformStyle: "preserve-3d",
-                rotateY: scrollRotation,
-                z: depthZ,
-              }}
-              className="relative w-full flex items-center justify-center pointer-events-none"
-            >
-              {/* SLOT 1: PREVIOUS CATEGORY (-120 deg) */}
-              <div
-                onClick={() => scrollToCategory((activeCategoryIdx - 1 + numCategories) % numCategories)}
-                className="absolute w-[240px] sm:w-[300px] h-[320px] sm:h-[420px] flex flex-col items-center justify-center p-4 bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-200/80 shadow-lg cursor-pointer pointer-events-auto transition-opacity duration-300 hover:opacity-80"
-                style={{
-                  transform: "rotateY(-120deg) translateZ(140px)",
-                  opacity: 0.35,
-                  backfaceVisibility: "hidden",
-                }}
-              >
-                <div className="relative w-full h-[220px] sm:h-[280px] flex items-center justify-center">
-                  <Image
-                    src={leftImageSrc}
-                    alt={prevCategory?.name || "Previous Category"}
-                    fill
-                    sizes="300px"
-                    className="object-contain filter grayscale contrast-75 drop-shadow-sm"
-                  />
-                </div>
-                <span className="font-mono text-xs font-bold text-slate-500 mt-2 truncate max-w-full">
-                  {prevCategory?.name}
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono">-120°</span>
-              </div>
-
-              {/* SLOT 2: NEXT CATEGORY (+120 deg) */}
-              <div
-                onClick={() => scrollToCategory((activeCategoryIdx + 1) % numCategories)}
-                className="absolute w-[240px] sm:w-[300px] h-[320px] sm:h-[420px] flex flex-col items-center justify-center p-4 bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-200/80 shadow-lg cursor-pointer pointer-events-auto transition-opacity duration-300 hover:opacity-80"
-                style={{
-                  transform: "rotateY(120deg) translateZ(140px)",
-                  opacity: 0.35,
-                  backfaceVisibility: "hidden",
-                }}
-              >
-                <div className="relative w-full h-[220px] sm:h-[280px] flex items-center justify-center">
-                  <Image
-                    src={rightImageSrc}
-                    alt={nextCategory?.name || "Next Category"}
-                    fill
-                    sizes="300px"
-                    className="object-contain filter grayscale contrast-75 drop-shadow-sm"
-                  />
-                </div>
-                <span className="font-mono text-xs font-bold text-slate-500 mt-2 truncate max-w-full">
-                  {nextCategory?.name}
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono">+120°</span>
-              </div>
-
-              {/* -------------------------------------------------------------
-                  SLOT 0: CENTER ACTIVE CATEGORY (0 deg)
-                  THE 500px * 800px MASKED HORIZONTAL SWAP FRAME
-                 ------------------------------------------------------------- */}
-              <div
-                onTouchStart={handleFrameTouchStart}
-                onTouchEnd={handleFrameTouchEnd}
-                className="relative w-[320px] sm:w-[440px] lg:w-[500px] h-[440px] sm:h-[580px] lg:h-[680px] xl:h-[750px] max-h-[75vh] bg-white rounded-3xl border border-slate-200/90 shadow-2xl pointer-events-auto z-40 overflow-hidden flex flex-col items-center justify-between p-4 sm:p-6"
-                style={{
-                  transform: "rotateY(0deg) translateZ(140px)",
-                  opacity: 1,
-                  backfaceVisibility: "hidden",
-                  boxShadow:
-                    "0 25px 60px -15px rgba(15, 23, 42, 0.12), 0 0 40px -10px rgba(2, 132, 199, 0.08)",
-                }}
-              >
-                {/* Subtle Inner Frame Lighting */}
-                <div className="absolute inset-0 bg-gradient-to-b from-sky-500/[0.02] to-transparent rounded-3xl pointer-events-none" />
-
-                {/* Frame Header Spec Tag */}
-                <div className="relative z-10 w-full flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider px-2">
-                  <span>500×800 FRAME // ACTIVE</span>
-                  <span>{activeCategory.badge}</span>
-                </div>
-
-                {/* -----------------------------------------------------------
-                    THE HORIZONTAL SLIDE STAGE (Inside 500x800 Frame Only)
-                    1st image slides left & disappears; 2nd enters from right!
-                   ----------------------------------------------------------- */}
-                <div className="relative w-full flex-1 overflow-hidden flex items-center justify-center my-2">
-                  <AnimatePresence initial={false} custom={swipeDirection} mode="popLayout">
-                    <motion.div
-                      key={`frame-slide-${activeCategory.id}-${currentProductIdx}`}
-                      custom={swipeDirection}
-                      variants={{
-                        enter: (direction: number) => ({
-                          x: direction > 0 ? "100%" : "-100%",
-                          opacity: 0,
-                        }),
-                        center: {
-                          x: 0,
-                          opacity: 1,
-                        },
-                        exit: (direction: number) => ({
-                          x: direction > 0 ? "-100%" : "100%",
-                          opacity: 0,
-                        }),
-                      }}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      transition={{
-                        x: { type: "spring", stiffness: 300, damping: 32 },
-                        opacity: { duration: 0.22 },
-                      }}
-                      className="absolute inset-0 w-full h-full flex flex-col items-center justify-center"
-                    >
-                      <div className="relative w-full h-full flex items-center justify-center">
-                        <Image
-                          src={centerImageSrc}
-                          alt={activeProduct?.name || activeCategory.name}
-                          fill
-                          sizes="(max-width: 640px) 320px, (max-width: 1024px) 440px, 500px"
-                          className="object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.14)] pointer-events-none"
-                          priority
-                        />
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
-
-                  {/* Grounding Shadow Under Active Product */}
-                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-3 bg-slate-900/10 rounded-full blur-md pointer-events-none" />
-                </div>
-
-                {/* Horizontal Product Navigation Controls in Frame Base */}
-                {activeCategory.products && activeCategory.products.length > 1 && (
-                  <div className="relative z-20 w-full flex items-center justify-between pt-2 border-t border-slate-100 px-2">
-                    <button
-                      onClick={() => changeProduct(-1)}
-                      className="p-1.5 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-700 transition-colors cursor-pointer"
-                      title="Previous Product (Slide in from left)"
-                      aria-label="Previous Product"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-
-                    <div className="flex items-center gap-1.5">
-                      {activeCategory.products.map((p, pIdx) => (
-                        <button
-                          key={p.id}
-                          onClick={() => {
-                            setSwipeDirection(pIdx > currentProductIdx ? 1 : -1);
-                            setCategoryProductIndex((prevMap) => ({
-                              ...prevMap,
-                              [activeCategory.id]: pIdx,
-                            }));
-                          }}
-                          className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                            currentProductIdx === pIdx
-                              ? "w-6 bg-sky-600"
-                              : "w-1.5 bg-slate-200 hover:bg-slate-300"
-                          }`}
-                          title={`Select ${p.name}`}
-                          aria-label={`Select product ${p.name}`}
-                        />
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={() => changeProduct(1)}
-                      className="p-1.5 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-700 transition-colors cursor-pointer"
-                      title="Next Product (Slide in from right)"
-                      aria-label="Next Product"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-
-          {/* -------------------------------------------------------------------
-              3. PRODUCT DETAILS PANEL (Positioned to the RIGHT of the centered frame)
-             ------------------------------------------------------------------- */}
-          <div
-            data-el="active-product-details"
-            className="w-full lg:max-w-[420px] flex flex-col justify-center space-y-4 text-left px-2 sm:px-4 z-20 shrink-0"
-          >
-            {activeProduct ? (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`prod-info-${activeProduct.id}`}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.28, ease: "easeOut" }}
-                  className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4"
-                >
-                  {/* Category & Product Index Tag */}
-                  <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                    <span className="font-mono text-xs font-bold text-sky-600 bg-sky-50 px-2.5 py-1 rounded-md border border-sky-100 uppercase tracking-wider">
-                      {activeCategory.name}
-                    </span>
-                    <span className="font-mono text-[11px] text-slate-400 font-semibold">
-                      PRODUCT 0{currentProductIdx + 1} // 0{activeCategory.products.length}
-                    </span>
-                  </div>
-
-                  {/* Product Title */}
-                  <div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
-                      {activeProduct.name}
-                    </h3>
-                    {activeProduct.sku && (
-                      <span className="font-mono text-xs text-slate-400 block mt-1">
-                        SKU: {activeProduct.sku}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Product Short Description */}
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-3">
-                    {activeProduct.shortDescription ||
-                      activeProduct.description ||
-                      "Engineered for sub-micron positioning repeatability and high dynamic load capacities in demanding industrial automation."}
-                  </p>
-
-                  {/* Price & Action Row */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <div>
-                      {activeProductPrice ? (
-                        <div className="space-y-0.5">
-                          <span className="block font-mono text-[10px] text-slate-400 uppercase font-bold">
-                            Price
-                          </span>
-                          <span className="font-mono text-lg sm:text-xl font-extrabold text-slate-900">
-                            ₹{Number(activeProductPrice).toLocaleString("en-IN")}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="font-mono text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
-                          OEM In Stock
-                        </span>
-                      )}
-                    </div>
-
-                    <Link
-                      href={`/product/${activeProduct.slug || activeProduct.id}`}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs sm:text-sm hover:bg-sky-600 transition-colors shadow-md hover:shadow-sky-600/20"
-                    >
-                      <span>VIEW PRODUCT</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            ) : (
-              /* Graceful Empty State if category has no products yet */
-              <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
-                <div className="flex items-center gap-2 text-xs font-mono font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-md border border-amber-200 inline-flex">
-                  <PackageCheck className="w-3.5 h-3.5" />
-                  <span>CATALOG READY</span>
-                </div>
-
-                <h3 className="text-xl font-bold text-slate-900 tracking-tight">
-                  {activeCategory.name}
-                </h3>
-
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Precision hardware solutions configured to your machine specifications. Explore full category inventory or submit technical drawings for custom sizing.
-                </p>
-
-                <div className="pt-2">
-                  <Link
-                    href={`/category/${activeCategory.slug || activeCategory.id}`}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-sky-600 transition-colors shadow-md"
-                  >
-                    <span>BROWSE CATEGORY</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {/* Swipe & Scroll Guidance */}
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 px-1 pt-1">
-              <span>◄ Swipe 500px frame to swap products ►</span>
-              <span>Scroll down for next category</span>
-            </div>
-          </div>
-        </div>
+      {/* ---------------------------------------------------------------------
+          CATEGORY STATIONS (Placed along the 3000px vertical Y-axis)
+          c1: 0 - 500px
+          c2: 700 - 1200px
+          c3: 1400 - 1900px
+          c4: 2100 - 2600px+
+         --------------------------------------------------------------------- */}
+      <div className="relative z-10 w-full flex flex-col justify-around min-h-[2800px]">
+        {resolvedCategories.map((category, index) => (
+          <CategoryStation
+            key={category.id}
+            category={category}
+            index={index}
+            totalCategories={resolvedCategories.length}
+            activeProductIndex={categoryProductIndex[category.id] || 0}
+            onProductChange={handleProductChange}
+            shouldReduceMotion={shouldReduceMotion}
+          />
+        ))}
       </div>
     </section>
   );
