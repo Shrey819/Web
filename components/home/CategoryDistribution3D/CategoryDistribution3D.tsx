@@ -9,6 +9,7 @@ import {
   useScroll,
   useTransform,
   useReducedMotion,
+  useMotionValueEvent,
 } from "framer-motion";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { StorefrontCategory } from "@/lib/storefront";
@@ -203,6 +204,7 @@ function CategoryStation({
   totalCategories,
   activeProductIndex,
   onProductChange,
+  onStationActive,
   shouldReduceMotion,
 }: {
   category: ResolvedCategory3D;
@@ -210,6 +212,7 @@ function CategoryStation({
   totalCategories: number;
   activeProductIndex: number;
   onProductChange: (categoryId: string, delta: number) => void;
+  onStationActive?: (index: number) => void;
   shouldReduceMotion: boolean | null;
 }) {
   const stationRef = useRef<HTMLDivElement>(null);
@@ -219,6 +222,13 @@ function CategoryStation({
   const { scrollYProgress } = useScroll({
     target: stationRef,
     offset: ["start end", "end start"],
+  });
+
+  // Report active centered station to section-wide controller
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    if (latest >= 0.35 && latest <= 0.65) {
+      onStationActive?.(index);
+    }
   });
 
   // 3D Angle Calculation:
@@ -533,6 +543,12 @@ export function CategoryDistribution3D({
     return resolve3DCategories(categories, products);
   }, [categories, products]);
 
+  // Active category index at viewport center
+  const [activeCategoryIndex, setActiveCategoryIndex] = useState<number>(0);
+  const handleStationActive = useCallback((idx: number) => {
+    setActiveCategoryIndex(idx);
+  }, []);
+
   // Independent Product Index for each category
   const [categoryProductIndex, setCategoryProductIndex] = useState<Record<string, number>>({});
 
@@ -549,9 +565,68 @@ export function CategoryDistribution3D({
     });
   }, [resolvedCategories]);
 
+  // Section-wide swap handler (applies to active centered category)
+  const handleSectionSwap = useCallback(
+    (delta: number) => {
+      const activeCat = resolvedCategories[activeCategoryIndex] || resolvedCategories[0];
+      if (!activeCat) return;
+      handleProductChange(activeCat.id, delta);
+    },
+    [resolvedCategories, activeCategoryIndex, handleProductChange]
+  );
+
+  // Section-wide wheel handler for horizontal trackpad / mouse scroll
+  const sectionWheelTimeRef = useRef<number>(0);
+  const sectionAccumulatedDeltaXRef = useRef<number>(0);
+
+  const handleSectionWheel = (e: React.WheelEvent) => {
+    const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+    const delta = isHorizontal ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+
+    if (Math.abs(delta) < 14) return;
+
+    sectionAccumulatedDeltaXRef.current += delta;
+    const now = Date.now();
+
+    if (Math.abs(sectionAccumulatedDeltaXRef.current) > 28) {
+      if (now - sectionWheelTimeRef.current > 320) {
+        const direction = sectionAccumulatedDeltaXRef.current > 0 ? 1 : -1;
+        handleSectionSwap(direction);
+        sectionWheelTimeRef.current = now;
+        sectionAccumulatedDeltaXRef.current = 0;
+      }
+    }
+  };
+
+  // Section-wide touch swipe handling across the entire section
+  const sectionTouchStartXRef = useRef<number | null>(null);
+  const sectionTouchStartYRef = useRef<number | null>(null);
+
+  const handleSectionTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      sectionTouchStartXRef.current = e.touches[0].clientX;
+      sectionTouchStartYRef.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleSectionTouchEnd = (e: React.TouchEvent) => {
+    if (sectionTouchStartXRef.current === null || sectionTouchStartYRef.current === null) return;
+    const diffX = e.changedTouches[0].clientX - sectionTouchStartXRef.current;
+    const diffY = e.changedTouches[0].clientY - sectionTouchStartYRef.current;
+
+    if (Math.abs(diffX) > 35 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+      handleSectionSwap(diffX < 0 ? 1 : -1);
+    }
+    sectionTouchStartXRef.current = null;
+    sectionTouchStartYRef.current = null;
+  };
+
   return (
     <section
       data-scene="category-distribution-3d"
+      onWheel={handleSectionWheel}
+      onTouchStart={handleSectionTouchStart}
+      onTouchEnd={handleSectionTouchEnd}
       className="relative w-full bg-gradient-to-b from-slate-100/70 via-white to-slate-100/70 text-slate-900 border-b border-slate-300/80 select-none py-10 overflow-hidden"
     >
       {/* -------------------------------------------------------------------
@@ -636,6 +711,30 @@ export function CategoryDistribution3D({
         </p>
       </div>
 
+      {/* -------------------------------------------------------------------
+          PROMINENT SECTION-WIDE LEFT (<) & RIGHT (>) NAVIGATION BUTTONS
+          Sticky at center viewport height, works across the entire section!
+         ------------------------------------------------------------------- */}
+      <div className="sticky top-1/2 -translate-y-1/2 pointer-events-none w-full max-w-4xl mx-auto flex items-center justify-between px-3 sm:px-6 z-30 -mb-12">
+        <button
+          onClick={() => handleSectionSwap(-1)}
+          className="pointer-events-auto w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white text-slate-800 hover:text-sky-600 shadow-md hover:shadow-xl border border-slate-200/90 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-sm"
+          title="Previous Product (Swipe Right / Left Arrow)"
+          aria-label="Previous Product"
+        >
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+
+        <button
+          onClick={() => handleSectionSwap(1)}
+          className="pointer-events-auto w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white text-slate-800 hover:text-sky-600 shadow-md hover:shadow-xl border border-slate-200/90 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-sm"
+          title="Next Product (Swipe Left / Right Arrow)"
+          aria-label="Next Product"
+        >
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+      </div>
+
       {/* ---------------------------------------------------------------------
           CATEGORY STATIONS (Vertical distribution with exact 30px gap between categories)
          --------------------------------------------------------------------- */}
@@ -648,6 +747,7 @@ export function CategoryDistribution3D({
             totalCategories={resolvedCategories.length}
             activeProductIndex={categoryProductIndex[category.id] || 0}
             onProductChange={handleProductChange}
+            onStationActive={handleStationActive}
             shouldReduceMotion={shouldReduceMotion}
           />
         ))}
