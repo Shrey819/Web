@@ -1,9 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+  useMotionValueEvent,
+  useReducedMotion,
+} from "framer-motion";
 import {
   ChevronUp,
   ChevronDown,
@@ -12,10 +19,9 @@ import {
   ArrowRight,
   Layers,
   Sparkles,
-  ExternalLink,
-  SlidersHorizontal,
   PackageCheck,
   Tag,
+  SlidersHorizontal,
 } from "lucide-react";
 import { StorefrontCategory } from "@/lib/storefront";
 import { Product } from "@/types";
@@ -37,30 +43,119 @@ export function CategoryDistribution3D({
   config,
 }: CategoryDistribution3DProps) {
   const shouldReduceMotion = useReducedMotion();
-  const sectionRef = useRef<HTMLElement | null>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   // 1. Resolve categories and active products
-  const resolvedCategories = React.useMemo(() => {
+  const resolvedCategories = useMemo(() => {
     return resolve3DCategories(categories, products);
   }, [categories, products]);
 
   const numCategories = resolvedCategories.length;
 
-  // 2. Active Category Index & Authoritative 3D Rotation State
-  // Step is strictly 120 degrees per category
+  // 2. Exact Vertical Scroll Budget:
+  // First 500px for C1 (0-500px, 0deg)
+  // 500-700px: 120deg rotation from C1 to C2 (200px transition)
+  // 700-1200px: C2 stationary at 0deg (500px window)
+  // 1200-1400px: 120deg rotation from C2 to C3 (200px transition)
+  // 1400-1900px: C3 stationary at 0deg (500px window)
+  // 1900-2100px: 120deg rotation from C3 to C4 (200px transition)
+  // 2100-2600px: C4 stationary at 0deg (500px window)
+  const activeWindowPx = 500;
+  const transitionWindowPx = 200;
+  const stepDistancePx = activeWindowPx + transitionWindowPx; // 700px per category cycle
+
+  // Total scroll distance: for 4 categories = (3 * 700) + 500 = 2600px
+  const totalScrollPx = useMemo(() => {
+    if (numCategories <= 1) return 1000;
+    return (numCategories - 1) * stepDistancePx + activeWindowPx;
+  }, [numCategories, stepDistancePx, activeWindowPx]);
+
+  // Construct deterministic piecewise scroll progress and angle mapping
+  const { scrollPoints, anglePoints } = useMemo(() => {
+    const sp: number[] = [];
+    const ap: number[] = [];
+
+    if (numCategories <= 1) {
+      return { scrollPoints: [0, 1], anglePoints: [0, 0] };
+    }
+
+    for (let i = 0; i < numCategories; i++) {
+      const activeStartPx = i * stepDistancePx;
+      const activeEndPx = activeStartPx + activeWindowPx;
+      const baseAngle = -i * 120;
+
+      // Start of active 500px plateau
+      sp.push(Math.min(1.0, activeStartPx / totalScrollPx));
+      ap.push(baseAngle);
+
+      // End of active 500px plateau
+      sp.push(Math.min(1.0, activeEndPx / totalScrollPx));
+      ap.push(baseAngle);
+    }
+
+    // Ensure monotonically non-decreasing unique points
+    const cleanSp: number[] = [];
+    const cleanAp: number[] = [];
+    for (let i = 0; i < sp.length; i++) {
+      const p = Math.max(0, Math.min(1, sp[i]));
+      if (cleanSp.length === 0 || p > cleanSp[cleanSp.length - 1] + 0.0001) {
+        cleanSp.push(p);
+        cleanAp.push(ap[i]);
+      } else if (p === cleanSp[cleanSp.length - 1]) {
+        cleanAp[cleanAp.length - 1] = ap[i];
+      }
+    }
+    if (cleanSp[cleanSp.length - 1] < 1.0) {
+      cleanSp.push(1.0);
+      cleanAp.push(cleanAp[cleanAp.length - 1]);
+    }
+
+    return { scrollPoints: cleanSp, anglePoints: cleanAp };
+  }, [numCategories, stepDistancePx, activeWindowPx, totalScrollPx]);
+
+  // Framer Motion Page Scroll Tracking
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"],
+  });
+
+  // Linear scroll-linked rotation transform across the 2600px budget
+  const scrollRotation = useTransform(scrollYProgress, scrollPoints, anglePoints);
+
+  // Active Category State
   const [activeCategoryIdx, setActiveCategoryIdx] = useState<number>(0);
-  const [rotationAngle, setRotationAngle] = useState<number>(0);
+  const [scrollPixelDisplay, setScrollPixelDisplay] = useState<number>(0);
 
-  // 3. Independent Product Selection Index for EACH Category
-  // Key: categoryId, Value: productIndex
+  // 3. Horizontal Product Browsing State
+  // Independent product index for each category
   const [categoryProductIndex, setCategoryProductIndex] = useState<Record<string, number>>({});
+  // Swipe direction: +1 = right-to-left (next product enters from right, old exits to left)
+  //                  -1 = left-to-right (prev product enters from left, old exits to right)
+  const [swipeDirection, setSwipeDirection] = useState<number>(1);
 
-  // 4. Scroll debounce/lock refs to prevent gesture skipping
-  const isRotatingRef = useRef<boolean>(false);
-  const touchStartYRef = useRef<number | null>(null);
-  const touchStartXRef = useRef<number | null>(null);
+  // Synchronize active category index from vertical page scroll
+  useMotionValueEvent(scrollYProgress, "change", (latestProgress) => {
+    const currentPx = Math.round(latestProgress * totalScrollPx);
+    setScrollPixelDisplay(currentPx);
 
-  // Active Category & Current Product
+    // Identify which category zone we are currently in
+    // Midpoint between Ci and Ci+1 is at: i * 700 + 600px
+    let matchedIndex = 0;
+    for (let i = 0; i < numCategories; i++) {
+      const thresholdStart = i * stepDistancePx - transitionWindowPx / 2;
+      const thresholdEnd = (i + 1) * stepDistancePx - transitionWindowPx / 2;
+      if (currentPx >= thresholdStart && (i === numCategories - 1 || currentPx < thresholdEnd)) {
+        matchedIndex = i;
+        break;
+      }
+    }
+
+    if (matchedIndex !== activeCategoryIdx) {
+      setActiveCategoryIdx(matchedIndex);
+    }
+  });
+
+  // Active Category & Selected Product
   const activeCategory: ResolvedCategory3D =
     resolvedCategories[activeCategoryIdx] || resolvedCategories[0];
 
@@ -70,34 +165,14 @@ export function CategoryDistribution3D({
       ? activeCategory.products[currentProductIdx % activeCategory.products.length]
       : undefined;
 
-  // Change category safely by delta (+1 for down/next, -1 for up/prev)
-  const changeCategory = useCallback(
-    (delta: number) => {
-      if (numCategories <= 1 || isRotatingRef.current) return;
-
-      isRotatingRef.current = true;
-      setActiveCategoryIdx((prev) => {
-        const next = (prev + delta + numCategories) % numCategories;
-        return next;
-      });
-
-      // Down (+1 delta) rotates carousel by -120deg to bring next panel to center
-      // Up (-1 delta) rotates carousel by +120deg
-      setRotationAngle((prev) => prev - delta * 120);
-
-      setTimeout(() => {
-        isRotatingRef.current = false;
-      }, 650);
-    },
-    [numCategories]
-  );
-
-  // Change product in active category horizontally
+  // Horizontal product swap handler strictly within the 500x800px frame
   const changeProduct = useCallback(
     (delta: number) => {
       if (!activeCategory || !activeCategory.products || activeCategory.products.length <= 1) return;
 
       const totalProds = activeCategory.products.length;
+      setSwipeDirection(delta > 0 ? 1 : -1);
+
       setCategoryProductIndex((prevMap) => {
         const currentIdx = prevMap[activeCategory.id] || 0;
         const nextIdx = (currentIdx + delta + totalProds) % totalProds;
@@ -110,21 +185,36 @@ export function CategoryDistribution3D({
     [activeCategory]
   );
 
-  // Keyboard navigation when user is focused within section
+  // Jump to specific category by scrolling the page
+  const scrollToCategory = useCallback(
+    (targetIndex: number) => {
+      if (!sectionRef.current) return;
+      const sectionTop = sectionRef.current.offsetTop;
+      const targetPx = targetIndex * stepDistancePx + 250; // middle of the 500px window
+      window.scrollTo({
+        top: sectionTop + targetPx,
+        behavior: "smooth",
+      });
+    },
+    [stepDistancePx]
+  );
+
+  // Keyboard navigation: ArrowUp/Down for category, ArrowLeft/Right for horizontal product swap
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if mouse is hovering over section or section is in viewport
       if (!sectionRef.current) return;
       const rect = sectionRef.current.getBoundingClientRect();
-      const inView = rect.top < window.innerHeight * 0.7 && rect.bottom > window.innerHeight * 0.3;
+      const inView = rect.top <= window.innerHeight * 0.5 && rect.bottom >= window.innerHeight * 0.5;
       if (!inView) return;
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        changeCategory(1);
+        const next = Math.min(numCategories - 1, activeCategoryIdx + 1);
+        scrollToCategory(next);
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        changeCategory(-1);
+        const prev = Math.max(0, activeCategoryIdx - 1);
+        scrollToCategory(prev);
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
         changeProduct(1);
@@ -136,349 +226,405 @@ export function CategoryDistribution3D({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [changeCategory, changeProduct]);
+  }, [activeCategoryIdx, numCategories, scrollToCategory, changeProduct]);
 
-  // Wheel handling with threshold accumulation and boundary release
-  const wheelAccumulatorRef = useRef<number>(0);
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    // Only capture deliberate vertical wheel gestures inside the stage
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) * 1.5) {
-      wheelAccumulatorRef.current += e.deltaY;
-
-      if (Math.abs(wheelAccumulatorRef.current) > 70) {
-        if (!isRotatingRef.current) {
-          if (wheelAccumulatorRef.current > 0) {
-            changeCategory(1);
-          } else {
-            changeCategory(-1);
-          }
-        }
-        wheelAccumulatorRef.current = 0;
-      }
-    } else if (Math.abs(e.deltaX) > 40) {
-      // Horizontal swipe on trackpad changes products
-      if (e.deltaX > 0) {
+  // Touch drag tracking for the 500x800px horizontal frame
+  const touchStartXRef = useRef<number | null>(null);
+  const handleFrameTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      touchStartXRef.current = e.touches[0].clientX;
+    }
+  };
+  const handleFrameTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const endX = e.changedTouches[0].clientX;
+    const diffX = endX - touchStartXRef.current;
+    if (Math.abs(diffX) > 40) {
+      if (diffX < 0) {
+        // Swiped Left -> advance product (next product enters from right, old exits left)
         changeProduct(1);
       } else {
+        // Swiped Right -> previous product (enters from left, old exits right)
         changeProduct(-1);
       }
     }
-  };
-
-  // Touch gesture handlers for mobile
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 0) return;
-    touchStartYRef.current = e.touches[0].clientY;
-    touchStartXRef.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartYRef.current === null || touchStartXRef.current === null) return;
-    const touchEndY = e.changedTouches[0].clientY;
-    const touchEndX = e.changedTouches[0].clientX;
-
-    const diffY = touchEndY - touchStartYRef.current;
-    const diffX = touchEndX - touchStartXRef.current;
-
-    if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 50) {
-      if (diffY < 0) {
-        changeCategory(1); // Swipe up -> next category down
-      } else {
-        changeCategory(-1); // Swipe down -> prev category up
-      }
-    } else if (Math.abs(diffX) > 50) {
-      if (diffX < 0) {
-        changeProduct(1); // Swipe left -> next product
-      } else {
-        changeProduct(-1); // Swipe right -> prev product
-      }
-    }
-
-    touchStartYRef.current = null;
     touchStartXRef.current = null;
   };
 
-  // Calculate the 3 slots for visual rendering:
-  // Slot 0: Center (0 deg) -> active category
-  // Slot 1: Right (+120 deg) -> next category
-  // Slot 2: Left (-120 deg) -> prev category
-  const prevIdx = (activeCategoryIdx - 1 + numCategories) % numCategories;
-  const nextIdx = (activeCategoryIdx + 1) % numCategories;
-
-  const prevCategory = resolvedCategories[prevIdx];
-  const nextCategory = resolvedCategories[nextIdx];
-
-  // Primary image for center slot: active product image if available, else category hero image
+  // Image source resolution
   const centerImageSrc =
     activeProduct?.images?.[0]?.url ||
     activeCategory?.image ||
     FALLBACK_CATEGORY_IMAGES.default;
 
+  const prevIdx = (activeCategoryIdx - 1 + numCategories) % numCategories;
+  const nextIdx = (activeCategoryIdx + 1) % numCategories;
+  const prevCategory = resolvedCategories[prevIdx];
+  const nextCategory = resolvedCategories[nextIdx];
+
   const leftImageSrc = prevCategory?.image || FALLBACK_CATEGORY_IMAGES.default;
   const rightImageSrc = nextCategory?.image || FALLBACK_CATEGORY_IMAGES.default;
 
+  // Active Product Price display
+  const activeProductPrice = activeProduct
+    ? (activeProduct.basePrice || (activeProduct as any).price)
+    : undefined;
+
+  // Under prefers-reduced-motion: unpin, fluid height, clean instant transitions
+  if (shouldReduceMotion) {
+    return (
+      <section
+        data-scene="category-distribution-3d"
+        className="relative w-full py-16 bg-white text-slate-900 border-b border-slate-200"
+      >
+        <div className="content-shell max-w-5xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="font-mono text-xs font-bold text-sky-600 uppercase tracking-widest bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
+              INDUSTRIAL CATEGORY DOMAINS
+            </span>
+            <h2 className="text-3xl font-extrabold text-slate-900">
+              {activeCategory.name}
+            </h2>
+            <p className="text-sm text-slate-600">{activeCategory.description}</p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {resolvedCategories.map((c, i) => (
+              <button
+                key={c.id}
+                onClick={() => setActiveCategoryIdx(i)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                  activeCategoryIdx === i
+                    ? "bg-slate-900 text-white border-slate-900"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+
+          {/* 500x800px Frame Fallback */}
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
+            <div className="relative w-full max-w-[480px] h-[400px] sm:h-[500px] bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center p-6">
+              <Image
+                src={centerImageSrc}
+                alt={activeProduct?.name || activeCategory.name}
+                fill
+                className="object-contain p-4"
+              />
+            </div>
+
+            <div className="w-full max-w-[420px] bg-white border border-slate-200 p-6 rounded-2xl shadow-lg space-y-4 text-left">
+              <span className="font-mono text-xs font-bold text-sky-600 uppercase">
+                {activeCategory.name}
+              </span>
+              <h3 className="text-2xl font-bold text-slate-900">
+                {activeProduct?.name || activeCategory.name}
+              </h3>
+              <p className="text-sm text-slate-600">
+                {activeProduct?.shortDescription || activeProduct?.description || activeCategory.description}
+              </p>
+              {activeProductPrice && (
+                <div className="text-xl font-bold text-slate-900">
+                  ₹{Number(activeProductPrice).toLocaleString("en-IN")}
+                </div>
+              )}
+              {activeProduct && (
+                <Link
+                  href={`/product/${activeProduct.slug || activeProduct.id}`}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-sky-600 transition-colors"
+                >
+                  <span>VIEW PRODUCT</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // =========================================================================
+  // PRODUCTION PINNED 3D Y-AXIS STAGE WITH 2600PX SCROLL BUDGET & 500x800PX FRAME
+  // =========================================================================
   return (
     <section
       ref={sectionRef}
       data-scene="category-distribution-3d"
-      onWheel={handleWheel}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      className="relative w-full py-16 sm:py-24 bg-white text-slate-900 border-b border-slate-200/90 overflow-hidden select-none"
+      style={{ height: `calc(${totalScrollPx}px + 100vh)` }}
+      className="relative w-full bg-white text-slate-900 border-b border-slate-200/90 select-none"
     >
-      {/* =========================================================================
-          BACKGROUND INDUSTRIAL ATMOSPHERE (White Base + Subtle Blueprint Grid)
-         ========================================================================= */}
-      {/* Precision Drafting Grid */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.035]"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, #0f172a 1px, transparent 1px),
-            linear-gradient(to bottom, #0f172a 1px, transparent 1px)
-          `,
-          backgroundSize: "32px 32px",
-        }}
-      />
+      {/* Pinned Viewport Container */}
+      <div className="sticky top-0 w-full h-screen overflow-hidden flex flex-col justify-between py-6 sm:py-8">
+        {/* Precision Drafting Grid Background */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.035]"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, #0f172a 1px, transparent 1px),
+              linear-gradient(to bottom, #0f172a 1px, transparent 1px)
+            `,
+            backgroundSize: "32px 32px",
+          }}
+        />
 
-      {/* Ambient Cobalt Blue Light Diffusion Behind Center Stage */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[550px] pointer-events-none transition-all duration-700 ease-out"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, rgba(2, 132, 199, 0.08) 0%, rgba(14, 165, 233, 0.03) 45%, transparent 70%)",
-        }}
-      />
+        {/* Ambient Cobalt Blue Light Diffusion Behind Stage */}
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[650px] pointer-events-none transition-all duration-700 ease-out"
+          style={{
+            background:
+              "radial-gradient(ellipse at center, rgba(2, 132, 199, 0.08) 0%, rgba(14, 165, 233, 0.03) 45%, transparent 70%)",
+          }}
+        />
 
-      {/* Subtle Engineering Vignette */}
-      <div className="absolute inset-0 bg-radial from-transparent via-slate-900/[0.015] to-slate-900/[0.04] pointer-events-none" />
+        {/* Technical HUD Metadata Indicators */}
+        <div className="absolute top-4 left-6 hidden md:flex items-center gap-2 pointer-events-none font-mono text-[10px] text-slate-400 uppercase tracking-widest z-30">
+          <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
+          <span>Y-AXIS 120° ROTATION // 500PX ACTIVE • 200PX TRANSITION</span>
+        </div>
+        <div className="absolute top-4 right-6 hidden md:flex items-center gap-4 pointer-events-none font-mono text-[10px] text-slate-400 uppercase tracking-widest z-30">
+          <span>SCROLL: {scrollPixelDisplay}px / {totalScrollPx}px</span>
+          <span>DOMAIN: 0{activeCategoryIdx + 1} // 0{numCategories}</span>
+        </div>
 
-      {/* Decorative Technical Viewport Metadata */}
-      <div className="absolute top-6 left-6 hidden md:flex items-center gap-2 pointer-events-none font-mono text-[10px] text-slate-400 uppercase tracking-widest">
-        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-        <span>3D.SYS // Y-AXIS 120° CAROUSEL</span>
-      </div>
-      <div className="absolute top-6 right-6 hidden md:flex items-center gap-3 pointer-events-none font-mono text-[10px] text-slate-400 uppercase tracking-widest">
-        <span>STEP: 120°</span>
-        <span>RADIUS: 140PX</span>
-        <span>DOMAIN: {activeCategoryIdx + 1}/{numCategories}</span>
-      </div>
-
-      <div className="content-shell relative z-10">
-        {/* =========================================================================
-            HEADER & CATEGORY TITLE (Prominently placed ABOVE central image)
-           ========================================================================= */}
-        <div className="text-center max-w-3xl mx-auto space-y-3 mb-8 sm:mb-12">
+        {/* -------------------------------------------------------------------
+            1. CATEGORY NAME (Prominently placed ABOVE central image)
+           ------------------------------------------------------------------- */}
+        <div className="relative z-30 text-center max-w-3xl mx-auto px-4 shrink-0">
           {/* Eyebrow badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-50 border border-sky-200/80 text-sky-700 text-xs font-mono font-semibold uppercase tracking-wider shadow-sm">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-50 border border-sky-200/80 text-sky-700 text-xs font-mono font-semibold uppercase tracking-wider shadow-sm mb-1.5">
             <Layers className="w-3.5 h-3.5 text-sky-600" />
             <span>
               Category Domain 0{activeCategoryIdx + 1} of 0{numCategories}
             </span>
           </div>
 
-          {/* Active Category Name (Updated automatically upon vertical 120° rotation) */}
+          {/* Active Category Name (Updates dynamically as carousel rotates) */}
           <motion.div
-            key={`cat-title-${activeCategory.id}`}
-            initial={{ opacity: 0, y: -10 }}
+            key={`title-${activeCategory.id}`}
+            initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
+            transition={{ duration: 0.3 }}
           >
             <h2
               data-el="active-category-title"
-              className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight"
+              className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight"
             >
               {activeCategory.name}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto mt-2 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto line-clamp-1 mt-0.5">
               {activeCategory.description}
             </p>
           </motion.div>
 
-          {/* Category Vertical Rotation Stepper Pills */}
-          <div className="flex items-center justify-center gap-1.5 pt-2">
+          {/* Scroll Timeline Stepper Dots */}
+          <div className="flex items-center justify-center gap-2 pt-1.5">
             {resolvedCategories.map((c, i) => (
               <button
                 key={c.id}
-                onClick={() => {
-                  const delta = i - activeCategoryIdx;
-                  if (delta !== 0) changeCategory(delta);
-                }}
+                onClick={() => scrollToCategory(i)}
                 className={`transition-all duration-300 rounded-full cursor-pointer ${
                   activeCategoryIdx === i
-                    ? "w-8 h-2 bg-sky-600 shadow-sm shadow-sky-600/30"
-                    : "w-2 h-2 bg-slate-300 hover:bg-slate-400"
+                    ? "w-8 h-1.5 bg-sky-600 shadow-sm shadow-sky-600/30"
+                    : "w-1.5 h-1.5 bg-slate-300 hover:bg-slate-400"
                 }`}
-                title={`Jump to ${c.name}`}
-                aria-label={`Select category ${c.name}`}
+                title={`Jump to ${c.name} (${i * stepDistancePx}px)`}
+                aria-label={`Jump to ${c.name}`}
               />
             ))}
           </div>
         </div>
 
-        {/* =========================================================================
-            3D VERTICAL Y-AXIS CAROUSEL STAGE & PRODUCT BROWSER
-           ========================================================================= */}
-        <div className="relative w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
-          {/* Vertical Stepper Controls (Left side on desktop) */}
-          <div className="hidden lg:flex flex-col items-center gap-3 z-30 shrink-0">
+        {/* -------------------------------------------------------------------
+            2. CENTRAL 3D STAGE & 500x800PX HORIZONTAL SWAP FRAME
+           ------------------------------------------------------------------- */}
+        <div className="relative z-20 w-full max-w-7xl mx-auto flex-1 flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-12 px-4 min-h-0">
+          {/* Vertical Stepper Quick Links (Desktop left column) */}
+          <div className="hidden xl:flex flex-col items-center gap-3 shrink-0">
             <button
-              onClick={() => changeCategory(-1)}
-              className="p-2.5 rounded-full bg-white border border-slate-300 shadow-sm text-slate-700 hover:text-sky-600 hover:border-sky-500 hover:shadow-md transition-all active:scale-95 cursor-pointer"
-              title="Previous Category (-120° rotation)"
-              aria-label="Previous Category"
+              onClick={() => scrollToCategory(Math.max(0, activeCategoryIdx - 1))}
+              disabled={activeCategoryIdx === 0}
+              className="p-2.5 rounded-full bg-white border border-slate-300 shadow-sm text-slate-700 hover:text-sky-600 hover:border-sky-500 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              title="Previous Category (-120°)"
             >
-              <ChevronUp className="w-5 h-5" />
+              <ChevronUp className="w-4 h-4" />
             </button>
 
-            <span className="font-mono text-[10px] font-bold text-slate-400 uppercase tracking-widest writing-vertical rotate-180 py-2">
-              SCROLL // VERTICAL
+            <span className="font-mono text-[9px] font-bold text-slate-400 uppercase tracking-widest writing-vertical rotate-180 py-1">
+              SCROLL TIMELINE
             </span>
 
             <button
-              onClick={() => changeCategory(1)}
-              className="p-2.5 rounded-full bg-white border border-slate-300 shadow-sm text-slate-700 hover:text-sky-600 hover:border-sky-500 hover:shadow-md transition-all active:scale-95 cursor-pointer"
-              title="Next Category (+120° rotation)"
-              aria-label="Next Category"
+              onClick={() => scrollToCategory(Math.min(numCategories - 1, activeCategoryIdx + 1))}
+              disabled={activeCategoryIdx === numCategories - 1}
+              className="p-2.5 rounded-full bg-white border border-slate-300 shadow-sm text-slate-700 hover:text-sky-600 hover:border-sky-500 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              title="Next Category (+120°)"
             >
-              <ChevronDown className="w-5 h-5" />
+              <ChevronDown className="w-4 h-4" />
             </button>
           </div>
 
-          {/* -----------------------------------------------------------------------
-              3D PERSPECTIVE STAGE (Center Slot at 0°, Left at -120°, Right at +120°)
-             ----------------------------------------------------------------------- */}
+          {/* 3D PERSPECTIVE SHELL */}
           <div
             data-el="category-carousel-3d"
-            className="relative w-full max-w-[460px] sm:max-w-[520px] lg:max-w-[480px] h-[360px] sm:h-[420px] md:h-[460px] flex items-center justify-center shrink-0"
+            className="relative flex items-center justify-center shrink-0 w-full max-w-[340px] sm:max-w-[460px] lg:max-w-[500px]"
             style={{
               perspective: "1200px",
               perspectiveOrigin: "50% 50%",
             }}
           >
-            {/* The 3D Rotating Shell */}
+            {/* 3D Shell rotating around Y-axis controlled by vertical scroll */}
             <motion.div
-              animate={
-                shouldReduceMotion
-                  ? { opacity: 1 }
-                  : {
-                      rotateY: rotationAngle,
-                    }
-              }
-              transition={{
-                duration: shouldReduceMotion ? 0.2 : 0.65,
-                ease: [0.22, 1, 0.36, 1], // Smooth signature easing
-              }}
               style={{
                 transformStyle: "preserve-3d",
+                rotateY: scrollRotation,
               }}
-              className="relative w-full h-full flex items-center justify-center pointer-events-none"
+              className="relative w-full flex items-center justify-center pointer-events-none"
             >
-              {/* SLOT 1: PREVIOUS CATEGORY (at -120 degrees) */}
+              {/* SLOT 1: PREVIOUS CATEGORY (-120 deg) */}
               <div
-                onClick={() => changeCategory(-1)}
-                className="absolute w-[240px] sm:w-[280px] h-[300px] sm:h-[350px] flex flex-col items-center justify-center p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-md cursor-pointer pointer-events-auto transition-opacity duration-300 hover:opacity-70"
+                onClick={() => scrollToCategory((activeCategoryIdx - 1 + numCategories) % numCategories)}
+                className="absolute w-[240px] sm:w-[300px] h-[320px] sm:h-[420px] flex flex-col items-center justify-center p-4 bg-white/75 backdrop-blur-sm rounded-3xl border border-slate-200/80 shadow-lg cursor-pointer pointer-events-auto transition-opacity duration-300 hover:opacity-75"
                 style={{
                   transform: "rotateY(-120deg) translateZ(140px)",
                   opacity: 0.35,
                   backfaceVisibility: "hidden",
                 }}
               >
-                <div className="relative w-full h-[200px] flex items-center justify-center">
+                <div className="relative w-full h-[220px] sm:h-[280px] flex items-center justify-center">
                   <Image
                     src={leftImageSrc}
                     alt={prevCategory?.name || "Previous Category"}
                     fill
-                    sizes="280px"
+                    sizes="300px"
                     className="object-contain filter grayscale contrast-75 drop-shadow-sm"
                   />
                 </div>
-                <span className="font-mono text-xs font-bold text-slate-500 mt-2 truncate max-w-full text-center">
+                <span className="font-mono text-xs font-bold text-slate-500 mt-2 truncate max-w-full">
                   {prevCategory?.name}
                 </span>
                 <span className="text-[10px] text-slate-400 font-mono">-120°</span>
               </div>
 
-              {/* SLOT 2: NEXT CATEGORY (at +120 degrees) */}
+              {/* SLOT 2: NEXT CATEGORY (+120 deg) */}
               <div
-                onClick={() => changeCategory(1)}
-                className="absolute w-[240px] sm:w-[280px] h-[300px] sm:h-[350px] flex flex-col items-center justify-center p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-md cursor-pointer pointer-events-auto transition-opacity duration-300 hover:opacity-70"
+                onClick={() => scrollToCategory((activeCategoryIdx + 1) % numCategories)}
+                className="absolute w-[240px] sm:w-[300px] h-[320px] sm:h-[420px] flex flex-col items-center justify-center p-4 bg-white/75 backdrop-blur-sm rounded-3xl border border-slate-200/80 shadow-lg cursor-pointer pointer-events-auto transition-opacity duration-300 hover:opacity-75"
                 style={{
                   transform: "rotateY(120deg) translateZ(140px)",
                   opacity: 0.35,
                   backfaceVisibility: "hidden",
                 }}
               >
-                <div className="relative w-full h-[200px] flex items-center justify-center">
+                <div className="relative w-full h-[220px] sm:h-[280px] flex items-center justify-center">
                   <Image
                     src={rightImageSrc}
                     alt={nextCategory?.name || "Next Category"}
                     fill
-                    sizes="280px"
+                    sizes="300px"
                     className="object-contain filter grayscale contrast-75 drop-shadow-sm"
                   />
                 </div>
-                <span className="font-mono text-xs font-bold text-slate-500 mt-2 truncate max-w-full text-center">
+                <span className="font-mono text-xs font-bold text-slate-500 mt-2 truncate max-w-full">
                   {nextCategory?.name}
                 </span>
                 <span className="text-[10px] text-slate-400 font-mono">+120°</span>
               </div>
 
-              {/* SLOT 0: CENTER ACTIVE CATEGORY & SELECTED PRODUCT (at 0 degrees) */}
+              {/* -------------------------------------------------------------
+                  SLOT 0: CENTER ACTIVE CATEGORY (0 deg)
+                  CONTAINS THE EXACT 500px * 800px MASKED HORIZONTAL FRAME
+                 ------------------------------------------------------------- */}
               <div
-                className="absolute w-[300px] sm:w-[380px] md:w-[420px] h-[340px] sm:h-[400px] md:h-[420px] flex flex-col items-center justify-center p-6 bg-white rounded-3xl border border-slate-200 shadow-2xl pointer-events-auto z-40 transition-shadow duration-300 hover:shadow-sky-500/10"
+                onTouchStart={handleFrameTouchStart}
+                onTouchEnd={handleFrameTouchEnd}
+                className="relative w-[320px] sm:w-[440px] lg:w-[500px] h-[440px] sm:h-[580px] lg:h-[680px] xl:h-[750px] max-h-[75vh] bg-white rounded-3xl border border-slate-200/90 shadow-2xl pointer-events-auto z-40 overflow-hidden flex flex-col items-center justify-between p-4 sm:p-6"
                 style={{
                   transform: "rotateY(0deg) translateZ(140px)",
                   opacity: 1,
                   backfaceVisibility: "hidden",
+                  boxShadow:
+                    "0 25px 60px -15px rgba(15, 23, 42, 0.12), 0 0 40px -10px rgba(2, 132, 199, 0.08)",
                 }}
               >
-                {/* Subtle Inner Card Lighting */}
-                <div className="absolute inset-0 bg-gradient-to-b from-sky-500/[0.03] to-transparent rounded-3xl pointer-events-none" />
+                {/* Subtle Inner Frame Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-b from-sky-500/[0.02] to-transparent rounded-3xl pointer-events-none" />
 
-                {/* Primary Centered Cutout Image (400px desktop target, object-contain) */}
-                <div className="relative w-full h-[260px] sm:h-[300px] md:h-[320px] flex items-center justify-center">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={`center-img-${activeCategory.id}-${activeProduct?.id || "default"}`}
-                      initial={{ opacity: 0, scale: 0.94 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.94 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
-                      className="relative w-full h-full flex items-center justify-center"
-                    >
-                      <Image
-                        src={centerImageSrc}
-                        alt={activeProduct?.name || activeCategory.name}
-                        fill
-                        sizes="(max-width: 640px) 300px, 420px"
-                        className="object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.12)] pointer-events-none"
-                        priority
-                      />
-                    </motion.div>
-                  </AnimatePresence>
+                {/* Frame Header Spec Tag */}
+                <div className="relative z-10 w-full flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider px-2">
+                  <span>500×800 FRAME // ACTIVE</span>
+                  <span>{activeCategory.badge}</span>
                 </div>
 
-                {/* Soft Elliptical Grounding Floor Shadow */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-3 bg-slate-900/10 rounded-full blur-md pointer-events-none" />
+                {/* -----------------------------------------------------------
+                    THE HORIZONTAL SLIDE STAGE (Inside 500x800 Frame Only)
+                    1st image slides left & disappears; 2nd enters from right!
+                   ----------------------------------------------------------- */}
+                <div className="relative w-full flex-1 overflow-hidden flex items-center justify-center my-2">
+                  <AnimatePresence initial={false} custom={swipeDirection} mode="popLayout">
+                    <motion.div
+                      key={`frame-slide-${activeCategory.id}-${currentProductIdx}`}
+                      custom={swipeDirection}
+                      variants={{
+                        enter: (direction: number) => ({
+                          x: direction > 0 ? "100%" : "-100%",
+                          opacity: 0,
+                        }),
+                        center: {
+                          x: 0,
+                          opacity: 1,
+                        },
+                        exit: (direction: number) => ({
+                          x: direction > 0 ? "-100%" : "100%",
+                          opacity: 0,
+                        }),
+                      }}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{
+                        x: { type: "spring", stiffness: 300, damping: 32 },
+                        opacity: { duration: 0.22 },
+                      }}
+                      className="absolute inset-0 w-full h-full flex flex-col items-center justify-center"
+                    >
+                      <div className="relative w-full h-full flex items-center justify-center">
+                        <Image
+                          src={centerImageSrc}
+                          alt={activeProduct?.name || activeCategory.name}
+                          fill
+                          sizes="(max-width: 640px) 320px, (max-width: 1024px) 440px, 500px"
+                          className="object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.14)] pointer-events-none"
+                          priority
+                        />
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
 
-                {/* Horizontal Product Pagination Indicator under Central Image */}
+                  {/* Elliptical Grounding Shadow Under Frame */}
+                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-3 bg-slate-900/10 rounded-full blur-md pointer-events-none" />
+                </div>
+
+                {/* Horizontal Product Navigation Controls in Frame Base */}
                 {activeCategory.products && activeCategory.products.length > 1 && (
-                  <div className="relative z-20 flex items-center gap-3 pt-2">
+                  <div className="relative z-20 w-full flex items-center justify-between pt-2 border-t border-slate-100 px-2">
                     <button
                       onClick={() => changeProduct(-1)}
-                      className="p-1.5 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-600 hover:text-sky-700 transition-colors cursor-pointer"
-                      title="Previous Product"
+                      className="p-1.5 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-700 transition-colors cursor-pointer"
+                      title="Previous Product (Slide in from left)"
                       aria-label="Previous Product"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       {activeCategory.products.map((p, pIdx) => (
                         <button
                           key={p.id}
                           onClick={() => {
+                            setSwipeDirection(pIdx > currentProductIdx ? 1 : -1);
                             setCategoryProductIndex((prevMap) => ({
                               ...prevMap,
                               [activeCategory.id]: pIdx,
@@ -486,7 +632,7 @@ export function CategoryDistribution3D({
                           }}
                           className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                             currentProductIdx === pIdx
-                              ? "w-5 bg-sky-600"
+                              ? "w-6 bg-sky-600"
                               : "w-1.5 bg-slate-200 hover:bg-slate-300"
                           }`}
                           title={`Select ${p.name}`}
@@ -497,8 +643,8 @@ export function CategoryDistribution3D({
 
                     <button
                       onClick={() => changeProduct(1)}
-                      className="p-1.5 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-600 hover:text-sky-700 transition-colors cursor-pointer"
-                      title="Next Product"
+                      className="p-1.5 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-700 transition-colors cursor-pointer"
+                      title="Next Product (Slide in from right)"
                       aria-label="Next Product"
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -509,12 +655,12 @@ export function CategoryDistribution3D({
             </motion.div>
           </div>
 
-          {/* -----------------------------------------------------------------------
-              PRODUCT DETAILS PANEL (Positioned to the RIGHT of the centered image)
-             ----------------------------------------------------------------------- */}
+          {/* -------------------------------------------------------------------
+              3. PRODUCT DETAILS PANEL (Positioned to the RIGHT of the centered frame)
+             ------------------------------------------------------------------- */}
           <div
             data-el="active-product-details"
-            className="w-full lg:max-w-[420px] flex flex-col justify-center space-y-4 text-left px-2 sm:px-4 z-20"
+            className="w-full lg:max-w-[420px] flex flex-col justify-center space-y-4 text-left px-2 sm:px-4 z-20 shrink-0"
           >
             {activeProduct ? (
               <AnimatePresence mode="wait">
@@ -523,8 +669,8 @@ export function CategoryDistribution3D({
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-2xl p-6 shadow-xl space-y-4"
+                  transition={{ duration: 0.28, ease: "easeOut" }}
+                  className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4"
                 >
                   {/* Category & Product Index Tag */}
                   <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
@@ -558,13 +704,13 @@ export function CategoryDistribution3D({
                   {/* Price & Action Row */}
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                     <div>
-                      {(activeProduct.basePrice || (activeProduct as any).price) ? (
+                      {activeProductPrice ? (
                         <div className="space-y-0.5">
                           <span className="block font-mono text-[10px] text-slate-400 uppercase font-bold">
                             Price
                           </span>
                           <span className="font-mono text-lg sm:text-xl font-extrabold text-slate-900">
-                            ₹{Number(activeProduct.basePrice || (activeProduct as any).price).toLocaleString("en-IN")}
+                            ₹{Number(activeProductPrice).toLocaleString("en-IN")}
                           </span>
                         </div>
                       ) : (
@@ -586,7 +732,7 @@ export function CategoryDistribution3D({
               </AnimatePresence>
             ) : (
               /* Graceful Empty State if category has no products yet */
-              <div className="bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
                 <div className="flex items-center gap-2 text-xs font-mono font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-md border border-amber-200 inline-flex">
                   <PackageCheck className="w-3.5 h-3.5" />
                   <span>CATALOG READY</span>
@@ -612,23 +758,10 @@ export function CategoryDistribution3D({
               </div>
             )}
 
-            {/* Mobile Category Navigation Controls (Visible on smaller screens) */}
-            <div className="flex lg:hidden items-center justify-between pt-2">
-              <button
-                onClick={() => changeCategory(-1)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-sky-50 text-slate-700 text-xs font-bold border border-slate-200"
-              >
-                <ChevronUp className="w-4 h-4" />
-                <span>PREV CATEGORY</span>
-              </button>
-
-              <button
-                onClick={() => changeCategory(1)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-sky-50 text-slate-700 text-xs font-bold border border-slate-200"
-              >
-                <span>NEXT CATEGORY</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
+            {/* Mobile Swipe Guidance Note */}
+            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 px-1 pt-1">
+              <span>◄ Swipe 500px frame for products ►</span>
+              <span>Scroll down for next category</span>
             </div>
           </div>
         </div>
