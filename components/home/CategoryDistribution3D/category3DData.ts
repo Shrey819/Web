@@ -91,9 +91,11 @@ export function resolve3DCategories(
     dbCategories && dbCategories.length > 0
       ? dbCategories
       : [
-          { id: "linear-guideway", name: "Linear Guideway", slug: "linear-guideway", itemCount: 27 },
-          { id: "ballscrew", name: "Ballscrew", slug: "ballscrew", itemCount: 19 },
-          { id: "actuators", name: "Actuators", slug: "actuators", itemCount: 2 },
+          { id: "linear-guideway", name: "Linear Guideway", slug: "linear-guideway", itemCount: 31 },
+          { id: "ballscrew", name: "Ballscrew", slug: "ballscrew", itemCount: 27 },
+          { id: "actuators", name: "Actuators", slug: "actuators", itemCount: 4 },
+          { id: "linear-guideways", name: "Linear Guideways", slug: "linear-guideways", itemCount: 3 },
+          { id: "ballscrews", name: "Ballscrews", slug: "ballscrews", itemCount: 2 },
         ];
 
   // Index active products by category ID, slug, and subcategory
@@ -112,67 +114,57 @@ export function resolve3DCategories(
     });
   });
 
-  // Track canonical slugs to eliminate duplicate singular/plural categories (e.g. ballscrew vs ballscrews)
-  const seenCanonical = new Set<string>();
   const resolved: ResolvedCategory3D[] = [];
 
-  // Sort categories by itemCount descending so high-product categories come first
-  const sortedCategories = [...sourceCategories].sort((a, b) => {
-    return Number(b.itemCount || 0) - Number(a.itemCount || 0);
-  });
-
-  for (const cat of sortedCategories) {
+  for (const cat of sourceCategories) {
     const rawSlug = (cat.slug || cat.id || "").toLowerCase();
     const canonicalKey = rawSlug.replace(/s$/, "");
 
-    if (seenCanonical.has(canonicalKey)) {
-      continue; // Skip duplicate plural category if singular already exists
-    }
-
-    // Match products across ID, slug, and normalized canonical key
-    const matched = [
+    // Match products across ID and slug
+    let matched = [
       ...(productsByCatKey.get(cat.id.toLowerCase()) || []),
       ...(productsByCatKey.get(cat.slug.toLowerCase()) || []),
-      ...(productsByCatKey.get(canonicalKey) || []),
-      ...(productsByCatKey.get(canonicalKey + "s") || []),
     ];
+
+    // If no direct ID/slug match, fallback to canonical or plural key
+    if (matched.length === 0) {
+      matched = [
+        ...(productsByCatKey.get(canonicalKey) || []),
+        ...(productsByCatKey.get(canonicalKey + "s") || []),
+      ];
+    }
 
     // Deduplicate matched products by ID
     const uniqueProducts = Array.from(
       new Map(matched.map((p) => [p.id, p])).values()
     );
 
-    // If category has products, or is a valid database category, include it
-    if (uniqueProducts.length > 0 || Number(cat.itemCount || 0) > 0) {
-      seenCanonical.add(canonicalKey);
+    const slugKey = (cat.slug || cat.id || "").toLowerCase();
+    const meta =
+      DEFAULT_CATEGORY_METADATA[slugKey] ||
+      DEFAULT_CATEGORY_METADATA[canonicalKey] || {
+        badge: "Industrial Grade",
+        description: "High-tolerance precision components engineered for reliable plant uptime.",
+        accentColor: "from-sky-500/20 to-blue-600/5",
+        defaultImage: FALLBACK_CATEGORY_IMAGES[slugKey] || FALLBACK_CATEGORY_IMAGES.default,
+      };
 
-      const slugKey = (cat.slug || cat.id || "").toLowerCase();
-      const meta =
-        DEFAULT_CATEGORY_METADATA[slugKey] ||
-        DEFAULT_CATEGORY_METADATA[canonicalKey] || {
-          badge: "Industrial Grade",
-          description: "High-tolerance precision components engineered for reliable plant uptime.",
-          accentColor: "from-sky-500/20 to-blue-600/5",
-          defaultImage: FALLBACK_CATEGORY_IMAGES[slugKey] || FALLBACK_CATEGORY_IMAGES.default,
-        };
+    // Determine category hero image:
+    // First product image with valid url if available, else meta default image
+    const firstProductImg = uniqueProducts[0]?.images?.[0]?.url;
+    const categoryImage = firstProductImg || meta.defaultImage;
 
-      // Determine category hero image:
-      // First product image with valid url if available, else meta default image
-      const firstProductImg = uniqueProducts[0]?.images?.[0]?.url;
-      const categoryImage = firstProductImg || meta.defaultImage;
-
-      resolved.push({
-        id: cat.id,
-        name: cat.name,
-        slug: cat.slug || cat.id,
-        description: meta.description,
-        itemCount: uniqueProducts.length || Number(cat.itemCount || 0),
-        badge: meta.badge,
-        accentColor: meta.accentColor,
-        image: categoryImage,
-        products: uniqueProducts,
-      });
-    }
+    resolved.push({
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug || cat.id,
+      description: meta.description,
+      itemCount: uniqueProducts.length || Number(cat.itemCount || 0),
+      badge: meta.badge,
+      accentColor: meta.accentColor,
+      image: categoryImage,
+      products: uniqueProducts.length > 0 ? uniqueProducts : dbProducts.slice(0, 4),
+    });
   }
 
   return resolved.length > 0

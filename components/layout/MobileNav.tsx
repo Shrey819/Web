@@ -56,25 +56,7 @@ export function MobileNav({
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          // Deduplicate singular/plural categories and filter 0-item ghost duplicates
-          const seen = new Set<string>();
-          const cleaned = data.filter((c) => {
-            const canonical = (c.slug || c.id || "").toLowerCase().replace(/s$/, "");
-            if (seen.has(canonical)) return false;
-            if (
-              Number(c.itemCount || 0) > 0 ||
-              !data.some(
-                (d) =>
-                  (d.slug || d.id || "").toLowerCase().replace(/s$/, "") === canonical &&
-                  Number(d.itemCount || 0) > 0
-              )
-            ) {
-              seen.add(canonical);
-              return true;
-            }
-            return false;
-          });
-          setCategories(cleaned.length > 0 ? cleaned : data);
+          setCategories(data);
         }
       })
       .catch(() => {});

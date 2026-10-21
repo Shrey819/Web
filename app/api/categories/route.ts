@@ -10,9 +10,18 @@ export async function GET() {
         c.slug,
         COALESCE(c.description, '') as description,
         COALESCE(c."sortOrder", 0) as "sortOrder",
-        COUNT(DISTINCT p.id)::int as "itemCount"
+        COUNT(DISTINCT pc."productId")::int as "itemCount"
       FROM "Category" c
-      LEFT JOIN "Product" p ON (c.id = p."categoryId" OR c.slug = p."categoryId") AND p.status = 'ACTIVE'
+      LEFT JOIN (
+        SELECT pc."productId", pc."categoryId" 
+        FROM "ProductCategory" pc 
+        JOIN "Product" p ON pc."productId" = p.id 
+        WHERE (p.status IS NULL OR p.status != 'DELETED') AND p."deletedAt" IS NULL AND p.status = 'ACTIVE' AND COALESCE(p.visible, true) = true
+        UNION
+        SELECT id as "productId", "categoryId" 
+        FROM "Product" 
+        WHERE (status IS NULL OR status != 'DELETED') AND "deletedAt" IS NULL AND (status = 'ACTIVE' OR COALESCE(visible, true) = true) AND "categoryId" IS NOT NULL
+      ) pc ON c.id = pc."categoryId" OR c.slug = pc."categoryId"
       WHERE COALESCE(c.status, 'active') != 'hidden'
       GROUP BY c.id, c.name, c.slug, c.description, c."sortOrder"
       ORDER BY c."sortOrder" ASC, c.name ASC

@@ -62,28 +62,8 @@ export function MegaMenu({ onClose, onMouseEnter, onMouseLeave }: MegaMenuProps)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          // Deduplicate singular/plural categories and filter 0-item ghost duplicates
-          const seen = new Set<string>();
-          const cleaned = data.filter((c) => {
-            const canonical = (c.slug || c.id || "").toLowerCase().replace(/s$/, "");
-            if (seen.has(canonical)) return false;
-            if (
-              Number(c.itemCount || 0) > 0 ||
-              !data.some(
-                (d) =>
-                  (d.slug || d.id || "").toLowerCase().replace(/s$/, "") === canonical &&
-                  Number(d.itemCount || 0) > 0
-              )
-            ) {
-              seen.add(canonical);
-              return true;
-            }
-            return false;
-          });
-
-          const finalList = cleaned.length > 0 ? cleaned : data;
-          setCategoriesList(finalList);
-          setActiveCategorySlug(finalList[0].slug);
+          setCategoriesList(data);
+          setActiveCategorySlug(data[0].slug);
         } else {
           // Fallback to static CATEGORIES if DB is empty
           const fallback = CATEGORIES.map((c) => ({
