@@ -338,7 +338,7 @@ function CategoryStation({
           opacity: detailsOpacity,
           pointerEvents: shouldReduceMotion ? "auto" : pointerEvents,
         }}
-        className="text-center px-4 mb-[30px] z-20"
+        className="text-center px-4 mb-[10px] z-20"
       >
         <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
           {category.name}
@@ -353,7 +353,7 @@ function CategoryStation({
         <div
           className="relative flex items-center justify-center shrink-0"
           style={{
-            perspective: "800px",
+            perspective: "1000px",
             perspectiveOrigin: "50% 50%",
           }}
         >
@@ -363,7 +363,7 @@ function CategoryStation({
               shouldReduceMotion
                 ? {}
                 : {
-                    transformOrigin: "50% 50% -25px",
+                    transformOrigin: "50% 50% -250px",
                     transformStyle: "preserve-3d",
                     rotateY,
                   }
@@ -602,7 +602,7 @@ export function CategoryDistribution3D({
       {/* ---------------------------------------------------------------------
           CATEGORY STATIONS (Vertical distribution with exact 30px gap between categories)
          --------------------------------------------------------------------- */}
-      <div className="relative z-10 w-full flex flex-col items-center gap-[30px] py-4">
+      <div className="relative z-10 w-full flex flex-col items-center gap-[20px] py-4">
         {resolvedCategories.map((category, index) => (
           <CategoryStation
             key={category.id}
