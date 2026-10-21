@@ -9,7 +9,6 @@ import {
   useScroll,
   useTransform,
   useMotionValueEvent,
-  useReducedMotion,
 } from "framer-motion";
 import {
   ChevronUp,
@@ -42,7 +41,6 @@ export function CategoryDistribution3D({
   products = [],
   config,
 }: CategoryDistribution3DProps) {
-  const shouldReduceMotion = useReducedMotion();
   const sectionRef = useRef<HTMLDivElement>(null);
 
   // 1. Resolve categories and active products
@@ -52,106 +50,117 @@ export function CategoryDistribution3D({
 
   const numCategories = resolvedCategories.length;
 
-  // 2. Exact Vertical Scroll Budget:
-  // First 500px for C1 (0-500px, 0deg)
-  // 500-700px: 120deg rotation from C1 to C2 (200px transition)
-  // 700-1200px: C2 stationary at 0deg (500px window)
-  // 1200-1400px: 120deg rotation from C2 to C3 (200px transition)
-  // 1400-1900px: C3 stationary at 0deg (500px window)
-  // 1900-2100px: 120deg rotation from C3 to C4 (200px transition)
-  // 2100-2600px: C4 stationary at 0deg (500px window)
-  const activeWindowPx = 500;
-  const transitionWindowPx = 200;
-  const stepDistancePx = activeWindowPx + transitionWindowPx; // 700px per category cycle
+  // 2. Full 3000px Y-Axis Scroll Budget:
+  // Whole section height is exactly 3000px on the Y axis
+  const TOTAL_SECTION_HEIGHT_PX = 3000;
 
-  // Total scroll distance: for 4 categories = (3 * 700) + 500 = 2600px
-  const totalScrollPx = useMemo(() => {
-    if (numCategories <= 1) return 1000;
-    return (numCategories - 1) * stepDistancePx + activeWindowPx;
-  }, [numCategories, stepDistancePx, activeWindowPx]);
+  // Track page scroll progress strictly over this 3000px section
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"],
+  });
 
-  // Construct deterministic piecewise scroll progress and angle mapping
-  const { scrollPoints, anglePoints } = useMemo(() => {
+  // Calculate piecewise scroll thresholds across the 3000px size for N categories
+  const { scrollProgressThresholds, angleThresholds } = useMemo(() => {
+    if (numCategories <= 1) {
+      return { scrollProgressThresholds: [0, 1], angleThresholds: [0, 0] };
+    }
+
     const sp: number[] = [];
     const ap: number[] = [];
 
-    if (numCategories <= 1) {
-      return { scrollPoints: [0, 1], anglePoints: [0, 0] };
-    }
-
+    // Distribute categories evenly across the 3000px range
+    // Each category gets a plateau with smooth 120deg rotation transitions in between
     for (let i = 0; i < numCategories; i++) {
-      const activeStartPx = i * stepDistancePx;
-      const activeEndPx = activeStartPx + activeWindowPx;
-      const baseAngle = -i * 120;
+      const targetAngle = -i * 120;
+      const centerFrac = i / (numCategories - 1);
 
-      // Start of active 500px plateau
-      sp.push(Math.min(1.0, activeStartPx / totalScrollPx));
-      ap.push(baseAngle);
+      // Plateau width around center (approx 12% of total range)
+      const plateauHalf = 0.06;
+      const plateauStart = Math.max(0, centerFrac - plateauHalf);
+      const plateauEnd = Math.min(1.0, centerFrac + plateauHalf);
 
-      // End of active 500px plateau
-      sp.push(Math.min(1.0, activeEndPx / totalScrollPx));
-      ap.push(baseAngle);
+      if (i === 0) {
+        sp.push(0);
+        ap.push(targetAngle);
+        sp.push(plateauEnd);
+        ap.push(targetAngle);
+      } else if (i === numCategories - 1) {
+        sp.push(plateauStart);
+        ap.push(targetAngle);
+        sp.push(1.0);
+        ap.push(targetAngle);
+      } else {
+        sp.push(plateauStart);
+        ap.push(targetAngle);
+        sp.push(plateauEnd);
+        ap.push(targetAngle);
+      }
     }
 
-    // Ensure monotonically non-decreasing unique points
+    // Ensure strictly monotonic non-decreasing points
     const cleanSp: number[] = [];
     const cleanAp: number[] = [];
     for (let i = 0; i < sp.length; i++) {
       const p = Math.max(0, Math.min(1, sp[i]));
-      if (cleanSp.length === 0 || p > cleanSp[cleanSp.length - 1] + 0.0001) {
+      if (cleanSp.length === 0 || p > cleanSp[cleanSp.length - 1] + 0.001) {
         cleanSp.push(p);
         cleanAp.push(ap[i]);
       } else if (p === cleanSp[cleanSp.length - 1]) {
         cleanAp[cleanAp.length - 1] = ap[i];
       }
     }
+
     if (cleanSp[cleanSp.length - 1] < 1.0) {
       cleanSp.push(1.0);
       cleanAp.push(cleanAp[cleanAp.length - 1]);
     }
 
-    return { scrollPoints: cleanSp, anglePoints: cleanAp };
-  }, [numCategories, stepDistancePx, activeWindowPx, totalScrollPx]);
+    return { scrollProgressThresholds: cleanSp, angleThresholds: cleanAp };
+  }, [numCategories]);
 
-  // Framer Motion Page Scroll Tracking
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
+  // Continuous linear 3D Y-axis rotation tied 1:1 to user scroll gesture
+  const scrollRotation = useTransform(
+    scrollYProgress,
+    scrollProgressThresholds,
+    angleThresholds
+  );
 
-  // Linear scroll-linked rotation transform across the 2600px budget
-  const scrollRotation = useTransform(scrollYProgress, scrollPoints, anglePoints);
+  // Subtle continuous 3D depth floating response
+  const depthZ = useTransform(scrollYProgress, [0, 0.5, 1], [0, 20, 0]);
 
   // Active Category State
   const [activeCategoryIdx, setActiveCategoryIdx] = useState<number>(0);
-  const [scrollPixelDisplay, setScrollPixelDisplay] = useState<number>(0);
+  const [currentScrollPx, setCurrentScrollPx] = useState<number>(0);
 
   // 3. Horizontal Product Browsing State
   // Independent product index for each category
   const [categoryProductIndex, setCategoryProductIndex] = useState<Record<string, number>>({});
-  // Swipe direction: +1 = right-to-left (next product enters from right, old exits to left)
-  //                  -1 = left-to-right (prev product enters from left, old exits to right)
+  // Direction for horizontal swap:
+  // +1 = next product: current image slides LEFT and disappears (-100%), new enters from RIGHT (+100% -> 0)
+  // -1 = prev product: current image slides RIGHT and disappears (+100%), new enters from LEFT (-100% -> 0)
   const [swipeDirection, setSwipeDirection] = useState<number>(1);
 
   // Synchronize active category index from vertical page scroll
-  useMotionValueEvent(scrollYProgress, "change", (latestProgress) => {
-    const currentPx = Math.round(latestProgress * totalScrollPx);
-    setScrollPixelDisplay(currentPx);
+  useMotionValueEvent(scrollYProgress, "change", (progress) => {
+    const px = Math.round(progress * TOTAL_SECTION_HEIGHT_PX);
+    setCurrentScrollPx(px);
 
-    // Identify which category zone we are currently in
-    // Midpoint between Ci and Ci+1 is at: i * 700 + 600px
-    let matchedIndex = 0;
-    for (let i = 0; i < numCategories; i++) {
-      const thresholdStart = i * stepDistancePx - transitionWindowPx / 2;
-      const thresholdEnd = (i + 1) * stepDistancePx - transitionWindowPx / 2;
-      if (currentPx >= thresholdStart && (i === numCategories - 1 || currentPx < thresholdEnd)) {
-        matchedIndex = i;
-        break;
+    // Determine which category is currently in focus
+    if (numCategories > 1) {
+      const step = 1 / (numCategories - 1);
+      let closestIdx = 0;
+      let minDiff = 999;
+      for (let i = 0; i < numCategories; i++) {
+        const diff = Math.abs(progress - i * step);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIdx = i;
+        }
       }
-    }
-
-    if (matchedIndex !== activeCategoryIdx) {
-      setActiveCategoryIdx(matchedIndex);
+      if (closestIdx !== activeCategoryIdx) {
+        setActiveCategoryIdx(closestIdx);
+      }
     }
   });
 
@@ -185,26 +194,27 @@ export function CategoryDistribution3D({
     [activeCategory]
   );
 
-  // Jump to specific category by scrolling the page
+  // Jump to specific category by scrolling the 3000px section
   const scrollToCategory = useCallback(
     (targetIndex: number) => {
       if (!sectionRef.current) return;
       const sectionTop = sectionRef.current.offsetTop;
-      const targetPx = targetIndex * stepDistancePx + 250; // middle of the 500px window
+      const frac = numCategories > 1 ? targetIndex / (numCategories - 1) : 0;
+      const targetPx = frac * TOTAL_SECTION_HEIGHT_PX;
       window.scrollTo({
         top: sectionTop + targetPx,
         behavior: "smooth",
       });
     },
-    [stepDistancePx]
+    [numCategories]
   );
 
-  // Keyboard navigation: ArrowUp/Down for category, ArrowLeft/Right for horizontal product swap
+  // Keyboard navigation: ArrowUp/Down for category scroll, ArrowLeft/Right for horizontal frame swap
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!sectionRef.current) return;
       const rect = sectionRef.current.getBoundingClientRect();
-      const inView = rect.top <= window.innerHeight * 0.5 && rect.bottom >= window.innerHeight * 0.5;
+      const inView = rect.top <= window.innerHeight * 0.6 && rect.bottom >= window.innerHeight * 0.4;
       if (!inView) return;
 
       if (e.key === "ArrowDown") {
@@ -228,7 +238,7 @@ export function CategoryDistribution3D({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeCategoryIdx, numCategories, scrollToCategory, changeProduct]);
 
-  // Touch drag tracking for the 500x800px horizontal frame
+  // Touch swipe tracking inside the 500x800px frame
   const touchStartXRef = useRef<number | null>(null);
   const handleFrameTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length > 0) {
@@ -239,12 +249,12 @@ export function CategoryDistribution3D({
     if (touchStartXRef.current === null) return;
     const endX = e.changedTouches[0].clientX;
     const diffX = endX - touchStartXRef.current;
-    if (Math.abs(diffX) > 40) {
+    if (Math.abs(diffX) > 35) {
       if (diffX < 0) {
-        // Swiped Left -> advance product (next product enters from right, old exits left)
+        // Swiped Left -> advance product (current slides left & disappears, new enters from right)
         changeProduct(1);
       } else {
-        // Swiped Right -> previous product (enters from left, old exits right)
+        // Swiped Right -> previous product (current slides right & disappears, new enters from left)
         changeProduct(-1);
       }
     }
@@ -265,102 +275,22 @@ export function CategoryDistribution3D({
   const leftImageSrc = prevCategory?.image || FALLBACK_CATEGORY_IMAGES.default;
   const rightImageSrc = nextCategory?.image || FALLBACK_CATEGORY_IMAGES.default;
 
-  // Active Product Price display
   const activeProductPrice = activeProduct
     ? (activeProduct.basePrice || (activeProduct as any).price)
     : undefined;
 
-  // Under prefers-reduced-motion: unpin, fluid height, clean instant transitions
-  if (shouldReduceMotion) {
-    return (
-      <section
-        data-scene="category-distribution-3d"
-        className="relative w-full py-16 bg-white text-slate-900 border-b border-slate-200"
-      >
-        <div className="content-shell max-w-5xl mx-auto space-y-8">
-          <div className="text-center space-y-2">
-            <span className="font-mono text-xs font-bold text-sky-600 uppercase tracking-widest bg-sky-50 px-3 py-1 rounded-full border border-sky-200">
-              INDUSTRIAL CATEGORY DOMAINS
-            </span>
-            <h2 className="text-3xl font-extrabold text-slate-900">
-              {activeCategory.name}
-            </h2>
-            <p className="text-sm text-slate-600">{activeCategory.description}</p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {resolvedCategories.map((c, i) => (
-              <button
-                key={c.id}
-                onClick={() => setActiveCategoryIdx(i)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold border transition-colors ${
-                  activeCategoryIdx === i
-                    ? "bg-slate-900 text-white border-slate-900"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
-
-          {/* 500x800px Frame Fallback */}
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
-            <div className="relative w-full max-w-[480px] h-[400px] sm:h-[500px] bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center p-6">
-              <Image
-                src={centerImageSrc}
-                alt={activeProduct?.name || activeCategory.name}
-                fill
-                className="object-contain p-4"
-              />
-            </div>
-
-            <div className="w-full max-w-[420px] bg-white border border-slate-200 p-6 rounded-2xl shadow-lg space-y-4 text-left">
-              <span className="font-mono text-xs font-bold text-sky-600 uppercase">
-                {activeCategory.name}
-              </span>
-              <h3 className="text-2xl font-bold text-slate-900">
-                {activeProduct?.name || activeCategory.name}
-              </h3>
-              <p className="text-sm text-slate-600">
-                {activeProduct?.shortDescription || activeProduct?.description || activeCategory.description}
-              </p>
-              {activeProductPrice && (
-                <div className="text-xl font-bold text-slate-900">
-                  ₹{Number(activeProductPrice).toLocaleString("en-IN")}
-                </div>
-              )}
-              {activeProduct && (
-                <Link
-                  href={`/product/${activeProduct.slug || activeProduct.id}`}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-sky-600 transition-colors"
-                >
-                  <span>VIEW PRODUCT</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // =========================================================================
-  // PRODUCTION PINNED 3D Y-AXIS STAGE WITH 2600PX SCROLL BUDGET & 500x800PX FRAME
-  // =========================================================================
   return (
     <section
       ref={sectionRef}
       data-scene="category-distribution-3d"
-      style={{ height: `calc(${totalScrollPx}px + 100vh)` }}
+      style={{ height: `${TOTAL_SECTION_HEIGHT_PX}px` }}
       className="relative w-full bg-white text-slate-900 border-b border-slate-200/90 select-none"
     >
-      {/* Pinned Viewport Container */}
-      <div className="sticky top-0 w-full h-screen overflow-hidden flex flex-col justify-between py-6 sm:py-8">
-        {/* Precision Drafting Grid Background */}
+      {/* Pinned Sticky Viewport Shell */}
+      <div className="sticky top-0 w-full h-screen overflow-hidden flex flex-col justify-between py-5 sm:py-7">
+        {/* Precision Industrial Blueprint Grid */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.035]"
+          className="absolute inset-0 pointer-events-none opacity-[0.038]"
           style={{
             backgroundImage: `
               linear-gradient(to right, #0f172a 1px, transparent 1px),
@@ -370,9 +300,9 @@ export function CategoryDistribution3D({
           }}
         />
 
-        {/* Ambient Cobalt Blue Light Diffusion Behind Stage */}
+        {/* Ambient Cobalt Blue Light Diffusion Behind Center Stage */}
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[650px] pointer-events-none transition-all duration-700 ease-out"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[700px] pointer-events-none transition-all duration-700 ease-out"
           style={{
             background:
               "radial-gradient(ellipse at center, rgba(2, 132, 199, 0.08) 0%, rgba(14, 165, 233, 0.03) 45%, transparent 70%)",
@@ -382,10 +312,10 @@ export function CategoryDistribution3D({
         {/* Technical HUD Metadata Indicators */}
         <div className="absolute top-4 left-6 hidden md:flex items-center gap-2 pointer-events-none font-mono text-[10px] text-slate-400 uppercase tracking-widest z-30">
           <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-          <span>Y-AXIS 120° ROTATION // 500PX ACTIVE • 200PX TRANSITION</span>
+          <span>3D.SYS // Y-AXIS 120° CAROUSEL • 3000PX SCROLL BUDGET</span>
         </div>
         <div className="absolute top-4 right-6 hidden md:flex items-center gap-4 pointer-events-none font-mono text-[10px] text-slate-400 uppercase tracking-widest z-30">
-          <span>SCROLL: {scrollPixelDisplay}px / {totalScrollPx}px</span>
+          <span>Y-SCROLL: {currentScrollPx}px / 3000px</span>
           <span>DOMAIN: 0{activeCategoryIdx + 1} // 0{numCategories}</span>
         </div>
 
@@ -401,7 +331,7 @@ export function CategoryDistribution3D({
             </span>
           </div>
 
-          {/* Active Category Name (Updates dynamically as carousel rotates) */}
+          {/* Active Category Name (Updated automatically upon vertical 120° rotation) */}
           <motion.div
             key={`title-${activeCategory.id}`}
             initial={{ opacity: 0, y: -6 }}
@@ -419,7 +349,7 @@ export function CategoryDistribution3D({
             </p>
           </motion.div>
 
-          {/* Scroll Timeline Stepper Dots */}
+          {/* Category Stepper Dots */}
           <div className="flex items-center justify-center gap-2 pt-1.5">
             {resolvedCategories.map((c, i) => (
               <button
@@ -430,7 +360,7 @@ export function CategoryDistribution3D({
                     ? "w-8 h-1.5 bg-sky-600 shadow-sm shadow-sky-600/30"
                     : "w-1.5 h-1.5 bg-slate-300 hover:bg-slate-400"
                 }`}
-                title={`Jump to ${c.name} (${i * stepDistancePx}px)`}
+                title={`Jump to ${c.name}`}
                 aria-label={`Jump to ${c.name}`}
               />
             ))}
@@ -453,7 +383,7 @@ export function CategoryDistribution3D({
             </button>
 
             <span className="font-mono text-[9px] font-bold text-slate-400 uppercase tracking-widest writing-vertical rotate-180 py-1">
-              SCROLL TIMELINE
+              3000PX SCROLL
             </span>
 
             <button
@@ -475,18 +405,19 @@ export function CategoryDistribution3D({
               perspectiveOrigin: "50% 50%",
             }}
           >
-            {/* 3D Shell rotating around Y-axis controlled by vertical scroll */}
+            {/* 3D Shell rotating around Y-axis controlled by vertical 3000px scroll */}
             <motion.div
               style={{
                 transformStyle: "preserve-3d",
                 rotateY: scrollRotation,
+                z: depthZ,
               }}
               className="relative w-full flex items-center justify-center pointer-events-none"
             >
               {/* SLOT 1: PREVIOUS CATEGORY (-120 deg) */}
               <div
                 onClick={() => scrollToCategory((activeCategoryIdx - 1 + numCategories) % numCategories)}
-                className="absolute w-[240px] sm:w-[300px] h-[320px] sm:h-[420px] flex flex-col items-center justify-center p-4 bg-white/75 backdrop-blur-sm rounded-3xl border border-slate-200/80 shadow-lg cursor-pointer pointer-events-auto transition-opacity duration-300 hover:opacity-75"
+                className="absolute w-[240px] sm:w-[300px] h-[320px] sm:h-[420px] flex flex-col items-center justify-center p-4 bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-200/80 shadow-lg cursor-pointer pointer-events-auto transition-opacity duration-300 hover:opacity-80"
                 style={{
                   transform: "rotateY(-120deg) translateZ(140px)",
                   opacity: 0.35,
@@ -511,7 +442,7 @@ export function CategoryDistribution3D({
               {/* SLOT 2: NEXT CATEGORY (+120 deg) */}
               <div
                 onClick={() => scrollToCategory((activeCategoryIdx + 1) % numCategories)}
-                className="absolute w-[240px] sm:w-[300px] h-[320px] sm:h-[420px] flex flex-col items-center justify-center p-4 bg-white/75 backdrop-blur-sm rounded-3xl border border-slate-200/80 shadow-lg cursor-pointer pointer-events-auto transition-opacity duration-300 hover:opacity-75"
+                className="absolute w-[240px] sm:w-[300px] h-[320px] sm:h-[420px] flex flex-col items-center justify-center p-4 bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-200/80 shadow-lg cursor-pointer pointer-events-auto transition-opacity duration-300 hover:opacity-80"
                 style={{
                   transform: "rotateY(120deg) translateZ(140px)",
                   opacity: 0.35,
@@ -535,7 +466,7 @@ export function CategoryDistribution3D({
 
               {/* -------------------------------------------------------------
                   SLOT 0: CENTER ACTIVE CATEGORY (0 deg)
-                  CONTAINS THE EXACT 500px * 800px MASKED HORIZONTAL FRAME
+                  THE 500px * 800px MASKED HORIZONTAL SWAP FRAME
                  ------------------------------------------------------------- */}
               <div
                 onTouchStart={handleFrameTouchStart}
@@ -549,7 +480,7 @@ export function CategoryDistribution3D({
                     "0 25px 60px -15px rgba(15, 23, 42, 0.12), 0 0 40px -10px rgba(2, 132, 199, 0.08)",
                 }}
               >
-                {/* Subtle Inner Frame Gradient */}
+                {/* Subtle Inner Frame Lighting */}
                 <div className="absolute inset-0 bg-gradient-to-b from-sky-500/[0.02] to-transparent rounded-3xl pointer-events-none" />
 
                 {/* Frame Header Spec Tag */}
@@ -603,7 +534,7 @@ export function CategoryDistribution3D({
                     </motion.div>
                   </AnimatePresence>
 
-                  {/* Elliptical Grounding Shadow Under Frame */}
+                  {/* Grounding Shadow Under Active Product */}
                   <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-3 bg-slate-900/10 rounded-full blur-md pointer-events-none" />
                 </div>
 
@@ -758,9 +689,9 @@ export function CategoryDistribution3D({
               </div>
             )}
 
-            {/* Mobile Swipe Guidance Note */}
+            {/* Swipe & Scroll Guidance */}
             <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 px-1 pt-1">
-              <span>◄ Swipe 500px frame for products ►</span>
+              <span>◄ Swipe 500px frame to swap products ►</span>
               <span>Scroll down for next category</span>
             </div>
           </div>
