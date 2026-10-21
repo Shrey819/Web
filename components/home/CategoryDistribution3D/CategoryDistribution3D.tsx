@@ -33,7 +33,7 @@ interface CategoryDistribution3DProps {
 }
 
 /**
- * Individual Category Station situated along the 3000px vertical Y-axis.
+ * Individual Category Station situated along the 1500px vertical Y-axis (reduced by 1/2 scale).
  * As the user scrolls naturally down the page, its 3D angle smoothly transitions:
  * Entering from below: +120°
  * Centered in viewport: 0° (Facing forward, 100% opacity, sharp)
@@ -63,10 +63,7 @@ function CategoryStation({
     offset: ["start end", "end start"],
   });
 
-  // 3D Angle Calculation:
-  // When at bottom of viewport (0.15): rotated at +120deg (or receded in 3D circle)
-  // When at center of viewport (0.45 - 0.55): strictly 0deg (Facing forward)
-  // When at top of viewport (0.85): rotated at -120deg (receded in 3D circle)
+  // 3D Angle Calculation (1/2 scale: translateZ reduced from 100px to 50px)
   const rotateY = useTransform(
     scrollYProgress,
     [0.1, 0.42, 0.58, 0.9],
@@ -76,7 +73,7 @@ function CategoryStation({
   const translateZ = useTransform(
     scrollYProgress,
     [0.1, 0.42, 0.58, 0.9],
-    [-100, 0, 0, -100]
+    [-50, 0, 0, -50]
   );
 
   const stationOpacity = useTransform(
@@ -97,14 +94,14 @@ function CategoryStation({
     category.image ||
     FALLBACK_CATEGORY_IMAGES.default;
 
-  // Horizontal product swap strictly within the 500x800px frame
+  // Horizontal product swap strictly within the 250x400px frame
   const handleSwap = (delta: number) => {
     if (!hasProducts || products.length <= 1) return;
     setSwipeDirection(delta > 0 ? 1 : -1);
     onProductChange(category.id, delta);
   };
 
-  // Touch swipe handling on the 500x800 frame
+  // Touch swipe handling on the 250x400 frame
   const touchStartXRef = useRef<number | null>(null);
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length > 0) touchStartXRef.current = e.touches[0].clientX;
@@ -112,7 +109,7 @@ function CategoryStation({
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStartXRef.current === null) return;
     const diffX = e.changedTouches[0].clientX - touchStartXRef.current;
-    if (Math.abs(diffX) > 40) {
+    if (Math.abs(diffX) > 30) {
       handleSwap(diffX < 0 ? 1 : -1);
     }
     touchStartXRef.current = null;
@@ -143,44 +140,44 @@ function CategoryStation({
   return (
     <div
       ref={stationRef}
-      className="relative w-full min-h-[650px] flex flex-col items-center justify-center my-12 sm:my-16"
+      className="relative w-full min-h-[360px] flex flex-col items-center justify-center my-6 sm:my-8"
     >
-      {/* Station Vertical Anchor Node on the Central Spine */}
-      <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex items-center gap-2 pointer-events-none z-10">
-        <span className="w-3 h-3 rounded-full bg-sky-500 ring-4 ring-sky-100" />
-        <span className="font-mono text-[10px] font-bold text-slate-400 bg-white/90 px-2 py-0.5 rounded border border-slate-200">
-          NODE 0{index + 1} // Y: {index * 700}PX
+      {/* Station Vertical Anchor Node on the Central Spine (Scaled by 1/2) */}
+      <div className="absolute left-1/2 -translate-x-1/2 -top-4 flex items-center gap-1.5 pointer-events-none z-10">
+        <span className="w-2.5 h-2.5 rounded-full bg-sky-500 ring-2 ring-sky-100" />
+        <span className="font-mono text-[9px] font-bold text-slate-400 bg-white/90 px-1.5 py-0.5 rounded border border-slate-200">
+          NODE 0{index + 1} // Y: {index * 350}PX
         </span>
       </div>
 
       {/* -------------------------------------------------------------------
           1. CATEGORY NAME (Prominently displayed ABOVE the central frame)
          ------------------------------------------------------------------- */}
-      <div className="text-center max-w-3xl mx-auto px-4 mb-6 z-20">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-xs font-mono font-semibold uppercase tracking-wider mb-2">
-          <Layers className="w-3.5 h-3.5 text-sky-600" />
+      <div className="text-center max-w-2xl mx-auto px-4 mb-3 sm:mb-4 z-20">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-[11px] font-mono font-semibold uppercase tracking-wider mb-1">
+          <Layers className="w-3 h-3 text-sky-600" />
           <span>
             Category 0{index + 1} of 0{totalCategories} // {category.badge}
           </span>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+        <h2 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight">
           {category.name}
         </h2>
-        <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto mt-1 line-clamp-2">
+        <p className="text-[11px] sm:text-xs text-slate-500 max-w-md mx-auto line-clamp-1">
           {category.description}
         </p>
       </div>
 
       {/* -------------------------------------------------------------------
-          2. CENTRAL 500x800PX 3D FRAME & PRODUCT DETAILS TO THE RIGHT
+          2. CENTRAL 250x400PX 3D FRAME & PRODUCT DETAILS TO THE RIGHT (1/2 Scale)
          ------------------------------------------------------------------- */}
-      <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-12 px-4 z-20">
-        {/* 3D Perspective Container */}
+      <div className="w-full max-w-4xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 px-4 z-20">
+        {/* 3D Perspective Container (Scaled by 1/2) */}
         <div
-          className="relative flex items-center justify-center shrink-0 w-full max-w-[340px] sm:max-w-[440px] lg:max-w-[500px]"
+          className="relative flex items-center justify-center shrink-0 w-full max-w-[220px] sm:max-w-[240px] lg:max-w-[260px]"
           style={{
-            perspective: "1200px",
+            perspective: "900px",
             perspectiveOrigin: "50% 50%",
           }}
         >
@@ -199,16 +196,16 @@ function CategoryStation({
             className="relative w-full flex items-center justify-center"
           >
             {/* ---------------------------------------------------------------
-                THE EXACT 500px * 800px MASKED VIEWPORT FRAME (overflow: hidden)
+                THE EXACT 250px * 400px MASKED VIEWPORT FRAME (1/2 Scale)
                 Horizontal product swap happens strictly inside this frame box!
                --------------------------------------------------------------- */}
             <div
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
-              className="relative w-[320px] sm:w-[440px] lg:w-[500px] h-[480px] sm:h-[620px] lg:h-[750px] max-h-[80vh] bg-white rounded-3xl border border-slate-200/90 shadow-2xl overflow-hidden flex flex-col items-center justify-between p-4 sm:p-6"
+              className="relative w-[210px] sm:w-[240px] lg:w-[250px] h-[280px] sm:h-[350px] lg:h-[390px] max-h-[60vh] bg-white rounded-2xl border border-slate-200/90 shadow-xl overflow-hidden flex flex-col items-center justify-between p-2.5 sm:p-3.5"
               style={{
                 boxShadow:
-                  "0 25px 60px -15px rgba(15, 23, 42, 0.12), 0 0 40px -10px rgba(2, 132, 199, 0.08)",
+                  "0 15px 35px -10px rgba(15, 23, 42, 0.1), 0 0 25px -8px rgba(2, 132, 199, 0.08)",
               }}
             >
               {/* Subtle Ambient Blueprint Grid inside frame */}
@@ -219,21 +216,21 @@ function CategoryStation({
                     linear-gradient(to right, #0f172a 1px, transparent 1px),
                     linear-gradient(to bottom, #0f172a 1px, transparent 1px)
                   `,
-                  backgroundSize: "24px 24px",
+                  backgroundSize: "16px 16px",
                 }}
               />
 
               {/* Frame Header Tag */}
-              <div className="relative z-10 w-full flex items-center justify-between text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider px-2">
-                <span>500×800 FRAME</span>
+              <div className="relative z-10 w-full flex items-center justify-between text-[9px] font-mono font-bold text-slate-400 uppercase tracking-wider px-1">
+                <span>250×400 FRAME</span>
                 <span className="text-sky-600 font-semibold">{category.badge}</span>
               </div>
 
               {/* -------------------------------------------------------------
-                  HORIZONTAL SLIDE STAGE INSIDE THE 500x800 FRAME ONLY:
+                  HORIZONTAL SLIDE STAGE INSIDE THE 250x400 FRAME ONLY:
                   Old image slides left & disappears; new image enters from right!
                  ------------------------------------------------------------- */}
-              <div className="relative w-full flex-1 overflow-hidden flex items-center justify-center my-2">
+              <div className="relative w-full flex-1 overflow-hidden flex items-center justify-center my-1">
                 <AnimatePresence initial={false} custom={swipeDirection} mode="popLayout">
                   <motion.div
                     key={`prod-img-${category.id}-${activeProductIndex}`}
@@ -253,8 +250,8 @@ function CategoryStation({
                         src={displayImageSrc}
                         alt={currentProduct?.name || category.name}
                         fill
-                        sizes="(max-width: 640px) 320px, (max-width: 1024px) 440px, 500px"
-                        className="object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.14)] pointer-events-none p-2 sm:p-4"
+                        sizes="250px"
+                        className="object-contain drop-shadow-[0_12px_20px_rgba(0,0,0,0.12)] pointer-events-none p-1.5 sm:p-2"
                         priority={index === 0}
                       />
                     </div>
@@ -262,22 +259,22 @@ function CategoryStation({
                 </AnimatePresence>
 
                 {/* Soft Ground Floor Shadow under active frame product */}
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-3 bg-slate-900/10 rounded-full blur-md pointer-events-none" />
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 sm:w-40 h-2 bg-slate-900/10 rounded-full blur-sm pointer-events-none" />
               </div>
 
               {/* Horizontal Product Pagination Controls in Frame Base */}
               {hasProducts && products.length > 1 && (
-                <div className="relative z-20 w-full flex items-center justify-between pt-2 border-t border-slate-100 px-2">
+                <div className="relative z-20 w-full flex items-center justify-between pt-1.5 border-t border-slate-100 px-1">
                   <button
                     onClick={() => handleSwap(-1)}
-                    className="p-1.5 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-700 transition-colors cursor-pointer"
+                    className="p-1 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-700 transition-colors cursor-pointer"
                     title="Previous Product (Slide in from left)"
                     aria-label="Previous Product"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     {products.map((p, pIdx) => (
                       <button
                         key={p.id}
@@ -285,10 +282,10 @@ function CategoryStation({
                           const delta = pIdx - activeProductIndex;
                           if (delta !== 0) handleSwap(delta);
                         }}
-                        className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                        className={`h-1 rounded-full transition-all duration-300 cursor-pointer ${
                           activeProductIndex === pIdx
-                            ? "w-6 bg-sky-600"
-                            : "w-1.5 bg-slate-200 hover:bg-slate-300"
+                            ? "w-4 bg-sky-600"
+                            : "w-1 bg-slate-200 hover:bg-slate-300"
                         }`}
                         title={`Select ${p.name}`}
                         aria-label={`Select product ${p.name}`}
@@ -298,11 +295,11 @@ function CategoryStation({
 
                   <button
                     onClick={() => handleSwap(1)}
-                    className="p-1.5 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-700 transition-colors cursor-pointer"
+                    className="p-1 rounded-full bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-700 transition-colors cursor-pointer"
                     title="Next Product (Slide in from right)"
                     aria-label="Next Product"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
@@ -313,107 +310,107 @@ function CategoryStation({
         {/* -------------------------------------------------------------------
             3. PRODUCT DETAILS PANEL (Positioned to the RIGHT of the frame)
            ------------------------------------------------------------------- */}
-        <div className="w-full lg:max-w-[420px] flex flex-col justify-center space-y-4 text-left px-2 sm:px-4 z-20 shrink-0">
+        <div className="w-full lg:max-w-[320px] flex flex-col justify-center space-y-2.5 text-left px-2 sm:px-3 z-20 shrink-0">
           {currentProduct ? (
             <AnimatePresence mode="wait">
               <motion.div
                 key={`prod-card-${currentProduct.id}`}
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 15 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.28, ease: "easeOut" }}
-                className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4"
+                exit={{ opacity: 0, x: -15 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-4 shadow-lg space-y-2.5"
               >
                 {/* Category & Product Index Tag */}
-                <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                  <span className="font-mono text-xs font-bold text-sky-600 bg-sky-50 px-2.5 py-1 rounded-md border border-sky-100 uppercase tracking-wider">
+                <div className="flex items-center justify-between gap-1.5 border-b border-slate-100 pb-2">
+                  <span className="font-mono text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded border border-sky-100 uppercase tracking-wider">
                     {category.name}
                   </span>
-                  <span className="font-mono text-[11px] text-slate-400 font-semibold">
-                    PRODUCT 0{activeProductIndex + 1} // 0{products.length}
+                  <span className="font-mono text-[10px] text-slate-400 font-semibold">
+                    0{activeProductIndex + 1} / 0{products.length}
                   </span>
                 </div>
 
                 {/* Product Title & SKU */}
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-snug line-clamp-2">
                     {currentProduct.name}
                   </h3>
                   {currentProduct.sku && (
-                    <span className="font-mono text-xs text-slate-400 block mt-1">
+                    <span className="font-mono text-[10px] text-slate-400 block mt-0.5">
                       SKU: {currentProduct.sku}
                     </span>
                   )}
                 </div>
 
                 {/* Product Short Description */}
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-3">
+                <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed line-clamp-2">
                   {currentProduct.shortDescription ||
                     currentProduct.description ||
-                    "Engineered for sub-micron positioning repeatability and high dynamic load capacities in demanding industrial automation."}
+                    "Engineered for sub-micron positioning repeatability."}
                 </p>
 
                 {/* Price & Action Row */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
                   <div>
                     {productPrice ? (
                       <div className="space-y-0.5">
-                        <span className="block font-mono text-[10px] text-slate-400 uppercase font-bold">
+                        <span className="block font-mono text-[9px] text-slate-400 uppercase font-bold">
                           Price
                         </span>
-                        <span className="font-mono text-lg sm:text-xl font-extrabold text-slate-900">
+                        <span className="font-mono text-sm sm:text-base font-extrabold text-slate-900">
                           ₹{Number(productPrice).toLocaleString("en-IN")}
                         </span>
                       </div>
                     ) : (
-                      <span className="font-mono text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
-                        OEM In Stock
+                      <span className="font-mono text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                        In Stock
                       </span>
                     )}
                   </div>
 
                   <Link
                     href={`/product/${currentProduct.slug || currentProduct.id}`}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs sm:text-sm hover:bg-sky-600 transition-colors shadow-md hover:shadow-sky-600/20"
+                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 text-white font-bold text-xs hover:bg-sky-600 transition-colors shadow-sm"
                   >
-                    <span>VIEW PRODUCT</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span>VIEW</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </motion.div>
             </AnimatePresence>
           ) : (
             /* Graceful Empty State if category has no products yet */
-            <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
-              <div className="flex items-center gap-2 text-xs font-mono font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-md border border-amber-200 inline-flex">
-                <PackageCheck className="w-3.5 h-3.5" />
+            <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-4 shadow-lg space-y-2.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex">
+                <PackageCheck className="w-3 h-3" />
                 <span>CATALOG READY</span>
               </div>
 
-              <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">
                 {category.name}
               </h3>
 
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Precision hardware solutions configured to your machine specifications. Explore full category inventory or submit technical drawings for custom sizing.
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Precision hardware solutions configured to your machine specifications.
               </p>
 
-              <div className="pt-2">
+              <div className="pt-1">
                 <Link
                   href={`/category/${category.slug || category.id}`}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-sky-600 transition-colors shadow-md"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg bg-slate-900 text-white font-bold text-xs hover:bg-sky-600 transition-colors shadow-sm"
                 >
-                  <span>BROWSE CATEGORY</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>BROWSE</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
           )}
 
           {/* User Hint */}
-          <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 px-1 pt-1">
-            <span>◄ Swipe 500px frame to change product ►</span>
-            <span>Scroll naturally for next category</span>
+          <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 px-0.5">
+            <span>◄ Swipe 250px frame ►</span>
+            <span>Scroll for next</span>
           </div>
         </div>
       </div>
@@ -423,9 +420,10 @@ function CategoryStation({
 
 /**
  * Main 3D Category Distribution Section.
- * Takes the whole 3000px height along the Y-axis.
+ * Scaled by 1/2:
+ * Takes ~1500px height along the Y-axis.
  * DOES NOT stop/freeze the screen while scrolling (no sticky locking).
- * The user scrolls down naturally through the 3000px track.
+ * The user scrolls down naturally through the track.
  */
 export function CategoryDistribution3D({
   categories = [],
@@ -458,7 +456,7 @@ export function CategoryDistribution3D({
   return (
     <section
       data-scene="category-distribution-3d"
-      className="relative w-full min-h-[3000px] bg-white text-slate-900 border-b border-slate-200/90 select-none py-16"
+      className="relative w-full min-h-[1500px] bg-white text-slate-900 border-b border-slate-200/90 select-none py-10"
     >
       {/* Precision Drafting Grid Background */}
       <div
@@ -468,35 +466,31 @@ export function CategoryDistribution3D({
             linear-gradient(to right, #0f172a 1px, transparent 1px),
             linear-gradient(to bottom, #0f172a 1px, transparent 1px)
           `,
-          backgroundSize: "32px 32px",
+          backgroundSize: "24px 24px",
         }}
       />
 
-      {/* Central Vertical Guide Bar / Spine along the entire 3000px height */}
-      <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-sky-500/30 to-transparent pointer-events-none hidden md:block" />
+      {/* Central Vertical Guide Bar / Spine along the entire 1500px height */}
+      <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[1.5px] bg-gradient-to-b from-transparent via-sky-500/30 to-transparent pointer-events-none hidden md:block" />
 
       {/* Section Global Header */}
-      <div className="relative z-20 text-center max-w-2xl mx-auto px-4 mb-8">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-mono font-semibold uppercase tracking-wider mb-2">
-          <Sparkles className="w-3.5 h-3.5 text-sky-600" />
-          <span>Industrial 3D Distribution // 3000px Vertical Track</span>
+      <div className="relative z-20 text-center max-w-xl mx-auto px-4 mb-6">
+        <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-mono font-semibold uppercase tracking-wider mb-1.5">
+          <Sparkles className="w-3 h-3 text-sky-600" />
+          <span>Industrial 3D Distribution // 1500px Scaled Track</span>
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+        <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
           Explore Hardware Domains by Scrolling
         </h2>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+        <p className="text-xs text-slate-500 mt-0.5">
           Scroll down naturally through the vertical stations. Swipe any central frame horizontally to inspect products.
         </p>
       </div>
 
       {/* ---------------------------------------------------------------------
-          CATEGORY STATIONS (Placed along the 3000px vertical Y-axis)
-          c1: 0 - 500px
-          c2: 700 - 1200px
-          c3: 1400 - 1900px
-          c4: 2100 - 2600px+
+          CATEGORY STATIONS (Placed along the 1500px vertical Y-axis, 1/2 Scale)
          --------------------------------------------------------------------- */}
-      <div className="relative z-10 w-full flex flex-col justify-around min-h-[2800px]">
+      <div className="relative z-10 w-full flex flex-col justify-around min-h-[1400px]">
         {resolvedCategories.map((category, index) => (
           <CategoryStation
             key={category.id}
