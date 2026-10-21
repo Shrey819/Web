@@ -182,7 +182,7 @@ export function CurvedProductShowcase({
   noteTopText = "Zero backlash\nin stock",
   noteBottomText = "Ready to ship",
   ctaText = "Explore Ballscrews & Guides",
-  ctaUrl = "/categories/ballscrew",
+  ctaUrl = "/category/ballscrew",
 }: CurvedProductShowcaseProps) {
   // Ensure we always have 10 products for the smooth cylinder carousel
   const displayProducts = useMemo(() => {
@@ -264,11 +264,11 @@ export function CurvedProductShowcase({
 
       if (isMobile) {
         centerX = stageW / 2;
-        yCenterBase = 125;
+        yCenterBase = 138;
         const mobScale = Math.min(1.0, stageW / 390);
-        pitch = 118 * mobScale;
-        widthScale = 0.58 * mobScale;
-        heightScale = 0.58;
+        pitch = 124 * mobScale;
+        widthScale = 0.64 * mobScale;
+        heightScale = 0.76;
         u = 1;
       } else {
         const contW = containerRef.current?.clientWidth || 1440;
@@ -669,12 +669,12 @@ export function CurvedProductShowcase({
               style={{ display: "none" }}
             >
               <Link
-                href={`/products/${p.slug}`}
+                href={`/product/${p.slug}`}
                 onClick={(e) => handleCardClick(e, p.slug)}
                 className="w-full h-full flex flex-col justify-between relative no-underline cursor-pointer"
               >
-                {/* Brand / Category Top Badge */}
-                <div className="absolute top-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between pointer-events-none">
+                {/* Brand / Category Top Header */}
+                <div className="w-full pt-2.5 px-3 pb-1 flex items-center justify-between z-10 shrink-0 pointer-events-none">
                   <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-white/90 text-[#08482D] backdrop-blur-md shadow-xs border border-[#08482D]/10">
                     {p.brand || "HIWIN"}
                   </span>
@@ -684,7 +684,7 @@ export function CurvedProductShowcase({
                 </div>
 
                 {/* Product Image Cover */}
-                <div className="w-full flex-1 relative overflow-hidden bg-gradient-to-b from-[#F2F5ED] to-white flex items-center justify-center p-3">
+                <div className="w-full flex-1 relative overflow-hidden bg-gradient-to-b from-[#F2F5ED] to-white flex items-center justify-center p-2.5">
                   <img
                     src={p.imageUrl}
                     alt={p.name}
@@ -806,7 +806,7 @@ export function CurvedProductShowcase({
         {/* Mobile Curved Carousel Stage Band */}
         <div
           ref={mobileStageRef}
-          className="cylinder-stage relative w-full h-[270px] overflow-hidden my-4"
+          className="cylinder-stage relative w-full h-[295px] overflow-hidden my-4"
           aria-label="Mobile Product Carousel"
         >
           {displayProducts.map((p, i) => (
@@ -819,19 +819,19 @@ export function CurvedProductShowcase({
               style={{ display: "none" }}
             >
               <Link
-                href={`/products/${p.slug}`}
+                href={`/product/${p.slug}`}
                 onClick={(e) => handleCardClick(e, p.slug)}
                 className="w-full h-full flex flex-col justify-between relative no-underline cursor-pointer"
               >
-                {/* Brand Top Tag */}
-                <div className="absolute top-1.5 left-1.5 z-10">
-                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/90 text-[#08482D] backdrop-blur-xs shadow-2xs">
+                {/* Brand Top Header Row - Stays strictly on the upperside so it never blocks the image */}
+                <div className="w-full pt-2 px-2 pb-0.5 flex items-center justify-center z-10 shrink-0 pointer-events-none">
+                  <span className="px-2 py-0.5 rounded-full text-[8.5px] font-extrabold bg-[#DAE7C7] text-[#08482D] border border-[#08482D]/15 shadow-2xs tracking-wide">
                     {p.brand || "HIWIN"}
                   </span>
                 </div>
 
-                {/* Product Image */}
-                <div className="w-full flex-1 relative overflow-hidden bg-gradient-to-b from-[#F2F5ED] to-white flex items-center justify-center p-2">
+                {/* Product Image - Dedicated clean space with zero obstruction */}
+                <div className="w-full flex-1 relative overflow-hidden bg-gradient-to-b from-[#F2F5ED]/40 to-white flex items-center justify-center p-2 min-h-[80px]">
                   <img
                     src={p.imageUrl}
                     alt={p.name}
@@ -848,10 +848,10 @@ export function CurvedProductShowcase({
 
                 {/* Product Info */}
                 <div className="p-2 bg-white/95 border-t border-[#E3E8DC] flex flex-col gap-0.5">
-                  <h4 className="text-[10.5px] font-bold text-[#101410] truncate">
-                    {p.name}
+                  <h4 className="text-[9.5px] font-bold text-[#101410] line-clamp-2 leading-tight">
+                    {p.name.replace(/^HIWIN\s+/i, "")}
                   </h4>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mt-0.5">
                     <span className="text-[11px] font-extrabold text-[#08482D]">
                       {formatPrice(p.price)}
                     </span>
