@@ -70,6 +70,10 @@ export function AssemblyScene({
     isMobile ? [50, 50, 0, 0] : [0, 0, 0, 0]
   );
 
+  // 6. HUD progress percentage and bar width transforms (top level for Rules of Hooks)
+  const progressText = useTransform(progressPercent, (v) => `${Math.min(100, Math.round(v))}%`);
+  const progressWidth = useTransform(progressPercent, (v) => `${Math.min(100, v)}%`);
+
   // =========================================================================
   // REDUCED MOTION STATIC FALLBACK:
   // Immediately render assembled machine + spec card, no pinning, no floating parts
@@ -326,12 +330,12 @@ export function AssemblyScene({
               Assembly Progress
             </span>
             <motion.span className="font-mono text-xs font-bold text-amber-600">
-              {useTransform(progressPercent, (v) => `${Math.min(100, Math.round(v))}%`)}
+              {progressText}
             </motion.span>
           </div>
           <div className="w-36 h-1.5 bg-slate-200 rounded-full overflow-hidden">
             <motion.div
-              style={{ width: useTransform(progressPercent, (v) => `${Math.min(100, v)}%`) }}
+              style={{ width: progressWidth }}
               className="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full"
             />
           </div>
