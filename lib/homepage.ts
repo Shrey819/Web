@@ -319,6 +319,7 @@ export const DEFAULT_SECTION_ORDER: string[] = [
   "sec-sticky-showcase",
   "sec-best-sellers",
   "sec-stats",
+  "sec-curved-motion-showcase",
   "sec-promo-banner",
   "sec-testimonials",
   "sec-compare",
@@ -1210,6 +1211,12 @@ export const BASE_SECTION_TEMPLATES: Record<
     category: "Trust & Social Proof",
     defaultData: DEFAULT_STATS,
   },
+  "sec-curved-motion-showcase": {
+    name: "Ballscrew & Linear Guideway Curved Showcase",
+    description: "Curved 3D cylinder card carousel with smooth momentum scrolling, hand-drawn annotations, and direct product detail links",
+    category: "Product Showcases",
+    defaultData: {},
+  },
   "sec-promo-banner": {
     name: "Volume Promo Banner",
     description: "High-conversion volume procurement callout banner with dual CTA buttons and image card",
@@ -1345,6 +1352,8 @@ export function getBaseSectionData(baseId: string, state: HomepageData): any {
       return state.bestSellers || DEFAULT_BEST_SELLERS;
     case "sec-stats":
       return state.stats || DEFAULT_STATS;
+    case "sec-curved-motion-showcase":
+      return {};
     case "sec-promo-banner":
       return state.promoBanner || DEFAULT_PROMO_BANNER;
     case "sec-testimonials":

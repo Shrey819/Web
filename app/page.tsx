@@ -18,6 +18,7 @@ import { ResourceHub } from "@/components/home/ResourceHub";
 import { FAQSection } from "@/components/home/FAQSection";
 import { ProductAssemblySection } from "@/components/home/ProductAssembly/ProductAssemblySection";
 import { CinematicProductSection } from "@/components/cinematic";
+import { CurvedProductShowcase } from "@/components/home/CurvedProductShowcase";
 import { getActiveProducts, getStorefrontCategories } from "@/lib/storefront";
 import { getHomepageData } from "@/lib/homepage-server";
 
@@ -88,6 +89,39 @@ export default async function HomePage() {
       sectionOrder.push("sec-top-fundamentals");
     }
   }
+
+  if (!sectionOrder.includes("sec-curved-motion-showcase")) {
+    const statsIndex = sectionOrder.indexOf("sec-stats");
+    if (statsIndex !== -1) {
+      sectionOrder.splice(statsIndex + 1, 0, "sec-curved-motion-showcase");
+    } else {
+      const promoIndex = sectionOrder.indexOf("sec-promo-banner");
+      if (promoIndex !== -1) {
+        sectionOrder.splice(promoIndex, 0, "sec-curved-motion-showcase");
+      } else {
+        sectionOrder.push("sec-curved-motion-showcase");
+      }
+    }
+  }
+
+  // Filter Ballscrew & Linear Guideway products for the curved motion showcase
+  const motionProducts = dbProducts.filter((p) => {
+    const text = `${p.name || ""} ${p.slug || ""} ${p.categoryId || ""}`.toLowerCase();
+    const cat = dbCategories.find((c) => c.id === p.categoryId || c.slug === p.categoryId);
+    const catName = (cat?.name || "").toLowerCase();
+    return (
+      text.includes("ballscrew") ||
+      text.includes("ball screw") ||
+      text.includes("guideway") ||
+      text.includes("linear guide") ||
+      catName.includes("ballscrew") ||
+      catName.includes("guideway") ||
+      catName.includes("linear") ||
+      text.includes("hiwin") ||
+      text.includes("thk") ||
+      text.includes("rexroth")
+    );
+  });
 
   const hiddenIds = new Set(homepageData.hiddenSectionIds || []);
 
@@ -209,6 +243,24 @@ export default async function HomePage() {
           : instanceData?.stats || homepageData.stats;
         return <StatsSection key={id} stats={stats} />;
       }
+
+      case "sec-curved-motion-showcase":
+        return (
+          <CurvedProductShowcase
+            key={id}
+            products={motionProducts.map((p) => ({
+              id: p.id,
+              name: p.name,
+              brand: p.brand || "HIWIN",
+              category:
+                dbCategories.find((c) => c.id === p.categoryId || c.slug === p.categoryId)?.name ||
+                "Ballscrew & Guideway",
+              price: (p as any).price || p.basePrice,
+              imageUrl: (p.images && p.images[0]?.url) || (p as any).image || "",
+              slug: p.slug,
+            }))}
+          />
+        );
 
       case "sec-promo-banner":
         return <PromoBanner key={id} config={instanceData} />;
