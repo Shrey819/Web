@@ -456,6 +456,22 @@ function CategoryStation({
                   {currentProduct.name}
                 </h3>
               </Link>
+
+              {/* Swipe left prompt */}
+              {hasProducts && products.length > 1 && (
+                <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-400 select-none pt-0.5">
+                  <motion.span
+                    animate={shouldReduceMotion ? {} : { x: [-2, 2, -2] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="inline-flex items-center text-sky-600 font-bold"
+                  >
+                    ←
+                  </motion.span>
+                  <span className="font-semibold text-slate-600">Swipe left</span>
+                  <span className="text-slate-300">·</span>
+                  <span className="text-slate-400">0{activeProductIndex + 1}/0{products.length}</span>
+                </div>
+              )}
             </motion.div>
 
             {/* Mobile phone view: neatly below */}
@@ -474,6 +490,22 @@ function CategoryStation({
                   {currentProduct.name}
                 </h3>
               </Link>
+
+              {/* Swipe left prompt */}
+              {hasProducts && products.length > 1 && (
+                <div className="flex items-center justify-center gap-1.5 font-mono text-[10px] text-slate-400 select-none pt-0.5">
+                  <motion.span
+                    animate={shouldReduceMotion ? {} : { x: [-2, 2, -2] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="inline-flex items-center text-sky-600 font-bold"
+                  >
+                    ←
+                  </motion.span>
+                  <span className="font-semibold text-slate-600">Swipe left</span>
+                  <span className="text-slate-300">·</span>
+                  <span className="text-slate-400">0{activeProductIndex + 1}/0{products.length}</span>
+                </div>
+              )}
             </motion.div>
           </>
         )}
@@ -597,6 +629,11 @@ export function CategoryDistribution3D({
         <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
           Explore Hardware Domains
         </h2>
+        <p className="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5 font-mono">
+          <span>Scroll down for domains</span>
+          <span className="text-slate-300">•</span>
+          <span className="text-sky-600 font-semibold">Swipe left for products</span>
+        </p>
       </div>
 
       {/* ---------------------------------------------------------------------
