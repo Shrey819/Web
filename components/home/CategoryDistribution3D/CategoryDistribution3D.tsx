@@ -380,41 +380,44 @@ function CategoryStation({
             }
             className="relative flex items-center justify-center"
           >
-            {/* Direct image frame: no outer card box, no border, no artificial padding */}
-            <div
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              className="group relative w-[210px] sm:w-[240px] lg:w-[250px] h-[145px] sm:h-[165px] lg:h-[180px] overflow-hidden flex items-center justify-center select-none cursor-grab active:cursor-grabbing"
-              title="Scroll horizontally or swipe to inspect products"
-            >
-              <AnimatePresence initial={false} custom={swipeDirection} mode="popLayout">
-                <motion.div
-                  key={`prod-img-${category.id}-${activeProductIndex}`}
-                  custom={swipeDirection}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{
-                    x: { type: "spring", stiffness: 300, damping: 32 },
-                    opacity: { duration: 0.2 },
-                  }}
-                  className="absolute inset-0 w-full h-full flex items-center justify-center"
-                >
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    <Image
-                      src={displayImageSrc}
-                      alt={currentProduct?.name || category.name}
-                      fill
-                      sizes="250px"
-                      className="object-contain drop-shadow-md pointer-events-none"
-                      priority={index === 0}
-                    />
-                  </div>
-                </motion.div>
-              </AnimatePresence>
+            {/* Picture wrapper with horizontal arrows visible on mobile and desktop */}
+            <div className="relative flex items-center justify-center">
+              {/* Direct image frame: no outer card box, no border, no artificial padding */}
+              <div
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                className="relative w-[210px] sm:w-[240px] lg:w-[250px] h-[145px] sm:h-[165px] lg:h-[180px] overflow-hidden flex items-center justify-center select-none cursor-grab active:cursor-grabbing"
+                title="Swipe or use arrows to inspect products"
+              >
+                <AnimatePresence initial={false} custom={swipeDirection} mode="popLayout">
+                  <motion.div
+                    key={`prod-img-${category.id}-${activeProductIndex}`}
+                    custom={swipeDirection}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{
+                      x: { type: "spring", stiffness: 300, damping: 32 },
+                      opacity: { duration: 0.2 },
+                    }}
+                    className="absolute inset-0 w-full h-full flex items-center justify-center"
+                  >
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      <Image
+                        src={displayImageSrc}
+                        alt={currentProduct?.name || category.name}
+                        fill
+                        sizes="250px"
+                        className="object-contain drop-shadow-md pointer-events-none"
+                        priority={index === 0}
+                      />
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
 
-              {/* Minimal Desktop Hover Arrows for Horizontal Swapping */}
+              {/* Horizontal Navigation Arrows for each picture (Visible on Mobile & Desktop) */}
               {hasProducts && products.length > 1 && (
                 <>
                   <button
@@ -422,22 +425,23 @@ function CategoryStation({
                       e.stopPropagation();
                       handleSwap(-1);
                     }}
-                    className="absolute left-1 top-1/2 -translate-y-1/2 z-30 p-1.5 rounded-full bg-white/80 hover:bg-white text-slate-700 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    className="absolute -left-3 sm:-left-4 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-white text-slate-800 hover:text-sky-600 shadow-md border border-slate-200/90 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-sm opacity-90 hover:opacity-100"
                     title="Previous Product"
                     aria-label="Previous Product"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSwap(1);
                     }}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 z-30 p-1.5 rounded-full bg-white/80 hover:bg-white text-slate-700 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    className="absolute -right-3 sm:-right-4 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-white text-slate-800 hover:text-sky-600 shadow-md border border-slate-200/90 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-sm opacity-90 hover:opacity-100"
                     title="Next Product"
                     aria-label="Next Product"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </>
               )}
