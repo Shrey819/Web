@@ -147,4 +147,38 @@ export const CINEMATIC_PRODUCTS: CinematicProduct[] = [
     image: "https://res.cloudinary.com/hecyltpu/image/upload/v1790332556/showcase-orbit/ballnose-tool.png",
     accentColor: "#06b6d4",
   },
+  {
+    id: "cine-prod-7",
+    sku: "THK-HSR-25A",
+    name: "Precision Ground Recirculating Ballscrew",
+    category: "Linear Transmission Systems",
+    subtitle: "High-Speed Dynamic Preloaded Ballscrew",
+    description:
+      "Precision-ground ball screw with whisper-quiet recirculation and zero axial backlash for high-speed CNC gantries.",
+    price: "$670.00",
+    specs: [
+      { label: "Lead Precision", value: "JIS C5 Ground" },
+      { label: "Preload", value: "Zero Backlash" },
+      { label: "Dynamic Load", value: "24.8 kN" },
+    ],
+    image: "/cinematic-products/linear-guide-rail.png",
+    accentColor: "#eab308",
+  },
+  {
+    id: "cine-prod-8",
+    sku: "IND-ROUTER-50",
+    name: "Multi-Tooth Inserted Face Mill Cutter",
+    category: "Milling Cutters & Tool Holders",
+    subtitle: "Heavy Stock Removal Roughing Milling Head",
+    description:
+      "Indexable face mill designed for aggressive metal removal with internal coolant through-holes.",
+    price: "$425.00",
+    specs: [
+      { label: "Diameter", value: "50mm Arbor Mount" },
+      { label: "Insert Pockets", value: "5 Indexable Seats" },
+      { label: "Coolant", value: "Internal Through-Spindle" },
+    ],
+    image: "/cinematic-products/ballnose-router-tool.png",
+    accentColor: "#f97316",
+  },
 ];
