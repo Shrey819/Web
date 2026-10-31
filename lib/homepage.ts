@@ -311,6 +311,7 @@ export const DEFAULT_SECTION_ORDER: string[] = [
   "sec-cinematic",
   "sec-categories-grid",
   "sec-category-distribution-3d",
+  "sec-category-horizontal-showcase",
   "sec-top-fundamentals",
   "sec-featured-catalog",
   "sec-solutions",

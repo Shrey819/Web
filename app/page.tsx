@@ -4,6 +4,7 @@ import { HomepageCategoryShowcase } from "@/components/home/HomepageCategoryShow
 import { BrandMarquee } from "@/components/home/BrandMarquee";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { CategoryDistribution3D } from "@/components/home/CategoryDistribution3D/CategoryDistribution3D";
+import { CategoryHorizontalShowcase } from "@/components/home/CategoryHorizontalShowcase/CategoryHorizontalShowcase";
 import { TopFundamentals } from "@/components/home/TopFundamentals";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { SolutionsShowcase } from "@/components/home/SolutionsShowcase";
@@ -78,6 +79,15 @@ export default async function HomePage() {
       sectionOrder.splice(catGridIndex + 1, 0, "sec-category-distribution-3d");
     } else {
       sectionOrder.push("sec-category-distribution-3d");
+    }
+  }
+
+  if (!sectionOrder.includes("sec-category-horizontal-showcase")) {
+    const dist3dIndex = sectionOrder.indexOf("sec-category-distribution-3d");
+    if (dist3dIndex !== -1) {
+      sectionOrder.splice(dist3dIndex + 1, 0, "sec-category-horizontal-showcase");
+    } else {
+      sectionOrder.push("sec-category-horizontal-showcase");
     }
   }
 
@@ -195,6 +205,16 @@ export default async function HomePage() {
       case "sec-category-distribution-3d":
         return (
           <CategoryDistribution3D
+            key={id}
+            categories={dbCategories}
+            products={dbProducts}
+            config={instanceData}
+          />
+        );
+
+      case "sec-category-horizontal-showcase":
+        return (
+          <CategoryHorizontalShowcase
             key={id}
             categories={dbCategories}
             products={dbProducts}

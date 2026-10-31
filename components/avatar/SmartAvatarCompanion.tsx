@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { motion, useScroll, useVelocity, useSpring, useTransform, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { AvatarMascot, type AvatarAnimation, type AvatarMascotHandle } from "./AvatarMascot";
 import { AvatarChatbot } from "./AvatarChatbot";
 import { useCartStore } from "@/store/useCartStore";
@@ -11,19 +11,8 @@ import {
   X,
   ChevronUp,
   ChevronDown,
-  Sparkles,
   ArrowRight,
 } from "lucide-react";
-
-interface ActiveTarget {
-  id: string;
-  x: number;
-  y: number;
-  prompt: string;
-  mood: AvatarAnimation;
-  actionLabel?: string;
-  actionHref?: string;
-}
 
 export function SmartAvatarCompanion() {
   const mascotRef = useRef<AvatarMascotHandle>(null);
@@ -31,44 +20,36 @@ export function SmartAvatarCompanion() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [avatarMood, setAvatarMood] = useState<AvatarAnimation>("idle");
   const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 });
-  const [activeTarget, setActiveTarget] = useState<ActiveTarget | null>(null);
 
   // Popup / Drawer / Menu detection to suppress avatar & messages while open
   const isCartOpen = useCartStore((s) => s.isOpen);
   const isQuickViewOpen = useQuickViewStore((s) => s.isOpen);
   const [isAnyPopupOpen, setIsAnyPopupOpen] = useState(false);
 
-  // User Drag-and-Drop & Anger States
+  // User Drag-and-Drop & Anger Return States
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
   const [dropPosition, setDropPosition] = useState<{ x: number; y: number } | null>(null);
-  const [isAngryDropped, setIsAngryDropped] = useState(false);
+  const [isAngry, setIsAngry] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
 
   const isPointerDownRef = useRef(false);
   const isActuallyDraggingRef = useRef(false);
   const dragStartPointerRef = useRef({ x: 0, y: 0 });
   const dragInitialAvatarRef = useRef({ x: 0, y: 0 });
-  const angerTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Speech bubble state with auto-dismiss & anti-block protection
+  const angerTimer1Ref = useRef<NodeJS.Timeout | null>(null);
+  const angerTimer2Ref = useRef<NodeJS.Timeout | null>(null);
+  const angerTimer3Ref = useRef<NodeJS.Timeout | null>(null);
+
+  // Speech bubble state with auto-dismiss
   const [bubbleText, setBubbleText] = useState<string | null>("Hi! I'm Kilby ⚡ How can I help?");
   const [bubbleAction, setBubbleAction] = useState<{ label: string; href?: string } | null>(null);
   const [isBubbleVisible, setIsBubbleVisible] = useState(true);
-  const [isScrolling, setIsScrolling] = useState(false);
 
   const dismissTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastTargetIdRef = useRef<string | null>(null);
 
-  // Scroll tracking & travel inertia
-  const { scrollY } = useScroll();
-  const scrollVelocity = useVelocity(scrollY);
-  const smoothVelocity = useSpring(scrollVelocity, { damping: 35, stiffness: 220 });
-
-  // Travel angle: leans forward when diving down, tilts up when scrolling up
-  const travelRotate = useTransform(smoothVelocity, [-1200, 0, 1200], [-8, 0, 8]);
-
-  // Window resize handler
+  // Window resize handler to maintain exact right-corner coordinates
   useEffect(() => {
     const handleResize = () => {
       setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -78,14 +59,28 @@ export function SmartAvatarCompanion() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const clearAllAngerTimers = useCallback(() => {
+    if (angerTimer1Ref.current) {
+      clearTimeout(angerTimer1Ref.current);
+      angerTimer1Ref.current = null;
+    }
+    if (angerTimer2Ref.current) {
+      clearTimeout(angerTimer2Ref.current);
+      angerTimer2Ref.current = null;
+    }
+    if (angerTimer3Ref.current) {
+      clearTimeout(angerTimer3Ref.current);
+      angerTimer3Ref.current = null;
+    }
+  }, []);
+
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
-      if (angerTimerRef.current) clearTimeout(angerTimerRef.current);
+      clearAllAngerTimers();
       if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     };
-  }, []);
+  }, [clearAllAngerTimers]);
 
   // Restore user minimized preference
   useEffect(() => {
@@ -111,7 +106,7 @@ export function SmartAvatarCompanion() {
     }
   };
 
-  // Helper: Show polite speech bubble that auto-dismisses so it NEVER blocks content
+  // Helper: Show polite speech bubble that auto-dismisses
   const showBubble = useCallback(
     (text: string, actionLabel?: string, actionHref?: string, durationMs = 4500) => {
       if (dismissTimerRef.current) {
@@ -140,7 +135,6 @@ export function SmartAvatarCompanion() {
   }, []);
 
   // Universal Popup / Menu / Cart Drawer Detection
-  // Ensures Kilby stays completely silent and out of the way when any drawer/popup is active
   const checkPopups = useCallback(() => {
     if (typeof document === "undefined") return false;
     const body = document.body;
@@ -164,7 +158,6 @@ export function SmartAvatarCompanion() {
       setIsAnyPopupOpen(open);
       if (open) {
         hideBubble();
-        setActiveTarget(null);
       }
     };
 
@@ -191,174 +184,12 @@ export function SmartAvatarCompanion() {
     };
   }, []);
 
-  // 1. Dynamic Target Evaluator: Detects buttons and inputs across Header, Body & Footer
-  // ONLY for automatic travel on scroll - NEVER sets anger!
-  const evaluateTargets = useCallback(() => {
-    if (isChatOpen || isMinimized || isDragging || isAngryDropped || isAnyPopupOpen) return;
-
-    const anchors = Array.from(document.querySelectorAll<HTMLElement>("[data-kilby-anchor]"));
-    if (anchors.length === 0) {
-      setActiveTarget(null);
-      return;
-    }
-
-    const vHeight = window.innerHeight;
-    const vWidth = window.innerWidth;
-    const scrollYPos = window.scrollY || window.pageYOffset || 0;
-    const avatarSize = 54;
-    const margin = 12;
-
-    // Check if any anchor or its child has active focus
-    const focusedEl = document.activeElement as HTMLElement | null;
-    const focusedAnchor = anchors.find(
-      (a) => a === focusedEl || a.contains(focusedEl)
-    );
-
-    let chosenEl: HTMLElement | null = focusedAnchor || null;
-
-    if (!chosenEl) {
-      // When at top of page, allow visiting header search or hero CTA
-      if (scrollYPos < 80) {
-        for (const el of anchors) {
-          const rect = el.getBoundingClientRect();
-          if (rect.bottom > 0 && rect.top < vHeight * 0.55 && rect.height > 0) {
-            chosenEl = el;
-            break;
-          }
-        }
-      } else {
-        // When scrolled down, skip sticky header anchors unless user focused them
-        let minDistance = Infinity;
-        for (const el of anchors) {
-          const isSticky = Boolean(el.closest("header.sticky, header.fixed, [data-sticky]"));
-          if (isSticky) continue;
-
-          const rect = el.getBoundingClientRect();
-          if (rect.bottom > 20 && rect.top < vHeight - 20 && rect.height > 0) {
-            const centerY = rect.top + rect.height / 2;
-            const dist = Math.abs(centerY - vHeight * 0.45);
-            if (dist < minDistance) {
-              minDistance = dist;
-              chosenEl = el;
-            }
-          }
-        }
-      }
-    }
-
-    if (chosenEl) {
-      const rect = chosenEl.getBoundingClientRect();
-      const position = chosenEl.getAttribute("data-kilby-position") || "right";
-      const prompt = chosenEl.getAttribute("data-kilby-prompt") || "Need assistance with this? Ask me! 💡";
-      const mood = (chosenEl.getAttribute("data-kilby-mood") as AvatarAnimation) || "curious";
-      const actionLabel = chosenEl.getAttribute("data-kilby-action") || undefined;
-      const actionHref = chosenEl.getAttribute("data-kilby-href") || undefined;
-
-      let targetX = rect.right + margin;
-      let targetY = rect.top + rect.height / 2 - avatarSize / 2;
-
-      // If positioning on the right would push Kilby off the screen edge, place on left
-      if (position === "left" || targetX + avatarSize + 16 > vWidth) {
-        targetX = rect.left - avatarSize - margin;
-      }
-      // If left is also too tight, place top
-      if (targetX < 12) {
-        targetX = Math.min(vWidth - avatarSize - 16, Math.max(16, rect.left));
-        targetY = rect.top - avatarSize - margin;
-      }
-
-      // Clamp inside viewport
-      const clampedX = Math.max(12, Math.min(targetX, vWidth - avatarSize - 16));
-      const clampedY = Math.max(12, Math.min(targetY, vHeight - avatarSize - 16));
-
-      const anchorId = chosenEl.getAttribute("data-kilby-anchor") || "anchor";
-      setActiveTarget({
-        id: anchorId,
-        x: clampedX,
-        y: clampedY,
-        prompt,
-        mood,
-        actionLabel,
-        actionHref,
-      });
-      if (!isAngryDropped && !isDragging) {
-        setAvatarMood(mood);
-      }
-    } else {
-      setActiveTarget(null);
-    }
-  }, [isChatOpen, isMinimized, isDragging, isAngryDropped, isAnyPopupOpen]);
-
-  // When activeTarget changes, trigger polite speech bubble with 4.5s auto-dismiss
+  // Periodic Friendly Tips while resting at base
   useEffect(() => {
-    if (activeTarget && !isAngryDropped && !isDragging && !isAnyPopupOpen) {
-      if (activeTarget.id !== lastTargetIdRef.current) {
-        lastTargetIdRef.current = activeTarget.id;
-        showBubble(activeTarget.prompt, activeTarget.actionLabel, activeTarget.actionHref, 4500);
-      }
-    } else if (!activeTarget) {
-      lastTargetIdRef.current = null;
-    }
-  }, [activeTarget, showBubble, isAngryDropped, isDragging, isAnyPopupOpen]);
-
-  // Run target evaluation on scroll, focus, and input events
-  useEffect(() => {
-    let animFrame: number;
-    const handleScrollOrEvent = () => {
-      setIsScrolling(true);
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsScrolling(false);
-      }, 220);
-
-      cancelAnimationFrame(animFrame);
-      animFrame = requestAnimationFrame(evaluateTargets);
-    };
-
-    window.addEventListener("scroll", handleScrollOrEvent, { passive: true });
-    window.addEventListener("focusin", handleScrollOrEvent);
-    window.addEventListener("focusout", handleScrollOrEvent);
-
-    const initialTimer = setTimeout(evaluateTargets, 400);
-
-    return () => {
-      window.removeEventListener("scroll", handleScrollOrEvent);
-      window.removeEventListener("focusin", handleScrollOrEvent);
-      window.removeEventListener("focusout", handleScrollOrEvent);
-      cancelAnimationFrame(animFrame);
-      clearTimeout(initialTimer);
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    };
-  }, [evaluateTargets]);
-
-  // 2. Form Input Validation Reactions
-  useEffect(() => {
-    if (isChatOpen || isMinimized || isDragging || isAngryDropped || isAnyPopupOpen) return;
-
-    const handleInputChange = (e: Event) => {
-      const target = e.target as HTMLInputElement | null;
-      if (!target || target.type !== "email") return;
-
-      const val = target.value.trim();
-      if (val.length > 5 && !val.includes("@")) {
-        setAvatarMood("suspicious");
-        showBubble("Could you check your email, maybe name@company.com?", undefined, undefined, 4000);
-      } else if (val.includes("@") && val.includes(".")) {
-        setAvatarMood("happy");
-        showBubble("Email looks great! 🤝", undefined, undefined, 3000);
-      }
-    };
-
-    window.addEventListener("input", handleInputChange);
-    return () => window.removeEventListener("input", handleInputChange);
-  }, [isChatOpen, isMinimized, isDragging, isAngryDropped, isAnyPopupOpen, showBubble]);
-
-  // 3. Periodic Friendly Tips when not anchored to a specific form element
-  useEffect(() => {
-    if (isChatOpen || isMinimized || isDragging || activeTarget || isAngryDropped || isAnyPopupOpen) return;
+    if (isChatOpen || isMinimized || isDragging || isAngry || isAnyPopupOpen) return;
 
     const prompts = [
-      "Travelling with you! Ask me anything 🚀",
+      "I'm Kilby! Click to chat anytime ⚡",
       "Need a bulk project quote? Click me! 📋",
       "We stock Siemens & Delta PLCs ⚡",
       "Same-day dispatch across India 🚚",
@@ -369,12 +200,13 @@ export function SmartAvatarCompanion() {
     const interval = setInterval(() => {
       const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
       showBubble(randomPrompt, undefined, undefined, 4500);
-    }, 28000);
+    }, 32000);
 
     return () => clearInterval(interval);
-  }, [isChatOpen, isMinimized, isDragging, activeTarget, isAngryDropped, isAnyPopupOpen, showBubble]);
+  }, [isChatOpen, isMinimized, isDragging, isAngry, isAnyPopupOpen, showBubble]);
 
-  // Coordinates Calculation:
+  // Steady Coordinates Calculation:
+  // Stays fixed at right bottom corner regardless of scrolling!
   // Mobile Downside Corner: 12px from right, 16px from bottom
   // Desktop: 24px from right, 28px from bottom
   const avatarSize = 54;
@@ -382,46 +214,39 @@ export function SmartAvatarCompanion() {
   const defaultX = windowSize.width - avatarSize - (isMobile ? 12 : 24);
   const defaultY = windowSize.height - avatarSize - (isMobile ? 16 : 28);
 
-  const baseTargetX = activeTarget ? activeTarget.x : defaultX;
-  const baseTargetY = activeTarget ? activeTarget.y : defaultY;
-
   // Real-time Coordinate Resolution:
   // 1. Dragging position (following user pointer)
-  // 2. Drop position (staying at drop site while angry for 0.5s only)
-  // 3. Active in-page anchor (automatic on scroll)
-  // 4. Default downside corner
+  // 2. Drop position (staying at drop site while shaking in anger)
+  // 3. Steady original place at right corner (defaultX, defaultY)
   const currentX = dragPosition
     ? dragPosition.x
     : dropPosition
     ? dropPosition.x
-    : baseTargetX;
+    : defaultX;
 
   const currentY = dragPosition
     ? dragPosition.y
     : dropPosition
     ? dropPosition.y
-    : baseTargetY;
+    : defaultY;
 
-  // Smart Bubble Placement:
-  // Suppressed completely whenever a popup, drawer, or menu is open!
+  // Smart Bubble Placement
   const isTopRegion = currentY < 90;
   const isRightSide = currentX > windowSize.width / 2;
-  const shouldShowBubble = isBubbleVisible && !isScrolling && !isAnyPopupOpen && Boolean(bubbleText);
+  const shouldShowBubble = isBubbleVisible && !isAnyPopupOpen && Boolean(bubbleText);
 
-  // 4. HOLD, DRAG & DROP HANDLERS (Desktop Mouse + Mobile Touch)
-  // Anger only triggers when USER manually drags and changes Kilby's position (> 35px)!
+  // HOLD, DRAG & DROP HANDLERS (Desktop Mouse + Mobile Touch)
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     if (isChatOpen || isMinimized || isAnyPopupOpen) return;
 
     e.stopPropagation();
 
-    // Clear any previous anger timer
-    if (angerTimerRef.current) {
-      clearTimeout(angerTimerRef.current);
-      angerTimerRef.current = null;
-    }
-    setIsAngryDropped(false);
+    // Reset anger and return timers if user grabs him again
+    clearAllAngerTimers();
+    setIsAngry(false);
+    setIsShaking(false);
+    setDropPosition(null);
 
     isPointerDownRef.current = true;
     isActuallyDraggingRef.current = false;
@@ -442,8 +267,8 @@ export function SmartAvatarCompanion() {
     const dy = e.clientY - dragStartPointerRef.current.y;
     const dist = Math.hypot(dx, dy);
 
-    // Threshold of 16px to begin drag mode (prevents accidental micro-movements on tap)
-    if (!isActuallyDraggingRef.current && dist > 16) {
+    // Threshold of 14px to begin drag mode
+    if (!isActuallyDraggingRef.current && dist > 14) {
       isActuallyDraggingRef.current = true;
       setIsDragging(true);
       setAvatarMood("scared");
@@ -482,7 +307,7 @@ export function SmartAvatarCompanion() {
       const droppedAtX = dragPosition.x;
       const droppedAtY = dragPosition.y;
 
-      // Check how far Kilby was actually moved from where drag started
+      // Check distance moved from start
       const totalMoved = Math.hypot(
         droppedAtX - dragInitialAvatarRef.current.x,
         droppedAtY - dragInitialAvatarRef.current.y
@@ -491,48 +316,62 @@ export function SmartAvatarCompanion() {
       setIsDragging(false);
       setDragPosition(null);
 
-      // ONLY get angry if USER ACTUALLY CHANGED Kilby's position by dragging (> 35px)!
-      if (totalMoved > 35) {
+      // ONLY get angry and return if USER ACTUALLY MOVED Kilby (> 25px)!
+      if (totalMoved > 25) {
+        clearAllAngerTimers();
         setDropPosition({ x: droppedAtX, y: droppedAtY });
-        setIsAngryDropped(true);
+        setIsAngry(true);
+        setIsShaking(true);
         setAvatarMood("angry");
 
         const angryLines = [
           "Hey! Don't throw me around! 😤",
           "Hey! I'm an engineer, not a toy! 😡",
-          "Whoa! Put me back at my station! 💢",
-          "Ouch! Why did you drop me here?! 😾",
+          "Whoa! Taking myself back to my station! 💢",
+          "Ouch! I belong in my corner! 😾",
+          "Hmph! Heading back to my post! 😤",
         ];
         const randomLine = angryLines[Math.floor(Math.random() * angryLines.length)];
-        showBubble(randomLine, undefined, undefined, 1800);
+        showBubble(randomLine, undefined, undefined, 3500);
 
-        // Anger & shaking for EXACTLY 0.5 SECONDS ONLY, then snaps back to base!
-        if (angerTimerRef.current) clearTimeout(angerTimerRef.current);
-        angerTimerRef.current = setTimeout(() => {
-          setIsAngryDropped(false);
-          setDropPosition(null);
-          setAvatarMood("happy");
-          showBubble("Phew, back to base! 😌", undefined, undefined, 2000);
-        }, 500); // 0.5 seconds only!
+        // Phase 1: Shake in anger at the drop spot for 500ms
+        angerTimer1Ref.current = setTimeout(() => {
+          // Phase 2: Start returning back to original corner while staying ANGRY
+          setIsShaking(false);
+          setDropPosition(null); // Coordinate target switches to (defaultX, defaultY)
+
+          // Phase 3: Arrived back at original corner (after 900ms spring flight) -> Calm down!
+          angerTimer2Ref.current = setTimeout(() => {
+            setIsAngry(false);
+            setAvatarMood("happy");
+            showBubble("Phew, back where I belong! 😌", undefined, undefined, 2500);
+
+            // Phase 4: Settle to idle
+            angerTimer3Ref.current = setTimeout(() => {
+              setAvatarMood("idle");
+            }, 2500);
+          }, 900);
+        }, 500);
       } else {
-        // User put him right back or barely jiggled him (< 35px) -> No anger!
+        // User barely moved him -> Put back peacefully
         setDropPosition(null);
-        setIsAngryDropped(false);
+        setIsAngry(false);
+        setIsShaking(false);
         setAvatarMood("idle");
       }
     } else {
-      // Normal click / tap (< 16px) -> Open chatbot!
+      // Normal click / tap (< 14px) -> Open chatbot!
       setIsDragging(false);
       setDragPosition(null);
       setDropPosition(null);
-      setIsAngryDropped(false);
+      setIsAngry(false);
+      setIsShaking(false);
       setIsChatOpen(true);
       setAvatarMood("happy");
     }
   };
 
   // Minimized Floating Pill - in mobile downside corner (bottom-4 right-3)
-  // Fades out and yields z-index whenever a modal, drawer, or menu is open
   if (isMinimized) {
     return (
       <div
@@ -560,7 +399,7 @@ export function SmartAvatarCompanion() {
         isAnyPopupOpen ? "z-30 opacity-0 pointer-events-none" : "z-[10000] opacity-100"
       }`}
     >
-      {/* 1. Full Chatbot Window (Centered or Docked at mobile downside corner) */}
+      {/* 1. Full Chatbot Window (Docked at bottom right corner) */}
       <div className="absolute bottom-3 sm:bottom-6 right-3 sm:right-6 pointer-events-auto">
         <AvatarChatbot
           isOpen={isChatOpen}
@@ -571,30 +410,46 @@ export function SmartAvatarCompanion() {
         />
       </div>
 
-      {/* 2. Floating Kilby Traveling, Anchoring & Draggable anywhere on site */}
+      {/* 2. Floating Kilby: Steady at right corner, only moves when dragged and returns in anger */}
       {!isChatOpen && (
         <motion.div
           animate={
-            isAngryDropped
+            isShaking && dropPosition
               ? {
-                  x: [currentX - 5, currentX + 5, currentX - 4, currentX + 4, currentX - 2, currentX + 2, currentX],
-                  y: [currentY, currentY - 2, currentY + 2, currentY],
-                  rotate: [-8, 8, -6, 6, -3, 3, 0],
+                  x: [
+                    dropPosition.x - 6,
+                    dropPosition.x + 6,
+                    dropPosition.x - 5,
+                    dropPosition.x + 5,
+                    dropPosition.x - 3,
+                    dropPosition.x + 3,
+                    dropPosition.x,
+                  ],
+                  y: [
+                    dropPosition.y,
+                    dropPosition.y - 3,
+                    dropPosition.y + 3,
+                    dropPosition.y - 2,
+                    dropPosition.y + 2,
+                    dropPosition.y,
+                  ],
+                  rotate: [-10, 10, -8, 8, -4, 4, 0],
                 }
               : {
                   x: currentX,
                   y: currentY,
+                  rotate: 0,
                 }
           }
           transition={
             isDragging
               ? { duration: 0 } // Zero-lag immediate pointer following while dragging
-              : isAngryDropped
-              ? { duration: 0.5, ease: "easeInOut" } // Shakes for 0.5s only, NO REPEAT!
+              : isShaking
+              ? { duration: 0.5, ease: "easeInOut" } // Shakes with anger at drop spot
               : {
                   type: "spring",
-                  stiffness: 140,
-                  damping: 18,
+                  stiffness: 110,
+                  damping: 15,
                   mass: 0.8,
                 }
           }
@@ -602,12 +457,11 @@ export function SmartAvatarCompanion() {
             position: "absolute",
             top: 0,
             left: 0,
-            rotate: isAngryDropped ? undefined : travelRotate,
           }}
           className="pointer-events-auto select-none"
         >
           <div className="relative flex items-center gap-2.5">
-            {/* Non-Obstructive Speech Bubble (Vertical placement, auto-dismissing, scroll-protected, popup-suppressed) */}
+            {/* Speech Bubble */}
             <AnimatePresence>
               {shouldShowBubble && (
                 <motion.div
@@ -620,7 +474,7 @@ export function SmartAvatarCompanion() {
                   } ${
                     isRightSide ? "right-0" : "left-0"
                   } w-max max-w-[240px] sm:max-w-[280px] p-3 rounded-2xl ${
-                    isAngryDropped
+                    isAngry
                       ? "bg-red-950/95 text-white border-red-500/60 shadow-red-900/40"
                       : "bg-slate-950/95 text-white border-amber-400/40"
                   } shadow-2xl border backdrop-blur-md z-50 text-xs font-medium`}
@@ -629,7 +483,7 @@ export function SmartAvatarCompanion() {
                     <p
                       className="text-slate-100 leading-snug cursor-pointer hover:text-amber-300 transition-colors"
                       onClick={() => {
-                        if (!isDragging && !isAngryDropped && !isAnyPopupOpen) {
+                        if (!isDragging && !isAngry && !isAnyPopupOpen) {
                           setIsChatOpen(true);
                           setAvatarMood("happy");
                         }
@@ -652,7 +506,7 @@ export function SmartAvatarCompanion() {
                   </div>
 
                   {/* Optional Action Pill inside the speech bubble */}
-                  {bubbleAction?.label && !isAngryDropped && (
+                  {bubbleAction?.label && !isAngry && (
                     <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-end">
                       {bubbleAction.href ? (
                         <Link
@@ -681,7 +535,7 @@ export function SmartAvatarCompanion() {
                   {/* Speech Bubble Arrow Tail pointing directly at Kilby */}
                   <div
                     className={`absolute w-2.5 h-2.5 ${
-                      isAngryDropped
+                      isAngry
                         ? "bg-red-950 border-red-500/60"
                         : "bg-slate-950 border-amber-400/40"
                     } rotate-45 ${
@@ -696,7 +550,7 @@ export function SmartAvatarCompanion() {
               )}
             </AnimatePresence>
 
-            {/* Draggable Kilby Avatar Mascot Dock */}
+            {/* Draggable Kilby Avatar Mascot */}
             <div
               className="relative group cursor-grab active:cursor-grabbing select-none touch-none"
               onPointerDown={handlePointerDown}
@@ -704,12 +558,12 @@ export function SmartAvatarCompanion() {
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
               onMouseEnter={() => {
-                if (!shouldShowBubble && !isScrolling && !isDragging && !isAngryDropped && !isAnyPopupOpen) {
+                if (!shouldShowBubble && !isDragging && !isAngry && !isAnyPopupOpen) {
                   showBubble(
-                    activeTarget?.prompt || "Hi! I'm Kilby ⚡ Click to chat or drag me around!",
-                    activeTarget?.actionLabel,
-                    activeTarget?.actionHref,
-                    4000
+                    "Hi! I'm Kilby ⚡ Click to chat or drag me around!",
+                    undefined,
+                    undefined,
+                    3500
                   );
                 }
               }}
@@ -719,10 +573,8 @@ export function SmartAvatarCompanion() {
                 className={`relative flex items-center justify-center p-1 rounded-full bg-gradient-to-tr from-slate-950 via-slate-900 to-amber-950 text-white shadow-2xl border-2 transition-transform duration-150 focus:outline-none pointer-events-none ${
                   isDragging
                     ? "scale-110 border-red-400 ring-4 ring-red-400/40 shadow-red-500/30"
-                    : isAngryDropped
+                    : isAngry
                     ? "border-red-500 ring-4 ring-red-500/50 shadow-red-500/40"
-                    : activeTarget
-                    ? "border-amber-400 ring-4 ring-amber-400/30 scale-105"
                     : "border-amber-400/60 hover:border-amber-400 hover:scale-105"
                 }`}
                 aria-label="Kilby AI Assistant"
@@ -730,12 +582,12 @@ export function SmartAvatarCompanion() {
                 {/* Active Online / Angry Pulse */}
                 <span
                   className={`absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 z-10 ${
-                    isAngryDropped || isDragging ? "bg-red-500 animate-ping" : "bg-emerald-500"
+                    isAngry || isDragging ? "bg-red-500 animate-ping" : "bg-emerald-500"
                   }`}
                 />
 
-                {/* Quick Hint Pill */}
-                {isAngryDropped ? (
+                {/* Status Pill Badge */}
+                {isAngry ? (
                   <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-red-600 text-white text-[8px] font-extrabold uppercase px-1.5 py-0.2 rounded-full shadow-md pointer-events-none animate-pulse">
                     ANGRY!
                   </span>
@@ -743,13 +595,9 @@ export function SmartAvatarCompanion() {
                   <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-amber-400 text-slate-950 text-[8px] font-extrabold uppercase px-1.5 py-0.2 rounded-full shadow-md pointer-events-none">
                     MOVING...
                   </span>
-                ) : activeTarget ? (
-                  <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-amber-500 text-slate-950 text-[8px] font-extrabold uppercase px-1.5 py-0.2 rounded-full shadow-md pointer-events-none animate-bounce">
-                    LOOK!
-                  </span>
                 ) : null}
 
-                {/* Embedded Yellow Avatar (size 54) */}
+                {/* Embedded Yellow Avatar */}
                 <div className="w-11 h-11 overflow-hidden rounded-full flex items-center justify-center bg-slate-900/60 pointer-events-none">
                   <AvatarMascot
                     ref={mascotRef}
