@@ -7,6 +7,7 @@ import { QuickViewModal } from "@/components/product/QuickViewModal";
 import { ToastContainer } from "@/components/ui/ToastContainer";
 import { HeaderFooterWrapper } from "@/components/layout/HeaderFooterWrapper";
 import { UserTracker } from "@/components/layout/UserTracker";
+import { SitePreloader } from "@/components/intro/SitePreloader";
 
 import { 
   getSiteUrl, 
@@ -126,6 +127,7 @@ export default function RootLayout({
         <CartDrawer />
         <QuickViewModal />
         <ToastContainer />
+        <SitePreloader />
       </body>
     </html>
   );
